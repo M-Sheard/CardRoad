@@ -431,8 +431,24 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <div id="home">
 <section id="visualShell">
   <div class="worldTopbar">
-    <div><b id="visualDate">Monday, 2 March · Year 1</b><div id="visualPhase" class="small">Morning</div></div>
-    <div class="worldActions"><button id="openJournal" class="uiPlaque" aria-label="Open Journal">Journal</button><button id="advanceTime" class="uiPlaque" aria-label="Pass Time">Time</button></div>
+    <button type="button" id="advanceTime" class="scrollPlaque" aria-label="Pass time">
+      <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
+      <span class="scrollWell">
+        <img class="scrollSun" src="./assets/ui/date_frame_probe_sun.png" alt="">
+        <span class="scrollCopy"><b id="visualDate">Monday, 2 March · Year 1</b><span id="visualPhase" class="small">Morning</span></span>
+      </span>
+      <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
+    </button>
+    <div class="worldActions">
+      <button id="worldRecord" class="scrollPlaque scrollPlaque-sm" type="button" aria-label="Open journal">
+        <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
+        <span class="scrollWell">
+          <span id="worldRecordLabel">Journal</span>
+          <span id="worldRecordBadge" class="worldRecordBadge hidden"></span>
+        </span>
+        <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
+      </button>
+    </div>
   </div>
   <div id="townScene" class="townScene">
     <div class="wash wash1"></div><div class="wash wash2"></div>
@@ -442,14 +458,23 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div class="sceneGround"></div>
     <div class="sceneLabel"><span id="locationTitle">Lythmere Market</span><small id="locationSubtitle">A riverside market where local players drift in and out through the day.</small></div>
     <div id="npcHotspots"></div>
-    <button id="noticeBoard" class="worldObject notice">Noticeboard</button>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Tournament Today</button>
   </div>
-  <nav class="locationStrip" id="locationStrip" aria-label="Lythmere locations">
-    <button type="button" data-loc="Market">Market</button><button type="button" data-loc="Riverside">Riverside</button><button type="button" data-loc="Inn">Inn</button><button type="button" data-loc="Card Club" title="Card Club">Club</button>
+  <nav class="locationStrip scrollPlaque scrollPlaque-wide" id="locationStrip" aria-label="Lythmere locations">
+    <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
+    <div class="scrollWell locationWell">
+      <button type="button" data-loc="Market">Market</button>
+      <button type="button" data-loc="Riverside">Riverside</button>
+      <button type="button" data-loc="Inn">Inn</button>
+      <button type="button" data-loc="Card Club" title="Card Club">Club</button>
+    </div>
+    <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
   </nav>
-  <div id="sceneWhisper" class="sceneWhisper"></div>
   <div id="worldStatus" class="worldStatus"></div>
+<div id="noticeOverlay" class="noticeOverlay hidden">
+  <button type="button" id="closeNotice" class="noticeDismiss">Close</button>
+  <button id="noticeBoard" class="worldObject notice" type="button">Noticeboard</button>
+</div>
 </section>
 
 <div id="journalOverlay" class="journalOverlay hidden">
@@ -689,6 +714,9 @@ function publicInfoHere(){
  return null;
 }
 function formattedWorldDate(date=state.visual?.date){let d=new Date(date+"T12:00:00");return d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long",year:"numeric"})}
+function plaqueDateLabel(){return visualDateObj().toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+function noticeDateLabel(date){return new Date(date+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})}
+function noticeEventName(name){return String(name||"").replace(/^Lythmere\s+/i,"").replace(/^Saturday Open$/i,"Sat Open")}
 function syncCalendarState(){
  let d=visualDateObj();state.season.year=Math.max(1,d.getFullYear()-2025);
  state.season.day=Math.floor((d-new Date("2026-01-01T12:00:00"))/86400000)+1;
@@ -747,11 +775,49 @@ function npcPriority(n){
  return d.competitive>.7?"competitive practice":"ordinary local play";
 }
 function discoverEvent(ev){ensureVisualState();if(!state.visual.discoveredEvents.some(x=>x.id===ev.id)){state.visual.discoveredEvents.push(ev);state.visual.history.push(`Discovered ${ev.name} from ${ev.source}.`);news(`${ev.name} added to your journal calendar.`);save();}}
-function readNoticeboard(){
- let info=publicInfoHere();if(!info)return;
- discoverEvents(info.ids);state.visual.noticeRead=true;save();renderWorldScene();renderJournal();
- $("sceneWhisper").textContent="You copy public dates into your journal. The events already existed; you have simply learned about them.";
+function unreadNoticeIds(){
+ let info=publicInfoHere();if(!info)return[];
+ let known=new Set((state.visual.discoveredEvents||[]).map(e=>e.id));
+ return (info.ids||[]).filter(id=>{let e=worldEvent(id);return e&&!known.has(id);});
 }
+function fillNoticeBoard(info){
+ if(!$("noticeBoard")||!info)return;
+ let noticeEvents=(info.ids||[]).map(worldEvent).filter(Boolean).slice(0,3);
+ $("noticeBoard").innerHTML=`<span class="noticeTitle">${info.label}</span><span class="noticeItems">${
+   noticeEvents.length
+     ? noticeEvents.map(e=>`<span class="noticeItem"><b>${noticeEventName(e.name)}</b><small>${noticeDateLabel(e.date)}</small></span>`).join("")
+     : `<span class="noticeItem"><b>No notices</b><small>Tap to close</small></span>`
+ }</span>`;
+}
+function updateWorldRecordButton(){
+ let b=$("worldRecord");if(!b)return;
+ let n=unreadNoticeIds().length;
+ b.classList.toggle("hasUnread",n>0);
+ b.setAttribute("aria-label",n>0?"Open notices":"Open journal");
+ if($("worldRecordLabel"))$("worldRecordLabel").textContent=n>0?"Notices":"Journal";
+ if($("worldRecordBadge")){
+  $("worldRecordBadge").textContent=n>0?String(n):"";
+  $("worldRecordBadge").classList.toggle("hidden",n===0);
+ }
+}
+function closeNoticeView(){if($("noticeOverlay"))$("noticeOverlay").classList.add("hidden");}
+function openJournalView(){
+ closeNoticeView();
+ if($("journalOverlay"))$("journalOverlay").classList.remove("hidden");
+ renderJournal();
+}
+function openNoticeView(){
+ let info=publicInfoHere();if(!info){openJournalView();return;}
+ if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
+ fillNoticeBoard(info);
+ if($("noticeOverlay"))$("noticeOverlay").classList.remove("hidden");
+ discoverEvents(info.ids);state.visual.noticeRead=true;save();renderJournal();updateWorldRecordButton();
+}
+function onWorldRecord(){
+ if($("noticeOverlay")&&!$("noticeOverlay").classList.contains("hidden")){openJournalView();return;}
+ if(unreadNoticeIds().length)openNoticeView();else openJournalView();
+}
+function readNoticeboard(){openNoticeView();}
 function isSaturdayEventNow(){return state.visual.phase==="Afternoon"&&eventsOnDate(state.visual.date).some(e=>e.tier==="Local"&&e.place==="Lythmere Card Club")}
 function openSaturdayTournament(){
  let ev=eventsOnDate(state.visual.date).find(e=>e.tier==="Local")||{name:"Lythmere Saturday Open"};
@@ -775,7 +841,7 @@ function backgroundV6Day(){
 }
 function advanceVisualTime(){
  ensureVisualState();if(state.activeTournament&&state.activeTournament.status!=="complete"){alert("Finish the current tournament before moving time forward.");return}
- shiftWorldPhase(1);save();renderHome();
+ closeNoticeView();shiftWorldPhase(1);save();renderHome();
 }
 
 function localNpcNames(){return Object.keys(npcDefs).filter(n=>!npcDefs[n].visitor)}
@@ -1419,22 +1485,21 @@ function renderSeason(){syncCalendarState();return;}
 
 function renderWorldScene(){
  ensureVisualState();syncCalendarState();let loc=V6_LOCATIONS[state.visual.location]||V6_LOCATIONS.Market;$("townScene").dataset.location=state.visual.location;
- $("visualDate").textContent=visualDateLabel();$("visualPhase").textContent=state.visual.phase;$("locationTitle").textContent=loc.title;$("locationSubtitle").textContent=loc.subtitle;
- document.querySelectorAll("#locationStrip button").forEach(b=>b.classList.toggle("active",b.dataset.loc===state.visual.location));
+ $("visualDate").textContent=plaqueDateLabel();$("visualPhase").textContent=state.visual.phase+" · Year "+state.season.year;$("locationTitle").textContent=loc.title;$("locationSubtitle").textContent=loc.subtitle;
+ document.querySelectorAll("#locationStrip button").forEach(b=>{
+   let on=b.dataset.loc===state.visual.location;
+   b.classList.toggle("active",on);
+   if(on)b.setAttribute("aria-current","location");else b.removeAttribute("aria-current");
+ });
  let spots=$("npcHotspots");spots.innerHTML="";let present=localNpcNames().filter(n=>npcLocationNow(n)===state.visual.location);
+ let sceneEl=$("townScene");if(sceneEl)sceneEl.dataset.crowd=String(present.length);
  let positions=[[51,43],[72,64],[30,62],[80,70]];
- present.forEach((n,i)=>{let b=document.createElement("button");b.className="npcHotspot"+(n==="Tomas"?" tomas-production":"");b.style.left=positions[i%positions.length][0]+"%";b.style.top=positions[i%positions.length][1]+"%";b.innerHTML=`<span class="figure"></span><span class="tag">${n}</span>`;b.title=npcPriority(n);b.onclick=()=>openChallenge(n);spots.appendChild(b)});
- let info=publicInfoHere();$("noticeBoard").classList.toggle("hidden",!info);
- if(info){
-   let noticeEvents=(info.ids||[]).map(worldEvent).filter(Boolean).slice(0,3);
-   $("noticeBoard").innerHTML=`<span class="noticeTitle">${info.label}</span><span class="noticeItems">${
-     noticeEvents.length
-       ? noticeEvents.map(e=>`<span class="noticeItem"><b>${e.name}</b><small>${formattedWorldDate(e.date)}</small></span>`).join("")
-       : `<span class="noticeItem"><b>${info.label}</b><small>Tap to read</small></span>`
-   }</span>`;
- }
+ present.forEach((n,i)=>{let b=document.createElement("button");b.className="npcHotspot"+(n==="Tomas"?" tomas-production":"");b.dataset.npc=n;b.dataset.slot=String(i);b.style.left=positions[i%positions.length][0]+"%";b.style.top=positions[i%positions.length][1]+"%";b.innerHTML=`<span class="figure"></span><span class="tag">${n}</span>`;b.title=npcPriority(n);b.onclick=()=>openChallenge(n);spots.appendChild(b)});
+ let info=publicInfoHere();
+ if(info)fillNoticeBoard(info);
+ if($("noticeOverlay")&&!info)$("noticeOverlay").classList.add("hidden");
+ updateWorldRecordButton();
  $("eventHotspot").classList.toggle("hidden",!isSaturdayEventNow());
- $("sceneWhisper").textContent=present.length?`${present.join(", ")} ${present.length===1?"is":"are"} here. Tap a person to approach.`:"No familiar card players are here right now.";
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
 }
@@ -2120,11 +2185,13 @@ $("resultHome").onclick=()=>{
 };
 
 if($("advanceTime"))$("advanceTime").onclick=advanceVisualTime;
-if($("openJournal"))$("openJournal").onclick=()=>{$("journalOverlay").classList.remove("hidden");renderJournal()};
+if($("worldRecord"))$("worldRecord").onclick=onWorldRecord;
 if($("closeJournal"))$("closeJournal").onclick=()=>$("journalOverlay").classList.add("hidden");
-document.querySelectorAll("#locationStrip button").forEach(b=>b.onclick=()=>{state.visual.location=b.dataset.loc;save();renderWorldScene()});
+if($("closeNotice"))$("closeNotice").onclick=closeNoticeView;
+if($("noticeOverlay"))$("noticeOverlay").onclick=e=>{if(e.target===$("noticeOverlay"))closeNoticeView();};
+document.querySelectorAll("#locationStrip button").forEach(b=>b.onclick=()=>{closeNoticeView();state.visual.location=b.dataset.loc;save();renderWorldScene()});
 document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>renderJournal(b.dataset.jtab));
-if($("noticeBoard"))$("noticeBoard").onclick=readNoticeboard;
+if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
 if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();renderHome();}};
 
@@ -2149,7 +2216,7 @@ document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
    if(!img){
      img=document.createElement('img');
      img.className='tomasCutout';
-     img.src='./assets/npcs/tomas.webp';
+     img.src='./assets/npcs/tomas_standee_bevel_v19.png?v=bevel3';
      img.alt='Tomas';
      img.setAttribute('role','button');
      img.setAttribute('tabindex','0');
@@ -2213,7 +2280,7 @@ if ('serviceWorker' in navigator) {
    if(!img){
      img=document.createElement('img');
      img.className='nessaCutout';
-     img.src='./assets/npcs/nessa_standee_final_v14.png';
+     img.src='./assets/npcs/nessa_standee_bevel_v22.png?v=bevel6';
      img.alt='Nessa';
      img.setAttribute('role','button');
      img.setAttribute('tabindex','0');
@@ -2237,8 +2304,8 @@ if ('serviceWorker' in navigator) {
 <script>
 (function(){
  const defs=[
-  {name:'Bram', cls:'bramCutout', src:'./assets/npcs/bram_standee_v15.png'},
-  {name:'Elira',cls:'eliraCutout',src:'./assets/npcs/elira_standee_v17.png'}
+  {name:'Bram', cls:'bramCutout', src:'./assets/npcs/bram_standee_bevel_v22.png?v=bevel6'},
+  {name:'Elira',cls:'eliraCutout',src:'./assets/npcs/elira_standee_bevel_v22.png?v=bevel6'}
  ];
  function syncApprovedCutouts(){
   const scene=document.querySelector('.townScene'); if(!scene)return;
@@ -2975,12 +3042,984 @@ if ('serviceWorker' in navigator) {
   #visualDate{font-size:14px!important}
 }
 </style>
+<style>
+/* v23 — fit live copy into the existing UI frames. Contrast from v22 stays;
+   type size and padding return to the parchment/wood writing areas. */
+.worldTopbar>div:first-child{
+  width:min(48vw,330px)!important;
+  min-height:74px!important;
+  padding:16px 22px 10px 58px!important;
+  box-sizing:border-box!important;
+}
+#visualDate{
+  display:block!important;
+  max-width:100%!important;
+  font-size:13px!important;
+  line-height:1.1!important;
+  font-weight:800!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#visualPhase{
+  font-size:11px!important;
+  letter-spacing:.08em!important;
+  margin-top:3px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+}
+.sceneLabel{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:flex-end!important;
+  top:88px!important;
+  width:min(54vw,380px)!important;
+  min-height:100px!important;
+  padding:44px 36px 14px!important;
+  box-sizing:border-box!important;
+}
+.sceneLabel span{
+  font-size:16px!important;
+  line-height:1.1!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.sceneLabel small{
+  margin-top:8px!important;
+  font-size:10px!important;
+  line-height:1.2!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+  max-height:2.5em!important;
+}
+#noticeBoard.worldObject.notice{
+  left:6px!important;
+  bottom:152px!important;
+  width:min(30vw,168px)!important;
+  height:min(44vw,255px)!important;
+  min-height:200px!important;
+  padding:50px 18px 16px!important;
+  box-sizing:border-box!important;
+}
+.noticeTitle{
+  top:18px!important;
+  left:14px!important;
+  right:14px!important;
+  font-size:10px!important;
+  letter-spacing:.04em!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.noticeItems{
+  display:grid!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  gap:6px!important;
+  height:100%!important;
+  min-height:0!important;
+}
+.noticeItem{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  min-height:0!important;
+  overflow:hidden!important;
+  padding:0 2px!important;
+}
+.noticeItem b{
+  font-size:8.5px!important;
+  line-height:1.15!important;
+  display:-webkit-box!important;
+  -webkit-line-clamp:2!important;
+  -webkit-box-orient:vertical!important;
+  overflow:hidden!important;
+}
+.noticeItem small{
+  font-size:7.5px!important;
+  margin-top:1px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#sceneWhisper.sceneWhisper{
+  left:16px!important;
+  right:16px!important;
+  bottom:76px!important;
+  min-height:40px!important;
+  max-height:44px!important;
+  padding:10px 52px 8px!important;
+  box-sizing:border-box!important;
+  font-size:12px!important;
+  line-height:1.2!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.locationStrip button{
+  font-size:10px!important;
+  letter-spacing:.02em!important;
+  padding:6px 4px!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+@media(max-width:620px){
+  .worldTopbar>div:first-child{
+    padding:15px 16px 8px 52px!important;
+    min-height:70px!important;
+  }
+  #visualDate{font-size:12px!important}
+  #visualPhase{font-size:10px!important}
+  .sceneLabel{
+    padding:40px 28px 12px!important;
+    min-height:94px!important;
+  }
+  .sceneLabel span{font-size:15px!important}
+  .sceneLabel small{font-size:9px!important}
+  #noticeBoard.worldObject.notice{
+    padding:46px 14px 14px!important;
+  }
+  .noticeItem b{font-size:8px!important}
+  .noticeItem small{font-size:7px!important}
+  #sceneWhisper.sceneWhisper{
+    padding:9px 44px 7px!important;
+    font-size:11px!important;
+  }
+}
+</style>
+<style>
+/* v24 — current place lives in the bottom nav; date and notice copy sit in their writing areas. */
+.sceneLabel{display:none!important}
+.worldTopbar>div:first-child{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  width:min(48vw,330px)!important;
+  min-height:74px!important;
+  padding:12px 18px 12px 72px!important;
+  box-sizing:border-box!important;
+  text-align:center!important;
+}
+#visualDate,
+#visualPhase{
+  width:100%!important;
+  text-align:center!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+#visualDate{font-size:13px!important;line-height:1.15!important}
+#visualPhase{margin-top:2px!important;font-size:11px!important;letter-spacing:.1em!important}
+.locationStrip{
+  display:grid!important;
+  align-items:stretch!important;
+  gap:6px!important;
+  min-height:86px!important;
+  padding:8px 8px 10px!important;
+  background:#3a2a20!important;
+  border:2px solid #5c4636!important;
+  border-radius:8px!important;
+  box-shadow:0 8px 18px #0008!important;
+  z-index:35!important;
+}
+.locationStrip:has([data-loc="Market"].active){grid-template-columns:1.7fr .77fr .77fr .77fr!important}
+.locationStrip:has([data-loc="Riverside"].active){grid-template-columns:.77fr 1.7fr .77fr .77fr!important}
+.locationStrip:has([data-loc="Inn"].active){grid-template-columns:.77fr .77fr 1.7fr .77fr!important}
+.locationStrip:has([data-loc="Card Club"].active){grid-template-columns:.77fr .77fr .77fr 1.7fr!important}
+.locationStrip button{
+  min-height:0!important;
+  margin:0!important;
+  background:#e8d7b4!important;
+  color:#3a2a1c!important;
+  border:1px solid #6a5340!important;
+  border-radius:5px!important;
+  box-shadow:none!important;
+  outline:none!important;
+  font:700 10px/1.1 Georgia,serif!important;
+  letter-spacing:.03em!important;
+  text-transform:uppercase!important;
+  filter:none!important;
+}
+.locationStrip button.active{
+  background:transparent url("./assets/ui/location_title_frame.png") center/100% 100% no-repeat!important;
+  color:#ffe7a8!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  outline:none!important;
+  padding:26px 10px 10px!important;
+  font:800 12px/1.1 Georgia,serif!important;
+  letter-spacing:.06em!important;
+  text-shadow:0 2px 0 #1a120c, 0 2px 6px #000!important;
+  filter:drop-shadow(0 6px 10px rgba(0,0,0,.45))!important;
+}
+#sceneWhisper.sceneWhisper{bottom:98px!important}
+#noticeBoard.worldObject.notice{
+  left:6px!important;
+  bottom:168px!important;
+  width:min(32vw,176px)!important;
+  height:min(46vw,268px)!important;
+  min-height:212px!important;
+  padding:0!important;
+  display:flex!important;
+  flex-direction:column!important;
+  overflow:hidden!important;
+}
+.noticeTitle{
+  position:relative!important;
+  top:auto!important;
+  left:auto!important;
+  right:auto!important;
+  flex:0 0 22%!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  margin:0!important;
+  padding:10px 16px 0!important;
+  text-align:center!important;
+  font-size:9px!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  color:#ffe7a8!important;
+  text-shadow:0 1px 2px #000!important;
+}
+.noticeItems{
+  flex:1 1 auto!important;
+  display:grid!important;
+  grid-template-rows:repeat(3,minmax(0,1fr))!important;
+  gap:0!important;
+  height:auto!important;
+  min-height:0!important;
+  padding:1% 16% 9%!important;
+  box-sizing:border-box!important;
+}
+.noticeItem{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  width:100%!important;
+  min-width:0!important;
+  min-height:0!important;
+  padding:0 4px!important;
+  overflow:hidden!important;
+  text-align:center!important;
+  box-sizing:border-box!important;
+}
+.noticeItem b,
+.noticeItem small{
+  display:block!important;
+  width:100%!important;
+  text-align:center!important;
+  margin-left:auto!important;
+  margin-right:auto!important;
+}
+.noticeItem b{
+  font-size:8px!important;
+  line-height:1.15!important;
+  font-weight:800!important;
+  color:#1a120c!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+.noticeItem small{
+  margin-top:2px!important;
+  font-size:7px!important;
+  line-height:1.1!important;
+  color:#3f2c1c!important;
+  white-space:nowrap!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+}
+@media(max-width:620px){
+  .worldTopbar>div:first-child{padding:11px 14px 11px 64px!important}
+  .locationStrip{min-height:78px!important}
+  .locationStrip button.active{padding:22px 6px 8px!important;font-size:11px!important}
+  #sceneWhisper.sceneWhisper{bottom:92px!important}
+  #noticeBoard.worldObject.notice{bottom:158px!important}
+}
+</style>
+<style>
+/* v25 — option 3 compact place-tab in watercolor wood; crowd-aware NPC scale. */
+.locationStrip{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:end!important;
+  gap:6px!important;
+  min-height:54px!important;
+  padding:7px 8px 8px!important;
+  overflow:hidden!important;
+  background:#2a1c14!important;
+  border:1px solid #5a4330!important;
+  border-radius:0 0 10px 10px!important;
+  box-shadow:inset 0 1px 0 rgba(255,226,170,.14), 0 8px 16px #0007!important;
+}
+.locationStrip:has([data-loc="Market"].active),
+.locationStrip:has([data-loc="Riverside"].active),
+.locationStrip:has([data-loc="Inn"].active),
+.locationStrip:has([data-loc="Card Club"].active){
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+}
+.locationStrip button{
+  min-height:32px!important;
+  padding:8px 4px!important;
+  background:#e6d3af!important;
+  color:#3d2b1a!important;
+  border:1px solid #7a6248!important;
+  border-radius:4px!important;
+  box-shadow:none!important;
+  outline:none!important;
+  font:700 10px/1.05 Georgia,serif!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+  text-shadow:none!important;
+  filter:none!important;
+}
+.locationStrip button.active{
+  min-height:46px!important;
+  padding:14px 8px 8px!important;
+  overflow:hidden!important;
+  color:#f6e2a8!important;
+  border:0!important;
+  border-radius:3px!important;
+  background-color:#4a3424!important;
+  background-image:url("./assets/ui/location_title_frame.png")!important;
+  background-repeat:no-repeat!important;
+  background-position:center 58%!important;
+  background-size:118% 260%!important;
+  box-shadow:none!important;
+  outline:none!important;
+  font:800 11px/1.05 Georgia,serif!important;
+  letter-spacing:.05em!important;
+  text-shadow:0 1px 0 #1a120c, 0 2px 5px #000!important;
+  filter:drop-shadow(0 4px 6px rgba(0,0,0,.35))!important;
+}
+
+/* v35 supersedes crowd-wide shrink. Slot scale is perspective, not headcount. */
+
+@media(max-width:620px){
+  .locationStrip{min-height:50px!important}
+  .locationStrip button{min-height:30px!important;font-size:9px!important}
+  .locationStrip button.active{min-height:42px!important;padding:10px 4px 7px!important;font-size:10px!important}
+}
+</style>
+<style>
+/* v26 — presence scroll removed; Journal/Notices share one control; board is an overlay. */
+#sceneWhisper{display:none!important}
+.worldRecordBadge{
+  position:absolute;
+  top:-4px;
+  right:-4px;
+  min-width:16px;
+  height:16px;
+  padding:0 4px;
+  border-radius:8px;
+  background:#8b1e1e;
+  color:#ffe7a8;
+  font:800 9px/16px Georgia,serif;
+  box-shadow:0 0 0 2px #f4d78a;
+}
+#worldRecord{
+  position:relative!important;
+}
+#worldRecord.hasUnread{
+  box-shadow:0 0 0 2px #c9a45a, 0 0 0 4px #8b1e1e, 0 8px 16px #000a!important;
+}
+.noticeOverlay{
+  position:absolute;
+  inset:0;
+  z-index:50;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(12,9,7,.72);
+  padding:16px;
+}
+.noticeOverlay.hidden{display:none!important}
+.worldTopbar{
+  z-index:80!important;
+}
+.noticeDismiss{
+  position:absolute;
+  top:max(12px,env(safe-area-inset-top));
+  right:14px;
+  z-index:92;
+  min-height:44px;
+  padding:8px 14px;
+  background:#f6e7c8;
+  color:#1a120c;
+  border:2px solid #24160f;
+  border-radius:5px;
+  font:800 12px Georgia,serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+#noticeOverlay #noticeBoard.worldObject.notice{
+  position:relative!important;
+  left:auto!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:auto!important;
+  width:min(72vw,280px)!important;
+  height:min(78vh,420px)!important;
+  min-height:280px!important;
+  transform:none!important;
+  z-index:91!important;
+}
+.townScene[data-location] .tomasCutout,
+.townScene[data-location] .nessaCutout,
+.townScene[data-location] .bramCutout,
+.townScene[data-location] .eliraCutout{
+  bottom:12%!important;
+}
+@media(max-width:620px){
+  #noticeOverlay #noticeBoard.worldObject.notice{
+    width:min(86vw,280px)!important;
+    height:min(72vh,380px)!important;
+  }
+}
+</style>
+<style>
+/* v27 — date plaque is the time control; separate Time button removed. */
+.worldTopbar>#advanceTime{
+  display:flex!important;
+  flex-direction:column!important;
+  justify-content:center!important;
+  align-items:center!important;
+  width:min(48vw,330px)!important;
+  min-height:74px!important;
+  padding:12px 18px 12px 72px!important;
+  box-sizing:border-box!important;
+  margin:0!important;
+  text-align:center!important;
+  cursor:pointer!important;
+  appearance:none!important;
+  -webkit-appearance:none!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  transform:none!important;
+  background:transparent url("./assets/ui/date_time_frame.png") center/100% 100% no-repeat!important;
+  font-family:Georgia,serif!important;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55));
+}
+.worldTopbar>#advanceTime:hover{
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55)) brightness(1.06);
+}
+.worldTopbar>#advanceTime:active{
+  transform:translateY(1px)!important;
+}
+@media(max-width:620px){
+  .worldTopbar>#advanceTime{padding:11px 14px 11px 64px!important}
+}
+</style>
+<style>
+/* v28 — parchment family chrome; wax seal marks the current place. */
+.worldActions button.uiPlaque,
+.worldActions #worldRecord{
+  min-width:min(28vw,168px)!important;
+  min-height:74px!important;
+  padding:12px 16px 12px 18px!important;
+  box-sizing:border-box!important;
+  color:#1a120c!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent url("./assets/ui/date_time_frame.png") center/100% 100% no-repeat!important;
+  box-shadow:none!important;
+  font:800 13px/1.1 Georgia,serif!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  text-shadow:0 1px 0 rgba(255,244,214,.7)!important;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55));
+}
+.worldActions #worldRecord.hasUnread{
+  box-shadow:none!important;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55)) brightness(1.03);
+}
+.locationStrip{
+  overflow:visible!important;
+  background:#2a1c14!important;
+  border:1px solid #5a4330!important;
+  align-items:stretch!important;
+  min-height:52px!important;
+  padding:8px 8px 9px!important;
+}
+.locationStrip button{
+  position:relative!important;
+  min-height:42px!important;
+  padding:10px 4px 8px!important;
+  background:linear-gradient(#f6ead2,#e4d0ad)!important;
+  color:#3d2b1a!important;
+  border:1px solid #7a5a3e!important;
+  border-radius:3px!important;
+  box-shadow:inset 0 1px 0 rgba(255,248,230,.7)!important;
+  font:700 10px/1.05 Georgia,serif!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+  text-shadow:none!important;
+  filter:none!important;
+}
+.locationStrip button.active{
+  min-height:42px!important;
+  padding:18px 4px 6px!important;
+  overflow:visible!important;
+  color:#1a120c!important;
+  border:1px solid #6a4a30!important;
+  border-radius:3px!important;
+  background:linear-gradient(#fbf1d8,#edd6aa)!important;
+  background-image:linear-gradient(#fbf1d8,#edd6aa)!important;
+  box-shadow:inset 0 1px 0 #fff6, 0 2px 0 #3a2818!important;
+  font:800 11px/1.05 Georgia,serif!important;
+  letter-spacing:.05em!important;
+  text-shadow:0 1px 0 rgba(255,244,214,.8)!important;
+  filter:none!important;
+}
+.locationStrip button.active:after{
+  content:"";
+  position:absolute;
+  top:2px;
+  left:50%;
+  width:20px;
+  height:20px;
+  margin-left:-10px;
+  background:url("./assets/ui/wax_seal.png") center/contain no-repeat;
+  pointer-events:none;
+  mix-blend-mode:multiply;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
+}
+@media(max-width:620px){
+  .worldActions #worldRecord{min-height:70px!important;font-size:11px!important}
+  .locationStrip button.active:after{width:18px;height:18px;margin-left:-9px;top:2px}
+}
+</style>
+<style>
+/* v29 — Journal and locations share the blank parchment scroll, not the dated sun plaque. */
+.worldActions button.uiPlaque,
+.worldActions #worldRecord{
+  min-width:min(30vw,180px)!important;
+  min-height:74px!important;
+  padding:14px 22px!important;
+  color:#1a120c!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent url("./assets/ui/presence_message_frame.png") center/100% 100% no-repeat!important;
+  box-shadow:none!important;
+  font:800 13px/1 Georgia,serif!important;
+  letter-spacing:.1em!important;
+  text-transform:uppercase!important;
+  text-shadow:0 1px 0 rgba(255,244,214,.7)!important;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55));
+}
+.locationStrip{
+  min-height:64px!important;
+  padding:10px 34px 12px!important;
+  gap:0!important;
+  overflow:visible!important;
+  background:transparent url("./assets/ui/presence_message_frame.png") center/100% 100% no-repeat!important;
+  border:0!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55));
+}
+.locationStrip button{
+  min-height:40px!important;
+  padding:16px 6px 8px!important;
+  background:transparent!important;
+  color:#3d2b1a!important;
+  border:0!important;
+  border-right:1px solid rgba(90,62,38,.28)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  outline:none!important;
+  font:700 11px/1.05 Georgia,serif!important;
+  letter-spacing:.05em!important;
+  text-transform:uppercase!important;
+  text-shadow:0 1px 0 rgba(255,244,214,.65)!important;
+  filter:none!important;
+}
+.locationStrip button:last-child{border-right:0!important}
+.locationStrip button.active{
+  min-height:40px!important;
+  padding:18px 6px 8px!important;
+  overflow:visible!important;
+  color:#1a120c!important;
+  background:transparent!important;
+  background-image:none!important;
+  border:0!important;
+  border-right:1px solid rgba(90,62,38,.28)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  font:800 11px/1.05 Georgia,serif!important;
+  text-shadow:0 1px 0 rgba(255,244,214,.8)!important;
+  filter:none!important;
+}
+.locationStrip button.active:last-child{border-right:0!important}
+.locationStrip button.active:after{
+  top:2px;
+  width:20px;
+  height:20px;
+  margin-left:-10px;
+  mix-blend-mode:multiply;
+}
+@media(max-width:620px){
+  .worldActions #worldRecord{min-height:70px!important;padding:12px 16px!important;font-size:11px!important}
+  .locationStrip{padding:9px 28px 11px!important;min-height:58px!important}
+  .locationStrip button{font-size:9px!important;padding:14px 3px 6px!important}
+}
+</style>
+<style>
+/* v30 — same date-plaque hardware: ends keep native proportion, middle lengthens. */
+.worldTopbar>#advanceTime,
+.worldActions #worldRecord,
+.locationStrip{
+  box-sizing:border-box!important;
+  height:74px!important;
+  min-height:74px!important;
+  border:0!important;
+  border-radius:0!important;
+  background-color:transparent!important;
+  background-image:url("./assets/ui/date_frame_left.png"),url("./assets/ui/date_frame_right.png"),url("./assets/ui/date_frame_mid.png")!important;
+  background-repeat:no-repeat,no-repeat,repeat-x!important;
+  background-size:auto 100%,auto 100%,auto 100%!important;
+  background-position:left center,right center,center center!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))!important;
+}
+.worldTopbar>#advanceTime{
+  width:min(48vw,330px)!important;
+  padding:12px 22px 12px 76px!important;
+  background-image:url("./assets/ui/date_frame_probe_sun.png"),url("./assets/ui/date_frame_left.png"),url("./assets/ui/date_frame_right.png"),url("./assets/ui/date_frame_mid.png")!important;
+  background-repeat:no-repeat,no-repeat,no-repeat,repeat-x!important;
+  background-size:28px 28px,auto 100%,auto 100%,auto 100%!important;
+  background-position:42px 50%,left center,right center,center center!important;
+}
+.worldActions #worldRecord,
+.worldActions button.uiPlaque{
+  width:min(34vw,220px)!important;
+  min-width:0!important;
+  padding:12px 28px!important;
+  background:transparent url("./assets/ui/date_frame_left.png") left center/auto 100% no-repeat!important;
+  background-image:url("./assets/ui/date_frame_left.png"),url("./assets/ui/date_frame_right.png"),url("./assets/ui/date_frame_mid.png")!important;
+  background-repeat:no-repeat,no-repeat,repeat-x!important;
+  background-size:auto 100%,auto 100%,auto 100%!important;
+  background-position:left center,right center,center center!important;
+}
+.locationStrip{
+  padding:8px 42px 10px!important;
+  overflow:visible!important;
+}
+@media(max-width:620px){
+  .worldTopbar>#advanceTime,
+  .worldActions #worldRecord,
+  .locationStrip{height:68px!important;min-height:68px!important}
+  .worldActions #worldRecord{padding:10px 22px!important;font-size:11px!important}
+  .locationStrip{padding:7px 36px 9px!important}
+}
+</style>
+<style>
+/* v31 — date is master; journal is a uniform shrink; locations are the same plaque, longer. */
+.worldTopbar>#advanceTime{
+  width:330px!important;
+  max-width:calc(100vw - 140px)!important;
+  height:74px!important;
+  min-height:74px!important;
+}
+.worldActions #worldRecord,
+.worldActions button.uiPlaque{
+  width:258px!important;
+  height:58px!important;
+  min-height:58px!important;
+  padding:8px 22px!important;
+  font:800 11px/1 Georgia,serif!important;
+}
+.locationStrip{
+  left:50%!important;
+  right:auto!important;
+  width:min(620px, calc(100% - 24px))!important;
+  height:74px!important;
+  min-height:74px!important;
+  transform:translateX(-50%)!important;
+  padding:8px 48px 10px!important;
+}
+.locationStrip button.active:after{
+  top:4px;
+  width:26px;
+  height:26px;
+  margin-left:-13px;
+  mix-blend-mode:multiply;
+}
+@media(max-width:620px){
+  .worldTopbar>#advanceTime{width:min(330px,52vw)!important;height:64px!important;min-height:64px!important}
+  .worldActions #worldRecord,
+  .worldActions button.uiPlaque{width:min(200px,40vw)!important;height:50px!important;min-height:50px!important;padding:6px 16px!important;font-size:10px!important}
+  .locationStrip{width:min(620px,calc(100% - 16px))!important;height:64px!important;min-height:64px!important;padding:6px 36px 8px!important}
+}
+</style>
+<style>
+/* v32 — rebuild scrolls as cap + well + cap so boxes never paint over the rollers. */
+#visualShell .scrollPlaque{
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:stretch!important;
+  gap:0!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:none!important;
+  background-image:none!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+  box-sizing:border-box!important;
+  filter:drop-shadow(0 8px 14px rgba(0,0,0,.55))!important;
+}
+#visualShell .scrollCap{
+  display:block!important;
+  position:relative!important;
+  z-index:2!important;
+  height:74px!important;
+  width:auto!important;
+  flex:0 0 auto!important;
+  object-fit:contain!important;
+  pointer-events:none;
+}
+#visualShell .scrollWell{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  position:relative!important;
+  z-index:1!important;
+  display:flex!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:8px!important;
+  margin:0!important;
+  padding:0 10px!important;
+  border:0!important;
+  background-color:transparent!important;
+  background-image:url("./assets/ui/date_frame_mid.png")!important;
+  background-repeat:repeat-x!important;
+  background-size:auto 100%!important;
+  background-position:center!important;
+  box-shadow:none!important;
+}
+#visualShell #advanceTime.scrollPlaque{
+  width:auto!important;
+  min-width:280px!important;
+  height:74px!important;
+  min-height:74px!important;
+  padding:0!important;
+}
+#visualShell .scrollSun{
+  width:26px!important;
+  height:26px!important;
+  flex:0 0 auto!important;
+  object-fit:cover!important;
+  object-position:center!important;
+  border-radius:50%!important;
+}
+#visualShell .scrollCopy{
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center!important;
+  justify-content:center!important;
+  text-align:center!important;
+}
+#visualShell #worldRecord.scrollPlaque{
+  width:auto!important;
+  min-width:0!important;
+  height:58px!important;
+  min-height:58px!important;
+  padding:0!important;
+  font:800 11px/1 Georgia,serif!important;
+  letter-spacing:.08em!important;
+  text-transform:uppercase!important;
+  color:#1a120c!important;
+}
+#visualShell #worldRecord .scrollCap{height:58px!important}
+#visualShell .locationStrip.scrollPlaque{
+  left:50%!important;
+  right:auto!important;
+  width:min(620px,calc(100% - 24px))!important;
+  height:74px!important;
+  min-height:74px!important;
+  transform:translateX(-50%)!important;
+  padding:0!important;
+  grid-template-columns:none!important;
+}
+#visualShell .locationWell{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  height:100%!important;
+  padding:0!important;
+  gap:0!important;
+}
+#visualShell .locationWell button,
+#visualShell .locationStrip button{
+  position:relative!important;
+  min-height:0!important;
+  height:100%!important;
+  margin:0!important;
+  padding:10px 4px 6px!important;
+  background:transparent!important;
+  background-image:none!important;
+  color:#3d2b1a!important;
+  border:0!important;
+  border-right:1px solid rgba(90,62,38,.22)!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  outline:none!important;
+  filter:none!important;
+  font:700 11px/1.05 Georgia,serif!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+  text-shadow:0 1px 0 rgba(255,244,214,.7)!important;
+}
+#visualShell .locationWell button:last-child,
+#visualShell .locationStrip .locationWell button:last-child{border-right:0!important}
+#visualShell .locationWell button.active,
+#visualShell .locationStrip button.active{
+  color:#1a120c!important;
+  background:transparent!important;
+  background-image:none!important;
+  border-radius:0!important;
+  box-shadow:none!important;
+  filter:none!important;
+  font-weight:800!important;
+}
+#visualShell .locationWell button.active:after{
+  content:"";
+  position:absolute;
+  top:4px;
+  left:50%;
+  width:22px;
+  height:22px;
+  margin-left:-11px;
+  border-radius:50%;
+  overflow:hidden;
+  background:#7a1c18 url("./assets/ui/wax_seal.png") center/cover no-repeat;
+  pointer-events:none;
+}
+@media(max-width:620px){
+  #visualShell .scrollCap,
+  #visualShell #advanceTime.scrollPlaque,
+  #visualShell .locationStrip.scrollPlaque{height:64px!important;min-height:64px!important}
+  #visualShell .scrollCap{height:64px!important}
+  #visualShell #worldRecord.scrollPlaque,
+  #visualShell #worldRecord .scrollCap{height:50px!important;min-height:50px!important}
+  #visualShell .locationWell button{font-size:9px!important;padding:12px 2px 4px!important}
+}
+</style>
+<style>
+/* v34 — locked wood-bevel standees; name lives on the plaque. */
+.townScene [data-plate="tomasCutout"],
+.townScene [data-plate="nessaCutout"],
+.townScene [data-plate="bramCutout"],
+.townScene [data-plate="eliraCutout"]{display:none!important}
+.townScene .tomasCutout,
+.townScene .nessaCutout,
+.townScene .bramCutout,
+.townScene .eliraCutout{
+  object-fit:contain!important;
+  background:transparent!important;
+  filter:drop-shadow(4px 10px 8px rgba(18,12,8,.42))!important;
+}
+</style>
+<style>
+/* v35 — four standing anchors per location. Size is per slot (perspective),
+   not a crowd-wide shrink, so the wood plaque stays readable. */
+.townScene[data-crowd] .tomasCutout,
+.townScene[data-crowd] .nessaCutout,
+.townScene[data-crowd] .bramCutout,
+.townScene[data-crowd] .eliraCutout,
+.townScene .tomasCutout,
+.townScene .nessaCutout,
+.townScene .bramCutout,
+.townScene .eliraCutout{
+  right:auto!important;
+  width:min(30vw,220px)!important;
+  max-width:220px!important;
+  transform-origin:50% 100%!important;
+  transform:scale(var(--slot-scale,1))!important;
+  left:var(--slot-x,8%)!important;
+  bottom:var(--slot-bottom,12%)!important;
+  z-index:var(--slot-z,20)!important;
+}
+.townScene .tomasCutout:active,
+.townScene .nessaCutout:active,
+.townScene .bramCutout:active,
+.townScene .eliraCutout:active{
+  transform:scale(calc(var(--slot-scale,1) * .975))!important;
+}
+
+/* Market: 0 left stall, 1 right stall, 2 fountain-side back, 3 street receding */
+.townScene[data-location="Market"] [data-slot="0"]{--slot-x:-1.9%;--slot-bottom:6.1%;--slot-scale:.90;--slot-z:23}
+.townScene[data-location="Market"] [data-slot="1"]{--slot-x:24.0%;--slot-bottom:6.8%;--slot-scale:.89;--slot-z:22}
+.townScene[data-location="Market"] [data-slot="2"]{--slot-x:55.2%;--slot-bottom:25.6%;--slot-scale:.58;--slot-z:18}
+.townScene[data-location="Market"] [data-slot="3"]{--slot-x:34.4%;--slot-bottom:37.7%;--slot-scale:.38;--slot-z:17}
+
+.townScene[data-location="Riverside"] [data-slot="0"]{--slot-x:71.2%;--slot-bottom:6.7%;--slot-scale:.82;--slot-z:23}
+.townScene[data-location="Riverside"] [data-slot="1"]{--slot-x:-8.4%;--slot-bottom:31.6%;--slot-scale:.47;--slot-z:22}
+.townScene[data-location="Riverside"] [data-slot="2"]{--slot-x:67.4%;--slot-bottom:41.1%;--slot-scale:.34;--slot-z:18}
+.townScene[data-location="Riverside"] [data-slot="3"]{--slot-x:61.4%;--slot-bottom:45.2%;--slot-scale:.28;--slot-z:19}
+
+.townScene[data-location="Inn"] [data-slot="0"]{--slot-x:24.7%;--slot-bottom:3.3%;--slot-scale:1.18;--slot-z:22}
+.townScene[data-location="Inn"] [data-slot="1"]{--slot-x:13.9%;--slot-bottom:48.3%;--slot-scale:.43;--slot-z:23}
+.townScene[data-location="Inn"] [data-slot="2"]{--slot-x:78.1%;--slot-bottom:30.5%;--slot-scale:.73;--slot-z:22}
+.townScene[data-location="Inn"] [data-slot="3"]{--slot-x:38.0%;--slot-bottom:53.5%;--slot-scale:.34;--slot-z:18}
+
+.townScene[data-location="Card Club"] [data-slot="0"]{--slot-x:6.7%;--slot-bottom:33.4%;--slot-scale:.82;--slot-z:22}
+.townScene[data-location="Card Club"] [data-slot="1"]{--slot-x:22.3%;--slot-bottom:37.1%;--slot-scale:.70;--slot-z:23}
+.townScene[data-location="Card Club"] [data-slot="2"]{--slot-x:58.1%;--slot-bottom:44.7%;--slot-scale:.47;--slot-z:18}
+.townScene[data-location="Card Club"] [data-slot="3"]{--slot-x:31.8%;--slot-bottom:47.7%;--slot-scale:.38;--slot-z:17}
+
+@media(max-width:620px){
+  .townScene .tomasCutout,
+  .townScene .nessaCutout,
+  .townScene .bramCutout,
+  .townScene .eliraCutout{
+    width:min(42vw,200px)!important;
+    max-width:200px!important;
+  }
+}
+</style>
+<script>
+(function(){
+  const cutoutByName={Tomas:"tomasCutout",Nessa:"nessaCutout",Bram:"bramCutout",Elira:"eliraCutout"};
+  function syncNpcCrowdSlots(){
+    const scene=document.querySelector(".townScene");
+    if(!scene)return;
+    const present=[...scene.querySelectorAll("#npcHotspots .npcHotspot")].map(b=>b.dataset.npc).filter(Boolean);
+    scene.dataset.crowd=String(present.length);
+    Object.values(cutoutByName).forEach(cls=>{
+      const img=scene.querySelector("."+cls);
+      if(img)img.removeAttribute("data-slot");
+    });
+    const slotOrder=({1:[0],2:[0,1],3:[0,1,3],4:[0,1,2,3]})[present.length]||present.map((_,i)=>i);
+    present.forEach((name,i)=>{
+      const img=scene.querySelector("."+cutoutByName[name]);
+      if(img)img.dataset.slot=String(slotOrder[i]??i);
+    });
+  }
+  const crowdObs=new MutationObserver(()=>requestAnimationFrame(syncNpcCrowdSlots));
+  window.addEventListener("load",()=>{
+    syncNpcCrowdSlots();
+    crowdObs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
+  });
+})();
+</script>
 <script>
 (function(){
   function syncNpcNameplates(){
     const scene=document.querySelector(".townScene");
     if(!scene)return;
-    ["tomasCutout","nessaCutout","bramCutout","eliraCutout"].forEach(cls=>{
+    ["nessaCutout","bramCutout","eliraCutout"].forEach(cls=>{
       const img=scene.querySelector("."+cls);
       let plate=scene.querySelector('[data-plate="'+cls+'"]');
       const visible=!!(img&&img.style.display!=="none"&&img.offsetParent!==null);
@@ -3008,5 +4047,345 @@ if ('serviceWorker' in navigator) {
     obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
     window.addEventListener("resize",syncNpcNameplates);
   });
+})();
+</script>
+<style>
+/* Canonical location-anchor tool (locked). Off by default.
+   New screens: Mark spots → pins 0–3 (Tomas ghosts) → Copy → bake v35 slot CSS. */
+#spotToggle{
+  position:absolute;z-index:46;right:10px;
+  top:max(64px,calc(env(safe-area-inset-top) + 56px));
+  min-width:108px;padding:7px 10px;white-space:nowrap;
+  font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+  background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+  box-shadow:0 4px 12px #0007;cursor:pointer
+}
+#spotLayer{
+  display:none;position:absolute;inset:0;z-index:16;cursor:crosshair;
+  background-image:
+    repeating-linear-gradient(to right,rgba(255,240,210,.28) 0 1px,transparent 1px 10%),
+    repeating-linear-gradient(to top,rgba(255,240,210,.28) 0 1px,transparent 1px 10%);
+  background-size:10% 10%;
+  pointer-events:auto
+}
+.townScene.spotOn #spotLayer{display:block}
+.townScene.spotOn #npcHotspots,
+.townScene.spotOn .npcHotspot,
+.townScene.spotOn #eventHotspot{pointer-events:none!important}
+.townScene.spotOn .tomasCutout,
+.townScene.spotOn .nessaCutout,
+.townScene.spotOn .bramCutout,
+.townScene.spotOn .eliraCutout{
+  visibility:hidden!important;
+  pointer-events:none!important
+}
+.spotTick{
+  position:absolute;z-index:17;color:#fff8e8;font:700 10px/1 system-ui,sans-serif;
+  text-shadow:0 1px 2px #000c;pointer-events:none;opacity:.85
+}
+.spotTick.x{bottom:2px;transform:translateX(-50%)}
+.spotTick.y{left:3px;transform:translateY(50%)}
+.spotGhost{
+  position:absolute;z-index:40;left:var(--gx,50%);bottom:var(--gy,12%);
+  width:min(30vw,220px);max-width:220px;padding:0;margin:0;border:0;
+  background:transparent;cursor:grab;pointer-events:auto;touch-action:none;
+  transform-origin:50% 100%;transform:translateX(-50%) scale(var(--gs,1));
+  user-select:none;-webkit-user-drag:none
+}
+.spotGhost.is-drag{cursor:grabbing;z-index:80!important}
+.spotGhost img{
+  display:block;width:100%;height:auto;pointer-events:none;user-select:none;
+  -webkit-user-drag:none;opacity:.92
+}
+.spotBadge{
+  position:absolute;top:6%;left:50%;transform:translateX(-50%);
+  width:22px;height:22px;border-radius:50%;border:2px solid #fff8e8;
+  background:#e23b2e;color:#fff8e8;font:800 12px/18px system-ui,sans-serif;
+  text-align:center;pointer-events:none;box-shadow:0 1px 4px #0008
+}
+@media(max-width:620px){
+  .spotGhost{width:min(42vw,200px);max-width:200px}
+}
+#spotListToggle{
+  display:none;position:absolute;z-index:46;right:10px;
+  top:max(100px,calc(env(safe-area-inset-top) + 92px));
+  min-width:108px;padding:5px 8px;white-space:nowrap;
+  font:650 11px/1.2 system-ui,sans-serif;color:#241a13;
+  background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+  box-shadow:0 4px 12px #0007;cursor:pointer
+}
+#visualShell.spotOn #spotListToggle{display:block}
+#spotReadout{
+  display:none;position:absolute;z-index:46;right:10px;left:auto;width:min(228px,calc(100% - 24px));
+  top:max(136px,calc(env(safe-area-inset-top) + 128px));bottom:auto;
+  padding:6px 7px 7px;background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:6px;
+  box-shadow:0 6px 16px #0008;font:650 10px/1.3 system-ui,sans-serif;color:#241a13;
+  pointer-events:auto
+}
+#visualShell.spotOn.spotListOn #spotReadout{display:block}
+#spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+#spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+#spotReadout code{font:700 10px/1.35 ui-monospace,Consolas,monospace}
+#spotReadout .spotEnd{
+  display:grid;grid-template-columns:1fr auto auto auto;gap:4px;align-items:center;
+  margin:2px 0;font-weight:700
+}
+#spotReadout .spotActs{display:flex;gap:5px;margin-top:5px}
+#spotReadout .spotActs button,
+#spotReadout .spotEnd button{
+  padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;
+  border:1px solid #9f8e72;border-radius:4px;cursor:pointer;min-width:22px
+}
+@media(max-width:620px){
+  #spotToggle{top:max(58px,calc(env(safe-area-inset-top) + 50px));font-size:11px;padding:6px 8px}
+  #spotListToggle{top:max(92px,calc(env(safe-area-inset-top) + 84px))}
+  #spotReadout{top:max(126px,calc(env(safe-area-inset-top) + 118px));font-size:10px;width:min(180px,calc(100% - 20px))}
+}
+</style>
+<script>
+(function(){
+  const HINTS={
+    Market:["left stall","right stall","fountain-side","street receding"],
+    Riverside:["left path","right bank","mid path","water-side"],
+    Inn:["hearth left","rug center","bar right","back tables"],
+    "Card Club":["left floor","right floor","mid back","far table"]
+  };
+  const Z={Market:[23,22,18,17],Riverside:[23,22,18,19],Inn:[22,23,22,18],"Card Club":[22,23,18,17]};
+  const byLoc={}, endsByLoc={};
+  let on=false, listOn=true, drag=null;
+  function scene(){return document.querySelector(".townScene")}
+  function locName(){return (scene()&&scene().dataset.location)||"Market"}
+  function slots(loc){
+    if(!byLoc[loc])byLoc[loc]=[null,null,null,null];
+    return byLoc[loc];
+  }
+  function ends(loc){
+    if(!endsByLoc[loc])endsByLoc[loc]={front:1.18,back:.38};
+    return endsByLoc[loc];
+  }
+  function pct(n){return Number(n).toFixed(1)}
+  function sc2(n){return Number(n).toFixed(2)}
+  function clientPct(sc,x,y){
+    const r=sc.getBoundingClientRect();
+    return {
+      left:Math.max(0,Math.min(100,((x-r.left)/r.width)*100)),
+      bottom:Math.max(0,Math.min(100,((r.bottom-y)/r.height)*100))
+    };
+  }
+  function depthT(list,i){
+    const a=list[0], b=list[3], p=list[i];
+    if(a&&b&&p){
+      const span=b.bottom-a.bottom;
+      if(Math.abs(span)>=.4)return (p.bottom-a.bottom)/span;
+    }
+    return i/3;
+  }
+  function syncScales(list,loc){
+    const e=ends(loc);
+    list.forEach((p,i)=>{
+      if(!p)return;
+      if(i===0)p.scale=e.front;
+      else if(i===3)p.scale=e.back;
+      else{
+        const t=Math.max(0,Math.min(1,depthT(list,i)));
+        p.scale=+(e.front+(e.back-e.front)*t).toFixed(2);
+      }
+    });
+  }
+  function cutHalfPct(sc,img){
+    const w=img&&img.offsetWidth?img.offsetWidth:(window.innerWidth<=620?Math.min(window.innerWidth*.42,200):Math.min(window.innerWidth*.30,220));
+    return (w*.5/Math.max(1,sc?sc.clientWidth:1))*100;
+  }
+  function applySlots(){
+    let el=document.getElementById("spotSlotOverrides");
+    if(!el){el=document.createElement("style");el.id="spotSlotOverrides";document.head.appendChild(el)}
+    if(!on){el.textContent="";return}
+    const loc=locName();
+    const list=slots(loc);
+    syncScales(list,loc);
+    const sc=scene();
+    const z=Z[loc]||Z.Market;
+    let css="";
+    list.forEach((p,i)=>{
+      if(!p)return;
+      const img=sc&&sc.querySelector('[data-slot="'+i+'"]');
+      css+='.townScene[data-location="'+loc+'"] [data-slot="'+i+'"]{--slot-x:'+pct(p.left-cutHalfPct(sc,img))+'%;--slot-bottom:'+pct(p.bottom)+'%;--slot-scale:'+sc2(p.scale)+';--slot-z:'+z[i]+'}\n';
+    });
+    el.textContent=css;
+  }
+  function poseGhost(el,p,i){
+    if(!p){el.style.display="none";return}
+    const z=(Z[locName()]||Z.Market)[i]||20;
+    el.style.display="block";
+    el.style.setProperty("--gx",pct(p.left)+"%");
+    el.style.setProperty("--gy",pct(p.bottom)+"%");
+    el.style.setProperty("--gs",sc2(p.scale||1));
+    el.style.zIndex=String(40+z);
+  }
+  function paintDots(){
+    const sc=scene(); if(!sc)return;
+    const loc=locName();
+    const list=slots(loc);
+    syncScales(list,loc);
+    sc.querySelectorAll(".spotGhost").forEach(el=>{
+      poseGhost(el,list[+el.dataset.i],+el.dataset.i);
+    });
+  }
+  function paintReadout(){
+    const box=document.getElementById("spotReadout");
+    if(!box||!on)return;
+    const loc=locName();
+    const list=slots(loc);
+    syncScales(list,loc);
+    const e=ends(loc);
+    const hints=HINTS[loc]||HINTS.Market;
+    const lines=list.map((p,i)=>{
+      if(!p)return i+" "+hints[i]+" — tap floor";
+      const auto=i===1||i===2?" auto":"";
+      return i+" "+hints[i]+" — "+pct(p.left)+"L "+pct(p.bottom)+"B ×"+sc2(p.scale)+auto;
+    });
+    box.innerHTML="<b>"+loc+"</b><p class=\"spotHint\">0 front / 3 back. 1–2 scale from how high they sit.</p>"
+      +'<div class="spotEnd"><span>Front 0</span><span>'+sc2(e.front)+'</span><button type="button" data-end="front" data-dir="-1">−</button><button type="button" data-end="front" data-dir="1">+</button></div>'
+      +'<div class="spotEnd"><span>Back 3</span><span>'+sc2(e.back)+'</span><button type="button" data-end="back" data-dir="-1">−</button><button type="button" data-end="back" data-dir="1">+</button></div>'
+      +"<code>"+lines.join("<br>")+"</code>"
+      +'<div class="spotActs"><button type="button" id="spotCopy">Copy</button><button type="button" id="spotClear">Clear</button><button type="button" id="spotHideList">Hide</button></div>';
+  }
+  function bumpEnd(which,dir){
+    const e=ends(locName());
+    const key=which==="back"?"back":"front";
+    e[key]=Math.max(.28,Math.min(1.45,+(e[key]+(dir>0?.04:-.04)).toFixed(2)));
+    paintDots(); paintReadout(); applySlots();
+  }
+  function copyText(){
+    const loc=locName();
+    const list=slots(loc);
+    syncScales(list,loc);
+    const hints=HINTS[loc]||HINTS.Market;
+    const z=Z[loc]||Z.Market;
+    const sc=scene();
+    const human=loc+"\n"+list.map((p,i)=>p? (i+"  "+hints[i]+"  "+pct(p.left)+"  "+pct(p.bottom)+"  "+sc2(p.scale)): (i+"  "+hints[i]+"  —")).join("\n");
+    const css=list.map((p,i)=>{
+      if(!p)return "";
+      const img=sc&&sc.querySelector('[data-slot="'+i+'"]');
+      return '.townScene[data-location="'+loc+'"] [data-slot="'+i+'"]{--slot-x:'+pct(p.left-cutHalfPct(sc,img))+'%;--slot-bottom:'+pct(p.bottom)+'%;--slot-scale:'+sc2(p.scale)+';--slot-z:'+z[i]+'}';
+    }).filter(Boolean).join("\n");
+    const text=human+"\n\n"+css;
+    const done=()=>{const b=document.getElementById("spotReadout"); if(b) b.querySelector("b").textContent=loc+" · copied"};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done).catch(()=>fallback(text,done));
+    else fallback(text,done);
+  }
+  function fallback(text,done){
+    const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy")}catch(e){}
+    ta.remove(); done();
+  }
+  function syncListBtn(){
+    const listBtn=document.getElementById("spotListToggle");
+    const shell=document.getElementById("visualShell");
+    if(shell)shell.classList.toggle("spotListOn",on&&listOn);
+    if(listBtn)listBtn.textContent=listOn?"Hide list":"Show list";
+  }
+  function setOn(next){
+    on=next;
+    if(on)listOn=true;
+    const sc=scene();
+    const shell=document.getElementById("visualShell");
+    const btn=document.getElementById("spotToggle");
+    if(sc)sc.classList.toggle("spotOn",on);
+    if(shell)shell.classList.toggle("spotOn",on);
+    if(btn)btn.textContent=on?"Hide grid":"Mark spots";
+    syncListBtn();
+    if(on){paintDots();paintReadout();applySlots()}
+    else applySlots();
+  }
+  function mount(){
+    const sc=scene();
+    const shell=document.getElementById("visualShell");
+    if(!sc||!shell)return;
+    const layer=document.createElement("div");
+    layer.id="spotLayer";
+    [20,40,60,80].forEach(n=>{
+      const x=document.createElement("span"); x.className="spotTick x"; x.style.left=n+"%"; x.textContent=n+"%";
+      const y=document.createElement("span"); y.className="spotTick y"; y.style.bottom=n+"%"; y.textContent=n+"%";
+      layer.appendChild(x); layer.appendChild(y);
+    });
+    for(let i=0;i<4;i++){
+      const d=document.createElement("button");
+      d.type="button"; d.className="spotGhost"; d.dataset.i=String(i); d.style.display="none";
+      const img=document.createElement("img");
+      img.src="./assets/npcs/tomas_standee_bevel_v19.png?v=bevel3";
+      img.alt=""; img.draggable=false;
+      const badge=document.createElement("span");
+      badge.className="spotBadge"; badge.textContent=String(i);
+      d.appendChild(img); d.appendChild(badge);
+      d.addEventListener("pointerdown",e=>{
+        if(!on)return;
+        e.preventDefault(); e.stopPropagation();
+        const list=slots(locName());
+        const p=list[i];
+        const pos=clientPct(sc,e.clientX,e.clientY);
+        drag={i:i,id:e.pointerId,grabL:p?p.left-pos.left:0,grabB:p?p.bottom-pos.bottom:0};
+        d.classList.add("is-drag");
+        try{d.setPointerCapture(e.pointerId)}catch(err){}
+      });
+      layer.appendChild(d);
+    }
+    sc.appendChild(layer);
+    const btn=document.createElement("button");
+    btn.type="button"; btn.id="spotToggle"; btn.textContent="Mark spots";
+    btn.addEventListener("click",()=>setOn(!on));
+    shell.appendChild(btn);
+    const listBtn=document.createElement("button");
+    listBtn.type="button"; listBtn.id="spotListToggle"; listBtn.textContent="Hide list";
+    listBtn.addEventListener("click",()=>{listOn=!listOn;syncListBtn();if(listOn)paintReadout()});
+    shell.appendChild(listBtn);
+    const box=document.createElement("div");
+    box.id="spotReadout";
+    box.addEventListener("click",e=>{
+      const endBtn=e.target.closest("[data-end]");
+      if(endBtn){bumpEnd(endBtn.dataset.end,+endBtn.dataset.dir);return}
+      if(e.target.id==="spotCopy")copyText();
+      if(e.target.id==="spotClear"){byLoc[locName()]=[null,null,null,null];paintDots();paintReadout();applySlots()}
+      if(e.target.id==="spotHideList"){listOn=false;syncListBtn()}
+    });
+    shell.appendChild(box);
+    layer.addEventListener("pointerdown",e=>{
+      if(!on||drag||e.target!==layer)return;
+      e.preventDefault();
+      const list=slots(locName());
+      let i=list.findIndex(p=>!p);
+      if(i<0)i=3;
+      list[i]=clientPct(sc,e.clientX,e.clientY);
+      paintDots(); paintReadout(); applySlots();
+    });
+    window.addEventListener("pointermove",e=>{
+      if(!drag||e.pointerId!==drag.id)return;
+      const list=slots(locName());
+      const loc=locName();
+      const pos=clientPct(sc,e.clientX,e.clientY);
+      list[drag.i]={left:Math.max(0,Math.min(100,pos.left+drag.grabL)),bottom:Math.max(0,Math.min(100,pos.bottom+drag.grabB))};
+      syncScales(list,loc);
+      layer.querySelectorAll(".spotGhost").forEach(el=>poseGhost(el,list[+el.dataset.i],+el.dataset.i));
+    });
+    window.addEventListener("pointerup",e=>{
+      if(!drag||e.pointerId!==drag.id)return;
+      layer.querySelectorAll(".is-drag").forEach(n=>n.classList.remove("is-drag"));
+      drag=null;
+      paintDots(); paintReadout(); applySlots();
+    });
+    window.addEventListener("pointercancel",()=>{drag=null});
+    const strip=document.querySelector(".locationStrip");
+    if(strip)strip.addEventListener("click",()=>{if(on){paintDots();paintReadout();applySlots()}});
+    sc.addEventListener("wheel",e=>{
+      if(!on)return;
+      const pin=e.target.closest(".spotGhost");
+      if(!pin)return;
+      const i=+pin.dataset.i;
+      if(i!==0&&i!==3)return;
+      e.preventDefault();
+      bumpEnd(i===0?"front":"back",e.deltaY<0?1:-1);
+    },{passive:false});
+  }
+  window.addEventListener("load",mount);
 })();
 </script>

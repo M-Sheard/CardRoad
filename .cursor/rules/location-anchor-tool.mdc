@@ -1,0 +1,23 @@
+---
+description: Canonical Mark spots tool for location anchors and perspective scale
+alwaysApply: true
+---
+
+# Location anchor tool (locked)
+
+Whenever we add or restage a **location / town screen**, use the existing **Mark spots** overlay in root `index.html` (v37 block, `#spotToggle`). Do not invent a new pin, grid, or scale widget.
+
+**How Marc places a screen**
+1. Hard-refresh, **Mark spots**.
+2. Tap the floor for pins **0–3** (Tomas ghost standees at real slot size).
+3. Pin **0** = front (large), pin **3** = back (small). Set those with Front/Back or the wheel. Pins **1–2** interpolate from how high they sit.
+4. **Copy**, then bake the CSS into the v35 slot rules for that `data-location`.
+5. **Hide grid** when done. Overlay stays **off by default**.
+
+**Keep**
+- Four anchors per location, size per slot (not a crowd-wide shrink)
+- Ghosts = `assets/npcs/tomas_standee_bevel_v19.png`; hide live NPCs while placing
+- List panel top-right (never on the floor); **Hide list** if it blocks clicks
+- No per-mousemove CSS rewrites (laptop stays usable)
+
+**Do not** eyeball new screens from scratch, drag live NPCs as the placer, or split this tool out of `index.html` unless Marc asks.

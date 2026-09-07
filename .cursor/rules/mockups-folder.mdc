@@ -1,0 +1,15 @@
+---
+description: Save generated images into the project mockups folder
+alwaysApply: true
+---
+
+# Generated images go in `mockups/`
+
+Whenever you create an image for Marc (GenerateImage, screenshots kept as design options, UI/NPC/chrome mockups, depth treatments):
+
+1. Put the file **directly** in `C:\Users\shear\Desktop\CardRoad\mockups\`.
+2. If the generator writes somewhere else (Cursor `assets/`, temp, chat cache), **copy it into `mockups/` immediately** and tell Marc that path.
+3. Use a clear filename: `tomas-depth-option1-plywood-edge.png`, `cardroad-chrome-option2-wood-plaques.png`.
+4. Do not leave design options only in `.cursor/projects/.../assets/` or the chat.
+
+Live game art still belongs under `assets/` (e.g. `assets/npcs/`, `assets/ui/`). `mockups/` is for options and reference stills.

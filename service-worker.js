@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v22-ui-clarity';
+const CACHE_NAME = 'card-road-pwa-v22-spot-grid';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
