@@ -1,0 +1,11 @@
+# Local / OS
+Thumbs.db
+Desktop.ini
+.DS_Store
+*.log
+
+# Netlify CLI
+.netlify/
+
+# Archive of ChatGPT handover (keep on disk, do not publish)
+Old GPT files/

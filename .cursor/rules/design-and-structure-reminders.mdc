@@ -1,0 +1,20 @@
+---
+description: Flag any change to Card Road canon, match rules, or code structure before doing it
+alwaysApply: true
+---
+
+# Flag design and structure changes
+
+Card Road’s playable core is already validated. Do not silently mutate it.
+
+When a task would change **game design** (rules, roster numbers, economy, calendar, NPCs, tutorial, prestige, UI philosophy) or **code structure** (splitting `index.html`, new modules, data model, save format):
+
+1. **Stop and tell Marc** in plain language: what would change, why it helps later, and what it risks.
+2. **Ask before doing it** unless he already approved that exact change in this conversation.
+3. Prefer the smallest patch that preserves Baseline V1 (`C001–C120` N/E/S/W), genuine card loss, and match UX (board fit, last NPC move visible).
+
+Do not rewrite the whole prototype to add a feature. Extract files only when the current task is blocked by the monolith, and say so first.
+
+Ship targets are iOS, Android, and Steam via wrappers around the same web core. Do not start Unity/Godot or store shells unless Marc asks; call that out as a structure change first.
+
+Canonical reference: `DESIGN_BIBLE.md`. Playable source: root `index.html`, not `Old GPT files/`.

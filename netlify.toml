@@ -1,0 +1,8 @@
+# Publish the playable web core. Do not run a build step.
+[build]
+  publish = "."
+
+# This is a static PWA. SPA-style fallback is not required.
+
+[build.environment]
+  NODE_VERSION = "22"
