@@ -4050,6 +4050,71 @@ if ('serviceWorker' in navigator) {
 })();
 </script>
 <style>
+/* v38 — pin journal to the top-right; date scroll ~20% narrower so it never shoves Journal off-screen. */
+#visualShell .worldTopbar{
+  left:0!important;
+  right:0!important;
+  top:0!important;
+  pointer-events:none!important;
+}
+#visualShell .worldTopbar #advanceTime,
+#visualShell .worldTopbar .worldActions{
+  pointer-events:auto!important;
+}
+#visualShell #advanceTime.scrollPlaque{
+  position:absolute!important;
+  top:max(16px,calc(env(safe-area-inset-top) + 10px))!important;
+  left:max(16px,calc(env(safe-area-inset-left) + 10px))!important;
+  width:264px!important;
+  min-width:0!important;
+  max-width:calc(100vw - 160px)!important;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))!important;
+}
+#visualShell #advanceTime .scrollCopy #visualDate,
+#visualShell #advanceTime #visualDate{
+  font-size:13px!important;
+  line-height:1.1!important;
+}
+#visualShell #advanceTime #visualPhase{
+  font-size:11px!important;
+  margin-top:1px!important;
+}
+#visualShell #advanceTime .scrollSun{
+  width:22px!important;
+  height:22px!important;
+}
+#visualShell #advanceTime .scrollWell{
+  padding:0 6px!important;
+  gap:6px!important;
+}
+#visualShell .worldActions{
+  position:absolute!important;
+  top:max(16px,calc(env(safe-area-inset-top) + 10px))!important;
+  right:max(16px,calc(env(safe-area-inset-right) + 10px))!important;
+  left:auto!important;
+  display:flex!important;
+}
+#visualShell #worldRecord.scrollPlaque{
+  width:auto!important;
+  max-width:none!important;
+  min-width:0!important;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))!important;
+}
+@media(max-width:620px){
+  #visualShell #advanceTime.scrollPlaque{
+    width:min(224px,calc(100vw - 128px))!important;
+    height:58px!important;
+    min-height:58px!important;
+  }
+  #visualShell #advanceTime .scrollCap{
+    height:58px!important;
+  }
+  #visualShell #advanceTime #visualDate{font-size:12px!important}
+  #visualShell #advanceTime #visualPhase{font-size:10px!important}
+  #visualShell #advanceTime .scrollSun{width:18px!important;height:18px!important}
+}
+</style>
+<style>
 /* Canonical location-anchor tool (locked). Off by default.
    New screens: add ?pins=1 to the URL, then Mark spots → pins 0–3 → Copy → bake v35 slot CSS.
    Hidden for players; not mounted unless that query (or localStorage cardRoadPins=1). */
