@@ -841,14 +841,20 @@ function backgroundV6Day(){
  if(Math.random()<.35)runNpcEconomy();recovery();
 }
 function advanceVisualTime(){
- ensureVisualState();if(state.activeTournament&&state.activeTournament.status!=="complete"){alert("Finish the current tournament before moving time forward.");return}
+ ensureVisualState();
+ if(state.activeTournament&&state.activeTournament.status!=="complete"){
+  closeNoticeView();
+  show("tournament");
+  renderTournament();
+  return;
+ }
  closeNoticeView();shiftWorldPhase(1);save();renderHome();
 }
 
 function localNpcNames(){return Object.keys(npcDefs).filter(n=>!npcDefs[n].visitor)}
 function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
-let state, currentNpc=null, selectedDeck=[], playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
+let state, currentNpc=null, selectedDeck=[], playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
  let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0}};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
@@ -868,6 +874,11 @@ function ensureCopies(){
  let holders={You:state.player,...state.npcs};
  Object.entries(holders).forEach(([owner,cards])=>{let have={};(state.copyOwners[owner]||[]).forEach(id=>{let c=state.copies[id];if(c)have[c.design]=(have[c.design]||0)+1});let need={};cards.forEach(c=>need[c]=(need[c]||0)+1);Object.entries(need).forEach(([design,num])=>{for(let i=have[design]||0;i<num;i++){let cp=newCopy(design,owner,owner==="You"?"Starter collection":"Local circulation");state.copies[cp.id]=cp;state.copyOwners[owner].push(cp.id)}})});
  if(!state.inspectedCopies)state.inspectedCopies={};
+ Object.values(state.copies).forEach(cp=>{
+  if(!cp)return;
+  if(!Array.isArray(cp.signatures))cp.signatures=[];
+  if(!Array.isArray(cp.stamps))cp.stamps=[];
+ });
  if(!state.exchangePool)state.exchangePool=[];
  if(!state.economyStats)state.economyStats={commonIssued:0,exchangeTrades:0,npcAcquisitions:0};
  if(!state.testSettings)state.testSettings={handVisibility:"open"};
@@ -892,16 +903,47 @@ function physicalCopiesForDeck(owner,designDeck){
  return chosen;
 }
 function stampTournamentWinner(owner,tournament,copyIds){
+ if(!Array.isArray(copyIds))return;
  copyIds.forEach(id=>{
    let cp=state.copies[id];if(!cp)return;
+   if(!Array.isArray(cp.stamps))cp.stamps=[];
    if(!cp.stamps.some(s=>s.tournament===tournament&&s.round==="Winner")){
      cp.stamps.push({tournament,date:formattedWorldDate(),round:"Winner"});
    }
  });
  tournamentRecord(owner,tournament,"Winner",copyIds);
 }
-function backHTML(cp){let sig=cp.signatures.length?cp.signatures.map((s,i)=>`<div style="transform:rotate(${(i%5-2)*1.2}deg);margin:5px"><i>${s.owner}</i> <span class="small">${s.date}</span></div>`).join(""):"<div class='small'>No previous-owner signatures.</div>";let st=cp.stamps.length?cp.stamps.map(s=>`<div style="border:1px solid;padding:6px;margin:5px"><b>${s.tournament}</b><br>${s.date} · ${s.round}</div>`).join(""):"<div class='small'>No competition stamps.</div>";return `<h3>Card Back</h3><b>Previous Owners</b>${sig}<hr><b>Competition Record</b>${st}<hr><span class="small">Origin: ${cp.origin}</span>`}
-function inspectCopy(cp,ret){if(!cp)return;cp.inspected=true;state.inspectedCopies[cp.id]={signatures:cp.signatures.length,stamps:cp.stamps.length,owner:cp.owner};window._inspect=cp.id;window._inspectReturn=ret;window._back=false;$("inspectTitle").textContent=`Inspect ${cp.design}`;$("inspectFront").innerHTML=`<h3>${cp.design}</h3><div style="text-align:center;font-size:20px">N ${C[cp.design].n}<br>W ${C[cp.design].w} &nbsp; E ${C[cp.design].e}<br>S ${C[cp.design].s}</div><div class="small">Total ${C[cp.design].budget}</div>`;$("inspectBack").innerHTML=backHTML(cp);$("inspectFront").classList.remove("hidden");$("inspectBack").classList.add("hidden");$("flipCard").textContent="Flip to Back";save();show("cardInspector")}
+function backHTML(cp){
+ let sigs=Array.isArray(cp.signatures)?cp.signatures:[];
+ let stamps=Array.isArray(cp.stamps)?cp.stamps:[];
+ let sig=sigs.length?sigs.map((s,i)=>`<div style="transform:rotate(${(i%5-2)*1.2}deg);margin:5px"><i>${s.owner||"Unknown"}</i> <span class="small">${s.date||""}</span></div>`).join(""):"<div class='small'>No previous-owner signatures.</div>";
+ let st=stamps.length?stamps.map(s=>`<div style="border:1px solid;padding:6px;margin:5px"><b>${s.tournament||"Contest"}</b><br>${s.date||""} · ${s.round||""}</div>`).join(""):"<div class='small'>No competition stamps.</div>";
+ return `<h3>Card Back</h3><b>Previous Owners</b>${sig}<hr><b>Competition Record</b>${st}<hr><span class="small">Origin: ${cp.origin||"Unknown"}</span>`;
+}
+function inspectCopy(cp,ret){
+ ensureCopies();
+ if(!cp||!cp.design)return;
+ if(!Array.isArray(cp.signatures))cp.signatures=[];
+ if(!Array.isArray(cp.stamps))cp.stamps=[];
+ let card=C[cp.design];
+ if(!card)return;
+ if(cp.id&&state.copies[cp.id]){
+  cp.inspected=true;
+  state.inspectedCopies[cp.id]={signatures:cp.signatures.length,stamps:cp.stamps.length,owner:cp.owner};
+  save();
+ }
+ window._inspect=cp.id||null;
+ window._inspectCopy=cp;
+ window._inspectReturn=ret||null;
+ window._back=false;
+ $("inspectTitle").textContent="Inspect "+cp.design;
+ $("inspectFront").innerHTML=`<div class="inspectCardWrap">${cardHTML(card)}</div><div class="small" style="text-align:center;margin-top:8px">Total ${card.budget}</div>`;
+ $("inspectBack").innerHTML=backHTML(cp);
+ $("inspectFront").classList.remove("hidden");
+ $("inspectBack").classList.add("hidden");
+ $("flipCard").textContent="Flip to Back";
+ $("cardInspector").classList.remove("hidden");
+}
 
 
 function isRenewableCommon(design){return C[design]&&C[design].budget<=16}
@@ -1044,7 +1086,11 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
 }
 const $=x=>document.getElementById(x);
 function show(id){["home","challenge","termsBuilder","profile","cardInspector","starter","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id))}
-function cardHTML(c,owner="",sel=false){return `<div class="card ${owner} ${sel?'sel':''}"><div class="nm">${c.name}</div><span class="n">${c.n}</span><span class="e">${c.e}</span><span class="s">${c.s}</span><span class="w">${c.w}</span></div>`}
+function cardArtTone(name){return (parseInt(String(name).replace(/\D/g,""),10)||0)%6}
+function cardHTML(c,owner="",sel=false){
+ if(!c)return "";
+ return `<div class="card gilt art${cardArtTone(c.name)} ${owner||""} ${sel?"sel":""}" data-card="${c.name}"><span class="n">${c.n}</span><span class="e">${c.e}</span><span class="s">${c.s}</span><span class="w">${c.w}</span><div class="giltWindow" aria-hidden="true"></div></div>`;
+}
 
 
 
@@ -1142,7 +1188,7 @@ function renderOpponentHand(){
    let d=document.createElement("div");
    let visible=(remaining[n]||0)>0;
    if(visible){d.innerHTML=cardHTML(C[n],"ai");remaining[n]--}
-   else d.innerHTML=`<div class="card ai" style="display:flex;align-items:center;justify-content:center;text-align:center"><b>Hidden<br>Card</b></div>`;
+   else d.innerHTML=`<div class="card gilt ai" style="display:flex;align-items:center;justify-content:center;text-align:center"><b>Hidden<br>Card</b></div>`;
    $("oppHand").appendChild(d);
  });
 }
@@ -1683,8 +1729,20 @@ function cardRelationship(n,type,card){
  if(type==="youTook"){m.rivalry=clampRel(m.rivalry+1.4);m.respect=clampRel(m.respect+.5);rememberMoment(n,`You won ${card} from ${n}.`)}
  if(type==="theyTook"){m.rivalry=clampRel(m.rivalry+.9);rememberMoment(n,`${n} won ${card} from you.`)}
 }
-$("flipCard").onclick=()=>{let cp=state.copies[window._inspect];window._back=!window._back;$("inspectFront").classList.toggle("hidden",window._back);$("inspectBack").classList.toggle("hidden",!window._back);$("flipCard").textContent=window._back?"Flip to Front":"Flip to Back"};
-$("closeInspect").onclick=()=>{let r=window._inspectReturn||"home";show(r);if(r==="home")renderHome()};
+$("flipCard").onclick=()=>{
+ let cp=window._inspectCopy||state.copies[window._inspect];
+ if(!cp)return;
+ window._back=!window._back;
+ $("inspectFront").classList.toggle("hidden",window._back);
+ $("inspectBack").classList.toggle("hidden",!window._back);
+ $("flipCard").textContent=window._back?"Flip to Front":"Flip to Back";
+};
+$("closeInspect").onclick=()=>{
+ $("cardInspector").classList.add("hidden");
+ let r=window._inspectReturn;
+ if(r==="home"){show("home");renderHome();return}
+ if(r&&$(r)&&$(r).classList.contains("hidden"))show(r);
+};
 if($("handVisibilityMode"))$("handVisibilityMode").onchange=e=>{
  state.testSettings.handVisibility=e.target.value;
  $("handVisibilityHelp").textContent=handModeText();
@@ -1860,7 +1918,7 @@ $("beginMatch").onclick=()=>{
    seriesWins={p:0,ai:0};seriesWinner=null;pendingSeriesClaim=null;
    seriesPlayerExposed=[];seriesAiExposed=[];seriesResults=[];
  }
- playerHand=[...seriesPlayerDeck];aiHand=[...seriesAiDeck];aiPlayed=[];board=Array(9).fill(null);turn=0;chosen=null;lastCapture=null;pendingLossCard=null;lastComboCount=0;finishScheduled=false;setupAiHandVisibility();
+ playerHand=[...seriesPlayerDeck];aiHand=[...seriesAiDeck];aiPlayed=[];board=Array(9).fill(null);turn=0;chosen=null;lastCapture=null;pendingLossCard=null;lastComboCount=0;finishScheduled=false;matchAnimating=false;setupAiHandVisibility();
  if(seriesGame===0){
    $("playerRune").textContent="?";$("npcRune").textContent="?";$("runeNpcName").textContent=currentNpc.toUpperCase();
    $("runeResult").textContent="";$("startAfterRune").classList.add("hidden");$("runeChoice").classList.add("hidden");$("drawRunes").classList.remove("hidden");
@@ -1916,36 +1974,155 @@ function refreshFullRules(){
  if($("preMatchRules"))$("preMatchRules").innerHTML=selectedRulesHTML();
  if($("runeRules"))$("runeRules").innerHTML=selectedRulesHTML();
 }
-function renderGame(){
+function isPlayerTurn(){return (startingPlayer==="p"&&turn%2===0)||(startingPlayer==="ai"&&turn%2===1)}
+function reducedPlaceMotion(){return matchMedia("(prefers-reduced-motion: reduce)").matches}
+function boardOwners(){return board.map(x=>x?x.owner:null)}
+function ownerFlips(before,placer){
+ let out=[];
+ board.forEach((x,i)=>{if(x&&before[i]&&before[i]!==x.owner&&x.owner===placer)out.push(i)});
+ return out;
+}
+function elementRect(el){
+ if(!el)return null;
+ let card=el.classList&&el.classList.contains("card")?el:(el.querySelector&&el.querySelector(".card"))||el;
+ let r=card.getBoundingClientRect();
+ if(!r.width||!r.height)return null;
+ return {left:r.left,top:r.top,width:r.width,height:r.height};
+}
+function findPlayerCardEl(design){
+ return [...($("hand")?.children||[])].find(d=>d.querySelector("[data-card]")?.dataset.card===design)||$("hand")?.querySelector(".card.sel")?.parentElement||null;
+}
+function findOppCardEl(design){
+ let nodes=[...($("oppHand")?.children||[])];
+ return nodes.find(d=>d.querySelector("[data-card]")?.dataset.card===design)||nodes.find(d=>/Hidden/.test(d.textContent))||nodes[0]||null;
+}
+function flyCardToCell(fromRect,html,pos){
+ return new Promise(done=>{
+  let reduce=reducedPlaceMotion();
+  let cell=$("board")?.children[pos];
+  let to=cell?cell.getBoundingClientRect():null;
+  if(reduce||!fromRect||!to||!to.width){done();return}
+  let ghost=document.createElement("div");
+  ghost.className="placeGhost";
+  ghost.innerHTML=html;
+  ghost.style.left=fromRect.left+"px";
+  ghost.style.top=fromRect.top+"px";
+  ghost.style.width=fromRect.width+"px";
+  ghost.style.height=fromRect.height+"px";
+  ghost.style.transition="left .28s cubic-bezier(.2,.7,.2,1),top .28s cubic-bezier(.2,.7,.2,1),width .28s ease,height .28s ease";
+  document.body.appendChild(ghost);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+   ghost.style.left=to.left+"px";
+   ghost.style.top=to.top+"px";
+   ghost.style.width=to.width+"px";
+   ghost.style.height=to.height+"px";
+  }));
+  setTimeout(()=>{ghost.remove();done()},300);
+ });
+}
+function nudgeToward(from,to){
+ let fr=Math.floor(from/3),fc=from%3,tr=Math.floor(to/3),tc=to%3;
+ return {dx:(tc-fc)*7,dy:(tr-fr)*7};
+}
+function animateCaptures(indices,placer,pos){
+ return new Promise(done=>{
+  if(!indices.length){done();return}
+  let reduce=reducedPlaceMotion();
+  indices.forEach((i,k)=>{
+   setTimeout(()=>{
+    let cellEl=$("board")?.children[i];
+    let card=cellEl?.querySelector(".card");
+    if(!card)return;
+    let n=nudgeToward(i,pos);
+    card.style.setProperty("--dx",n.dx+"px");
+    card.style.setProperty("--dy",n.dy+"px");
+    card.classList.remove("p","ai","play-capture");
+    void card.offsetWidth;
+    card.classList.add(placer,"play-capture");
+    if(cellEl){
+     cellEl.classList.remove("cell-p","cell-ai");
+     cellEl.classList.add(placer==="p"?"cell-p":"cell-ai");
+    }
+   },reduce?0:k*80);
+  });
+  setTimeout(done, reduce?80:indices.length*80+280);
+ });
+}
+function afterPlaceMotion(){
+ matchAnimating=false;
+ document.querySelectorAll(".placeGhost").forEach(g=>g.remove());
+ if(turn>=9){
+  renderGame();
+  return;
+ }
+ let playerTurn=isPlayerTurn();
+ renderGame({deferAi:true});
+ if(!playerTurn){
+  $("status").textContent=`${currentNpc} is thinking…`;
+  let watchTurn=turn;
+  setTimeout(()=>{if(turn===watchTurn&&!matchAnimating)aiMove()},220);
+ }else{
+  $("status").textContent=chosen?"Choose a board space":"Choose a card";
+ }
+}
+function runPlaceMotion(fromRect,html,pos,placer,captured){
+ matchAnimating=true;
+ return flyCardToCell(fromRect,html,pos).then(()=>{
+  renderGame({deferAi:true,deferFinish:true,holdCaptures:captured});
+  return animateCaptures(captured,placer,pos);
+ }).then(afterPlaceMotion);
+}
+function renderGame(opts){
+ opts=opts||{};
  refreshFullRules();renderOpponentHand();
  let [p,a]=score();$("ps").textContent=p;$("as").textContent=a;
  $("seriesScore").textContent=seriesTarget>1?`Series: You ${seriesWins.p} — ${seriesWins.ai} ${currentNpc} · Game ${seriesGame+1}`:"";
  $("board").innerHTML="";
- board.forEach((x,i)=>{let c=document.createElement("div");c.className="cell";if(x)c.innerHTML=cardHTML(x.card,x.owner);else {let playerTurn=(startingPlayer==="p"&&turn%2===0)||(startingPlayer==="ai"&&turn%2===1);if(playerTurn)c.onclick=()=>place(i)};$("board").appendChild(c)});
- $("hand").innerHTML="";playerHand.forEach(n=>{let d=document.createElement("div");d.innerHTML=cardHTML(C[n],"p",chosen===n);d.onclick=()=>{chosen=n;renderGame()};$("hand").appendChild(d)});
+ let playerTurn=isPlayerTurn();
+ let hold=opts.holdCaptures||[];
+ board.forEach((x,i)=>{
+  let c=document.createElement("div");
+  let owner=x?x.owner:"";
+  if(x&&hold.includes(i))owner=owner==="p"?"ai":"p";
+  c.className="cell"+(owner?" cell-"+owner:"");
+  if(x)c.innerHTML=cardHTML(x.card,owner);
+  else if(playerTurn&&!matchAnimating)c.onclick=()=>place(i);
+  $("board").appendChild(c)
+ });
+ $("hand").innerHTML="";playerHand.forEach(n=>{let d=document.createElement("div");d.innerHTML=cardHTML(C[n],"p",chosen===n);d.onclick=()=>{if(matchAnimating)return;chosen=n;renderGame()};$("hand").appendChild(d)});
+ $("comboStatus").textContent=comboOn()?(lastComboCount?`Combo captured ${lastComboCount} extra card${lastComboCount===1?"":"s"}.`:"Combo rule active."):"";
  if(turn>=9){
    // Let the final board state paint before moving to the result screen.
-   if(!finishScheduled){
+   if(!opts.deferFinish&&!finishScheduled){
      finishScheduled=true;
      let finalTurn=turn;
-     requestAnimationFrame(()=>setTimeout(()=>{if(turn===finalTurn)finish()},260));
+     requestAnimationFrame(()=>setTimeout(()=>{if(turn===finalTurn)finish()},280));
    }
    return;
  }
- let playerTurn=(startingPlayer==="p"&&turn%2===0)||(startingPlayer==="ai"&&turn%2===1);
+ if(opts.deferAi) return;
  $("status").textContent=playerTurn?(chosen?"Choose a board space":"Choose a card"):`${currentNpc} is thinking…`;
- if(!playerTurn&&turn<9){
+ if(!playerTurn&&turn<9&&!matchAnimating){
    let watchTurn=turn;
-   setTimeout(()=>{if(turn===watchTurn){console.warn("AI thinking watchdog fired",watchTurn);aiMove()}},450);
+   setTimeout(()=>{if(turn===watchTurn&&!matchAnimating){console.warn("AI thinking watchdog fired",watchTurn);aiMove()}},450);
  }
- $("comboStatus").textContent=comboOn()?(lastComboCount?`Combo captured ${lastComboCount} extra card${lastComboCount===1?"":"s"}.`:"Combo rule active."):"";
 }
-function place(pos){if(!chosen||board[pos])return;let n=chosen;if(!seriesPlayerExposed.includes(n))seriesPlayerExposed.push(n);playerHand.splice(playerHand.indexOf(n),1);board[pos]={card:C[n],owner:"p"};resolve(pos,"p");chosen=null;turn++;renderGame();
- let aiTurn=(startingPlayer==="ai"&&turn%2===0)||(startingPlayer==="p"&&turn%2===1);
- if(turn<9&&aiTurn){
-   let expectedTurn=turn;
-   setTimeout(()=>{if(turn===expectedTurn)aiMove()},120);
- }}
+function place(pos){
+ if(!chosen||board[pos]||matchAnimating)return;
+ let n=chosen;
+ let fromEl=findPlayerCardEl(n);
+ let fromRect=elementRect(fromEl);
+ let html=cardHTML(C[n],"p");
+ if(fromEl) fromEl.style.visibility="hidden";
+ if(!seriesPlayerExposed.includes(n))seriesPlayerExposed.push(n);
+ playerHand.splice(playerHand.indexOf(n),1);
+ let before=boardOwners();
+ board[pos]={card:C[n],owner:"p"};
+ resolve(pos,"p");
+ let captured=ownerFlips(before,"p");
+ chosen=null;turn++;
+ runPlaceMotion(fromRect,html,pos,"p",captured);
+}
 function moveValue(c,pos){
  let r=Math.floor(pos/3),co=pos%3,s=0,same=0;
  for(const [dr,dc,m,o] of dirs){let rr=r+dr,cc=co+dc;if(rr<0||rr>2||cc<0||cc>2)continue;let q=rr*3+cc,x=board[q];if(x&&x.owner==="p"){if(reverseOn()?c[m]<x.card[o]:c[m]>x.card[o])s+=2.7;else if(c[m]===x.card[o]){s+=.25;same++}else s-=.75}}
@@ -1953,8 +2130,7 @@ function moveValue(c,pos){
 }
 
 function aiOpeningMove(){
- // Dedicated synchronous first-move path for an NPC starter.
- // It deliberately avoids timers/promises and resolves a legal opening before rendering "thinking…".
+ // Dedicated first-move path for an NPC starter.
  if(!aiHand||!aiHand.length){
    if(!seriesAiDeck||seriesAiDeck.length<5)seriesAiDeck=aiDeck();
    aiHand=[...(seriesAiDeck||[])];
@@ -1965,8 +2141,7 @@ function aiOpeningMove(){
    $("status").textContent="TEST/DEBUG — AI opening state invalid.";
    return false;
  }
- // On an empty board there are no captures to evaluate; prefer a strategically useful card
- // and one of the four corners, with slight variation.
+ renderGame({deferAi:true});
  let ranked=[...aiHand].filter(n=>C[n]).sort((a,b)=>{
    let ca=C[a],cb=C[b];
    let va=Math.max(ca.n,ca.e,ca.s,ca.w)+Math.min(ca.n,ca.e,ca.s,ca.w)*.15;
@@ -1976,15 +2151,21 @@ function aiOpeningMove(){
  let n=ranked[Math.floor(Math.random()*Math.min(2,ranked.length))]||aiHand[0];
  let corners=[0,2,6,8].filter(i=>board[i]===null);
  let pos=corners.length?corners[Math.floor(Math.random()*corners.length)]:empty[0];
+ let fromEl=findOppCardEl(n);
+ let fromRect=elementRect(fromEl);
+ let html=cardHTML(C[n],"ai");
+ if(fromEl) fromEl.style.visibility="hidden";
  let ix=aiHand.indexOf(n);if(ix>=0)aiHand.splice(ix,1);
  consumeVisibleAiCard(n);aiPlayed.push(n);
  if(!seriesAiExposed.includes(n))seriesAiExposed.push(n);
  markSeen(currentNpc,n);
+ let before=boardOwners();
  board[pos]={card:C[n],owner:"ai"};resolve(pos,"ai");turn++;save();
- renderGame();
+ runPlaceMotion(fromRect,html,pos,"ai",ownerFlips(before,"ai"));
  return true;
 }
 function aiMove(){
+ if(matchAnimating)return;
  if(turn>=9){renderGame();return}
  let empty=board.map((x,i)=>x?null:i).filter(i=>i!==null);
  if(!empty.length){renderGame();return}
@@ -2007,10 +2188,17 @@ function aiMove(){
    }
    best={v:0,n,c:C[n],pos};
  }
+ let fromEl=findOppCardEl(best.n);
+ let fromRect=elementRect(fromEl);
+ let html=cardHTML(best.c,"ai");
+ if(fromEl) fromEl.style.visibility="hidden";
  consumeVisibleAiCard(best.n);
  let ix=aiHand.indexOf(best.n);if(ix>=0)aiHand.splice(ix,1);
  aiPlayed.push(best.n);if(!seriesAiExposed.includes(best.n))seriesAiExposed.push(best.n);
- markSeen(currentNpc,best.n);board[best.pos]={card:best.c,owner:"ai"};resolve(best.pos,"ai");turn++;save();renderGame();
+ markSeen(currentNpc,best.n);
+ let before=boardOwners();
+ board[best.pos]={card:best.c,owner:"ai"};resolve(best.pos,"ai");turn++;save();
+ runPlaceMotion(fromRect,html,best.pos,"ai",ownerFlips(before,"ai"));
 }
 function settleSeries(winner){
  seriesWinner=winner;if(!window._tournamentMatch)scheduleActivityTime("match");
@@ -2041,7 +2229,9 @@ function settleSeries(winner){
  let ownership=owned===0?`<div style="margin:6px 0"><b>NEW CARD</b> · Owned: 0</div>`:`<div style="margin:6px 0"><b>Owned: ${owned} ${owned===1?"copy":"copies"}</b></div>`;
  w.innerHTML=`<b>${n}</b><br>N ${C[n].n} · E ${C[n].e} · S ${C[n].s} · W ${C[n].w}<br><span class="small">Total ${C[n].budget}</span>${ownership}`;
  let actions=document.createElement("div");actions.className="claimCardActions";
- let i=document.createElement("button");i.textContent="Inspect / Flip";i.onclick=()=>inspectCopy(cp,"result");actions.appendChild(i);
+ let i=document.createElement("button");i.type="button";i.textContent="Inspect / Flip";
+ i.onclick=e=>{e.preventDefault();e.stopPropagation();inspectCopy(cp||{design:n,owner:currentNpc,origin:"Match copy",signatures:[],stamps:[]},"result")};
+ actions.appendChild(i);
  let b=document.createElement("button");b.textContent="Claim this copy";b.onclick=()=>claim(n,cp?cp.id:null);actions.appendChild(b);
  w.appendChild(actions);$("claimCards").appendChild(w)
 });
@@ -2212,7 +2402,7 @@ document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
    const scene=document.querySelector('.townScene');
    if(!scene) return;
    let img=scene.querySelector('.tomasCutout');
-   const old=[...scene.querySelectorAll('button')].find(b=>b.textContent.trim()==='Tomas');
+   const old=[...scene.querySelectorAll('#npcHotspots .npcHotspot')].find(b=>b.dataset.npc==='Tomas');
    const isVisible=old && getComputedStyle(old).display!=='none' && old.offsetParent!==null;
    if(!img){
      img=document.createElement('img');
@@ -2221,12 +2411,12 @@ document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
      img.alt='Tomas';
      img.setAttribute('role','button');
      img.setAttribute('tabindex','0');
-     img.onclick=()=>old && old.click();
-     img.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&old){e.preventDefault();old.click();}};
      scene.appendChild(img);
    }
+   img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="Tomas"]');if(btn)btn.click();};
+   img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
    img.style.display=isVisible?'block':'none';
-   if(old) old.style.opacity='0';
+   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
  }
  const obs=new MutationObserver(()=>requestAnimationFrame(syncTomasCutout));
  window.addEventListener('load',()=>{
@@ -2276,7 +2466,7 @@ if ('serviceWorker' in navigator) {
    const scene=document.querySelector('.townScene');
    if(!scene) return;
    let img=scene.querySelector('.nessaCutout');
-   const old=[...scene.querySelectorAll('button')].find(b=>b.textContent.trim()==='Nessa');
+   const old=[...scene.querySelectorAll('#npcHotspots .npcHotspot')].find(b=>b.dataset.npc==='Nessa');
    const isVisible=old && getComputedStyle(old).display!=='none' && old.offsetParent!==null;
    if(!img){
      img=document.createElement('img');
@@ -2285,12 +2475,12 @@ if ('serviceWorker' in navigator) {
      img.alt='Nessa';
      img.setAttribute('role','button');
      img.setAttribute('tabindex','0');
-     img.onclick=()=>old && old.click();
-     img.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&old){e.preventDefault();old.click();}};
      scene.appendChild(img);
    }
+   img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="Nessa"]');if(btn)btn.click();};
+   img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
    img.style.display=isVisible?'block':'none';
-   if(old) old.style.opacity='0';
+   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
  }
  const obs=new MutationObserver(()=>requestAnimationFrame(syncNessaCutout));
  window.addEventListener('load',()=>{
@@ -2311,20 +2501,18 @@ if ('serviceWorker' in navigator) {
  function syncApprovedCutouts(){
   const scene=document.querySelector('.townScene'); if(!scene)return;
   defs.forEach(d=>{
-   const old=[...scene.querySelectorAll('button')].find(b=>b.textContent.trim()===d.name);
+   const old=[...scene.querySelectorAll('#npcHotspots .npcHotspot')].find(b=>b.dataset.npc===d.name);
    const visible=!!(old && getComputedStyle(old).display!=='none' && old.offsetParent!==null);
    let img=scene.querySelector('.'+d.cls);
    if(!img){
     img=document.createElement('img'); img.className=d.cls; img.src=d.src; img.alt=d.name;
     img.setAttribute('role','button'); img.setAttribute('tabindex','0');
-    img.onclick=()=>old&&old.click();
-    img.onkeydown=e=>{if((e.key==='Enter'||e.key===' ')&&old){e.preventDefault();old.click();}};
     scene.appendChild(img);
-   } else {
-    img.onclick=()=>old&&old.click();
    }
+   img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="'+d.name+'"]');if(btn)btn.click();};
+   img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
    img.style.display=visible?'block':'none';
-   if(old)old.style.opacity='0';
+   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
   });
  }
  const obs=new MutationObserver(()=>requestAnimationFrame(syncApprovedCutouts));
@@ -3952,6 +4140,14 @@ if ('serviceWorker' in navigator) {
   bottom:var(--slot-bottom,12%)!important;
   z-index:var(--slot-z,20)!important;
 }
+.townScene .tomasCutout,
+.townScene .nessaCutout,
+.townScene .bramCutout,
+.townScene .eliraCutout{
+  pointer-events:auto!important;
+  cursor:pointer;
+}
+#npcHotspots .npcHotspot{pointer-events:none!important}
 .townScene .tomasCutout:active,
 .townScene .nessaCutout:active,
 .townScene .bramCutout:active,
@@ -4071,6 +4267,10 @@ if ('serviceWorker' in navigator) {
 #visualShell .worldTopbar .worldActions{
   pointer-events:auto!important;
 }
+#visualShell #advanceTime img,
+#visualShell #worldRecord img{
+  pointer-events:none!important;
+}
 #visualShell #advanceTime.scrollPlaque{
   position:relative!important;
   top:auto!important;
@@ -4137,6 +4337,310 @@ if ('serviceWorker' in navigator) {
   #visualShell #advanceTime #visualDate{font-size:12px!important}
   #visualShell #advanceTime #visualPhase{font-size:10px!important}
   #visualShell #advanceTime .scrollSun{width:18px!important;height:18px!important}
+}
+</style>
+<style>
+/* v40 — fly from the hand into the well, then captured neighbours flip owner colour.
+   Presentation only; capture rules and board geometry stay the same. */
+.placeGhost{position:fixed;z-index:80;pointer-events:none;margin:0}
+.placeGhost .card{height:100%!important;min-height:0!important;box-sizing:border-box}
+#game .card.play-capture{animation:placeCapture .28s ease-out}
+@keyframes placeCapture{
+  0%{filter:brightness(1);transform:translate(0,0)}
+  40%{filter:brightness(1.16);transform:translate(var(--dx,0px),var(--dy,0px))}
+  100%{filter:brightness(1);transform:translate(0,0)}
+}
+@media(prefers-reduced-motion:reduce){
+  .placeGhost{transition:none!important}
+  #game .card.play-capture{animation:none}
+}
+</style>
+<style>
+/* v41 — playing-card rectangles. Poker 5:7 so the 3×3 is a tall board that
+   uses a phone's height; hands share the board width so five cards stay smaller
+   than the table cards and both rows stay on-screen. */
+#game{
+  --card-ratio:5/7;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+}
+#game .panel{
+  display:flex!important;
+  flex-direction:column;
+  align-items:stretch;
+  width:min(920px,100%);
+  height:100%;
+  max-height:calc(100dvh - 20px);
+  margin:0 auto;
+  box-sizing:border-box;
+  overflow:hidden;
+  padding:8px 10px 10px!important;
+}
+#game .score,#game #status,#game #comboStatus,#game #seriesScore,
+#game #oppHandLabel,#game .panel>div.small{flex:0 0 auto}
+#game .board,#game .hand{
+  width:min(100%,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8.25rem) / 2.08));
+  margin-left:auto;
+  margin-right:auto;
+}
+#game .board{
+  flex:0 1 auto;
+  margin-top:6px;
+  margin-bottom:6px;
+  gap:5px!important;
+  padding:6px!important;
+  box-sizing:border-box;
+}
+#game .cell{
+  aspect-ratio:var(--card-ratio)!important;
+  min-height:0;
+  border-radius:8px!important;
+}
+#game .card{
+  aspect-ratio:var(--card-ratio);
+  height:100%!important;
+  min-height:0!important;
+  border-radius:8px!important;
+}
+#game .hand{
+  flex:0 0 auto;
+  min-height:0!important;
+  margin-top:4px!important;
+  margin-bottom:6px!important;
+  gap:4px;
+}
+#game .hand>div{
+  min-width:0;
+  aspect-ratio:var(--card-ratio);
+}
+#game .nm{top:3px;font-size:clamp(8px,2.2vw,11px)}
+#game .n,#game .e,#game .s,#game .w{font-size:clamp(13px,4vw,22px)}
+#game .n{top:20%}
+#game .s{bottom:5%}
+#game .w{left:7%;top:54%;transform:translateY(-50%)}
+#game .e{right:7%;top:54%;transform:translateY(-50%)}
+#result .card,#cardInspector .card{
+  aspect-ratio:5/7;
+  min-height:0;
+  height:auto;
+  max-width:160px;
+  margin-inline:auto;
+}
+@media(max-width:620px){
+  #game .n,#game .e,#game .s,#game .w{font-size:clamp(12px,4.6vw,18px)}
+}
+</style>
+<style>
+/* v42 — Club felt (option 3). Oak table behind; 3×3 is a baize well-board with brass corners. */
+#game{
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+}
+#game .panel{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  overflow:visible!important;
+}
+#game .score{
+  align-self:center;
+  background:rgba(242,225,190,.95)!important;
+  color:#241a13;
+  border:2px solid #594333;
+  border-radius:4px;
+  padding:3px 16px;
+  box-shadow:0 5px 14px #0008;
+}
+#game #status{
+  color:#f7efdc;
+  text-shadow:0 1px 3px #000c;
+  font-weight:800;
+}
+#game #comboStatus,#game #seriesScore,
+#game #oppHandLabel,#game .panel>div.small{
+  color:#e8d7b6!important;
+  text-shadow:0 1px 2px #000a;
+}
+#game .board{
+  position:relative;
+  background:#163528!important;
+  border:13px solid #5a3a22!important;
+  border-radius:7px!important;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009!important;
+  padding:8px!important;
+}
+#game .board:before{
+  content:"";
+  position:absolute;
+  inset:-15px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/22px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/22px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/22px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/22px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#game .cell{
+  background:
+    radial-gradient(circle at 28% 18%,rgba(72,130,96,.35),transparent 55%),
+    #143226!important;
+  border:1px solid #0c2418!important;
+  box-shadow:inset 0 2px 7px #0008,inset 0 0 0 1px rgba(70,120,92,.4)!important;
+}
+#game .hand{
+  background:linear-gradient(#6d4b32,#4a301c);
+  border:3px solid #2a1810;
+  border-radius:6px;
+  padding:5px 6px!important;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.35),0 7px 16px #0007;
+}
+#game .card{
+  background:#f3e6c8!important;
+  box-shadow:0 3px 8px #0007;
+}
+</style>
+<style>
+/* v43b — gilt-window card face (option 1). Gold frame and painting; rim
+   numbers only. No C-code or N/E/S/W letters. Ownership is the well tint. */
+#game .card.gilt,
+.card.gilt{
+  background:#e8d7b0 url("assets/ui/card_gilt_frame.png") center/100% 100% no-repeat!important;
+  color:#2a1c12!important;
+  border:0!important;
+  border-radius:8px!important;
+  box-shadow:0 3px 8px #0008!important;
+  font-family:Palatino,"Palatino Linotype",Georgia,"Times New Roman",serif;
+  overflow:hidden;
+}
+.card.gilt.p,
+.card.gilt.ai{
+  border:0!important;
+}
+.card.gilt .nm{display:none!important}
+.card.gilt .n i,
+.card.gilt .e i,
+.card.gilt .s i,
+.card.gilt .w i{display:none!important}
+.card.gilt .n{top:3.2%!important;left:50%;transform:translateX(-50%);bottom:auto}
+.card.gilt .s{bottom:2.4%!important;left:50%;top:auto;transform:translateX(-50%)}
+.card.gilt .w{left:2.2%!important;right:auto;top:50%!important;transform:translateY(-50%)}
+.card.gilt .e{right:2.2%!important;left:auto;top:50%!important;transform:translateY(-50%)}
+#game .card.gilt .giltWindow,
+.card.gilt .giltWindow{
+  position:absolute;
+  z-index:1;
+  left:16.8%;
+  right:17%;
+  top:14.5%;
+  bottom:14.8%;
+  border:0;
+  border-radius:1px;
+  background-size:cover;
+  background-position:center;
+  background-repeat:no-repeat;
+}
+.card.gilt.art0 .giltWindow{background-image:url("assets/locations/market.webp");background-position:center 42%}
+.card.gilt.art1 .giltWindow{background-image:url("assets/locations/riverside.webp");background-position:center 48%}
+.card.gilt.art2 .giltWindow{background-image:url("assets/locations/inn.webp");background-position:center 38%}
+.card.gilt.art3 .giltWindow{background-image:url("assets/locations/card_club.webp");background-position:center 40%}
+.card.gilt.art4 .giltWindow{background-image:url("assets/locations/market.webp");background-position:68% 70%}
+.card.gilt.art5 .giltWindow{background-image:url("assets/locations/riverside.webp");background-position:20% 80%}
+#game .card.gilt .n,
+#game .card.gilt .e,
+#game .card.gilt .s,
+#game .card.gilt .w,
+.card.gilt .n,
+.card.gilt .e,
+.card.gilt .s,
+.card.gilt .w{
+  z-index:3;
+  display:flex!important;
+  flex-direction:column!important;
+  align-items:center;
+  line-height:.95;
+  font-weight:800;
+  color:#2a1c12;
+  text-shadow:0 1px 0 rgba(255,244,214,.75);
+}
+#game .card.gilt .n,
+#game .card.gilt .e,
+#game .card.gilt .s,
+#game .card.gilt .w{font-size:clamp(11px,3.4vw,20px)}
+#game .hand .card.gilt .n,
+#game .hand .card.gilt .e,
+#game .hand .card.gilt .s,
+#game .hand .card.gilt .w{font-size:clamp(9px,3.1vw,15px)}
+#game .cell{
+  padding:5px!important;
+  box-sizing:border-box!important;
+  display:flex!important;
+  align-items:stretch;
+  justify-content:stretch;
+}
+/* Cell already has the 5:7 ratio. Do not re-apply it on the card or the
+   extra width overflows right and the well lip looks thinner on that side. */
+#game .cell .card{
+  width:100%!important;
+  height:100%!important;
+  aspect-ratio:auto!important;
+  min-height:0!important;
+  align-self:stretch;
+  box-shadow:none!important;
+}
+#game .cell:has(.card.p),
+#game .cell.cell-p{
+  background:#2a4c78!important;
+  border-color:#9bb8dc!important;
+  box-shadow:inset 0 0 0 3px #6e97cc!important;
+}
+#game .cell:has(.card.ai),
+#game .cell.cell-ai{
+  background:#6a3028!important;
+  border-color:#c88676!important;
+  box-shadow:inset 0 0 0 3px #b45c4c!important;
+}
+#cardInspector:not(.hidden){
+  position:fixed!important;
+  inset:0!important;
+  z-index:120;
+  display:block!important;
+  max-width:none!important;
+  margin:0!important;
+  overflow:auto;
+  background:rgba(16,12,10,.88)!important;
+  min-height:0!important;
+  padding:max(16px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left))!important;
+}
+#cardInspector .inspectCardWrap{
+  max-width:180px;
+  margin:10px auto 0;
+}
+#cardInspector #inspectFront.npc,
+#cardInspector #inspectBack.npc{
+  background:#f3e4c4;
+  border:1px solid #c6a15a;
+  color:#2a1c12;
+}
+#cardInspector .inspectCardWrap .card{
+  aspect-ratio:5/7;
+  min-height:0;
+  height:auto;
+  width:100%;
+}
+@media(max-width:620px){
+  #game .card.gilt .n,
+  #game .card.gilt .e,
+  #game .card.gilt .s,
+  #game .card.gilt .w{font-size:clamp(10px,4.2vw,16px)}
 }
 </style>
 <style>

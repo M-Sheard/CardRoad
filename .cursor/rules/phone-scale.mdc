@@ -11,6 +11,7 @@ Card Road is played on many phone sizes (about 320px–430px wide, plus notched 
 - Inset chrome with `max(16px, env(safe-area-inset-* ) + 10px)`, not a single magic pixel.
 - Let the date/title flex and shrink (`min-width:0`, `%` / `vw` / `min()`). Pin Journal (and similar buttons) with `flex: 0 0 auto` in a padded row — never a fixed width that plus the date exceeds `100vw`.
 - Size standees and location tabs with `vw` / `%` of `.townScene`. Scene height is `100dvh` / `100svh`, **no** 690px+ min-height on phones.
+- Match cards are playing-card rectangles (`aspect-ratio: 5/7`), not squares. Size the board from `dvh` so the 3×3 plus both hands stay on-screen at ~320px and ~390px.
 - Check a **narrow** width (~320px) and a **typical** phone (~390px) when changing layout.
 - Keep the location painting as bright as desktop on phones. Do **not** stack a heavy bottom vignette or a dark `linear-gradient` over the webp — a tall crop already shows more of the shadowed floor.
 

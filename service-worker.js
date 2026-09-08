@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v24-mobile-bright';
+const CACHE_NAME = 'card-road-pwa-v31-well-center';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -17,7 +17,8 @@ const CORE_ASSETS = [
   './assets/ui/location_title_frame.png',
   './assets/ui/noticeboard_frame.png',
   './assets/ui/presence_message_frame.png',
-  './assets/ui/approach_prompt_frame.png'];
+  './assets/ui/match_club_table.png',
+  './assets/ui/card_gilt_frame.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
