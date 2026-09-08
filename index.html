@@ -432,7 +432,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <div id="home">
 <section id="visualShell">
   <div class="worldTopbar">
-    <button type="button" id="advanceTime" class="scrollPlaque" aria-label="Pass time">
+    <button type="button" id="advanceTime" class="scrollPlaque" data-place="date" data-place-css="#visualShell #advanceTime" aria-label="Pass time">
       <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
       <span class="scrollWell">
         <img class="scrollSun" src="./assets/ui/date_frame_probe_sun.png" alt="">
@@ -441,7 +441,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
     </button>
     <div class="worldActions">
-      <button id="worldRecord" class="scrollPlaque scrollPlaque-sm" type="button" aria-label="Open journal">
+      <button id="worldRecord" class="scrollPlaque scrollPlaque-sm" type="button" data-place="journal" data-place-css="#visualShell #worldRecord" aria-label="Open journal">
         <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
         <span class="scrollWell">
           <span id="worldRecordLabel">Journal</span>
@@ -457,11 +457,11 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div class="sceneBuildings"><div class="roof r1"></div><div class="roof r2"></div><div class="tower"></div></div>
     <div class="sceneRiver"></div><div class="sceneBridge"></div>
     <div class="sceneGround"></div>
-    <div class="sceneLabel"><span id="locationTitle">Lythmere Market</span><small id="locationSubtitle">A riverside market where local players drift in and out through the day.</small></div>
+    <div class="sceneLabel" data-place="locationTitle" data-place-css="#visualShell .sceneLabel"><span id="locationTitle">Lythmere Market</span><small id="locationSubtitle">A riverside market where local players drift in and out through the day.</small></div>
     <div id="npcHotspots"></div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Tournament Today</button>
   </div>
-  <nav class="locationStrip scrollPlaque scrollPlaque-wide" id="locationStrip" aria-label="Lythmere locations">
+  <nav class="locationStrip scrollPlaque scrollPlaque-wide" id="locationStrip" data-place="locationStrip" data-place-css="#visualShell #locationStrip" aria-label="Lythmere locations">
     <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
     <div class="scrollWell locationWell">
       <button type="button" data-loc="Market">Market</button>
@@ -635,11 +635,14 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 
 <div id="game" class="hidden">
 <div class="panel">
-<div id="seriesScore" class="small" style="text-align:center;margin-bottom:5px"></div><div class="score"><span id="ps">5</span> — <span id="as">5</span></div>
+<div class="matchHud">
+<div id="seriesScore" class="small" style="text-align:center;margin-bottom:5px"></div><div class="score" data-place="score" data-place-css="#game .score"><span id="ps">5</span> — <span id="as">5</span></div>
 <div id="status" style="text-align:center;font-weight:800"></div><div id="comboStatus" class="small" style="text-align:center;min-height:16px"></div>
-<div class="small" id="oppHandLabel">Opponent hand</div><div id="oppHand" class="hand"></div>
-<div id="board" class="board"></div>
-<div class="small">Your hand</div><div id="hand" class="hand"></div>
+</div>
+<div class="small" id="oppHandLabel">Opponent hand</div><div id="oppHand" class="hand" data-place="oppHand" data-place-css="#game #oppHand"></div>
+<div id="board" class="board" data-place="board" data-place-css="#game .board"></div>
+<div id="hand" class="hand" data-place="hand" data-place-css="#game #hand"></div>
+<div class="small" id="playerHandLabel">Your hand</div>
 </div>
 </div>
 
@@ -4361,6 +4364,8 @@ if ('serviceWorker' in navigator) {
    than the table cards and both rows stay on-screen. */
 #game{
   --card-ratio:5/7;
+  position:relative;
+  height:100dvh!important;
   min-height:100dvh!important;
   max-height:100dvh;
   overflow:hidden;
@@ -4380,7 +4385,7 @@ if ('serviceWorker' in navigator) {
   padding:8px 10px 10px!important;
 }
 #game .score,#game #status,#game #comboStatus,#game #seriesScore,
-#game #oppHandLabel,#game .panel>div.small{flex:0 0 auto}
+#game #oppHandLabel,#game #playerHandLabel,#game .panel>div.small{flex:0 0 auto}
 #game .board,#game .hand{
   width:min(100%,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8.25rem) / 2.08));
   margin-left:auto;
@@ -4460,7 +4465,7 @@ if ('serviceWorker' in navigator) {
   font-weight:800;
 }
 #game #comboStatus,#game #seriesScore,
-#game #oppHandLabel,#game .panel>div.small{
+#game #oppHandLabel,#game #playerHandLabel,#game .panel>div.small{
   color:#e8d7b6!important;
   text-shadow:0 1px 2px #000a;
 }
@@ -4507,6 +4512,44 @@ if ('serviceWorker' in navigator) {
   background:#f3e6c8!important;
   box-shadow:0 3px 8px #0007;
 }
+</style>
+<style>
+/* v45 — Marc's match pins. % of #game. Well tints unchanged. */
+#game .panel,
+#game .matchHud{display:contents!important;position:static!important}
+#game .score{
+  position:absolute;left:41.6%;top:1.1%;width:16.9%;margin:0;z-index:6;
+}
+#game #oppHand{
+  position:absolute;left:20.9%;top:8.0%;width:57.1%;margin:0!important;
+}
+#game .board{
+  position:absolute;left:23.9%;top:26.0%;width:53.9%;margin:0!important;
+}
+#game #hand{
+  position:absolute;left:21.5%;top:83.4%;width:57.1%;margin:0!important;
+}
+#game #oppHandLabel{
+  position:absolute;left:20.9%;top:5.4%;width:57.1%;margin:0;
+  text-align:center;min-height:0;pointer-events:none;
+}
+#game #playerHandLabel{
+  position:absolute;left:21.5%;top:auto;bottom:0.5%;width:57.1%;margin:0;
+  text-align:center;min-height:0;pointer-events:none;
+}
+#game #status{
+  position:absolute;left:22%;right:22%;top:4.4%;margin:0;
+  text-align:center;pointer-events:none;z-index:5;
+}
+#game #comboStatus{
+  position:absolute;left:22%;right:22%;top:auto;bottom:2.4%;margin:0;
+  text-align:center;min-height:0;pointer-events:none;
+}
+#game #seriesScore{
+  position:absolute;left:22%;right:22%;top:0;margin:0;
+  text-align:center;pointer-events:none;z-index:5;
+}
+#game #seriesScore:empty{display:none}
 </style>
 <style>
 /* v43b — gilt-window card face (option 1). Gold frame and painting; rim
@@ -5003,6 +5046,221 @@ html,body,#visualShell{color-scheme:only light}
       e.preventDefault();
       bumpEnd(i===0?"front":"back",e.deltaY<0?1:-1);
     },{passive:false});
+  }
+  window.addEventListener("load",function(){
+    const unlock=/(?:^|[?&])pins=1(?:&|$)/.test(location.search);
+    try{if(!unlock && localStorage.getItem("cardRoadPins")!=="1")return;}catch(e){if(!unlock)return}
+    mount();
+  });
+})();
+</script>
+<style>
+/* Overlay placer. Off by default. Same ?pins=1 as Mark spots.
+   Place → drag visible [data-place] → Copy → bake. Players never see it.
+   Match % is of #game; town % is of #visualShell. Mark spots (NPC pins) stays. */
+#overlayPlaceToggle{
+  display:none;position:fixed;z-index:80;
+  left:max(10px,calc(env(safe-area-inset-left) + 8px));
+  top:max(10px,calc(env(safe-area-inset-top) + 8px));
+  min-width:88px;padding:7px 10px;white-space:nowrap;
+  font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+  background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+  box-shadow:0 4px 12px #0007;cursor:pointer
+}
+html.pinsReady #overlayPlaceToggle{display:block}
+#overlayPlacePanel{
+  display:none;position:fixed;z-index:80;
+  left:max(10px,calc(env(safe-area-inset-left) + 8px));
+  top:max(48px,calc(env(safe-area-inset-top) + 46px));
+  width:min(200px,calc(100% - 24px));
+  padding:6px 7px 7px;background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:6px;
+  box-shadow:0 6px 16px #0008;font:650 10px/1.3 system-ui,sans-serif;color:#241a13
+}
+html.placeOn #overlayPlacePanel{display:block}
+#overlayPlacePanel b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+#overlayPlacePanel code{font:700 10px/1.35 ui-monospace,Consolas,monospace}
+#overlayPlacePanel .spotActs{display:flex;gap:5px;margin-top:5px}
+#overlayPlacePanel .spotActs button{
+  padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;
+  border:1px solid #9f8e72;border-radius:4px;cursor:pointer
+}
+#game.placeOn,#visualShell.placeOn{position:relative}
+#visualShell.placeOn .worldTopbar{display:contents}
+#visualShell.placeOn .townScene{position:static}
+#game.placeOn #oppHandLabel,
+#game.placeOn #playerHandLabel,
+#game.placeOn #status,
+#game.placeOn #comboStatus,
+#game.placeOn #seriesScore{display:none!important}
+html.placeOn [data-place]{
+  position:absolute!important;margin:0!important;cursor:grab;touch-action:none;
+  outline:2px dashed rgba(242,225,190,.85);z-index:8;box-sizing:border-box
+}
+html.placeOn [data-place].is-drag{cursor:grabbing;z-index:9}
+#game.placeOn .card,#game.placeOn .cell{pointer-events:none}
+@media(max-width:620px){
+  #overlayPlaceToggle{font-size:11px;padding:6px 8px}
+  #overlayPlacePanel{width:min(168px,calc(100% - 20px));font-size:10px}
+}
+</style>
+<script>
+(function(){
+  let on=false,pos={},binds=[],drag=null,root=null;
+  function pct(n){return Number(n).toFixed(1)}
+  function currentRoot(){
+    const g=document.getElementById("game");
+    if(g && !g.classList.contains("hidden")) return g;
+    return document.getElementById("visualShell")||document.body;
+  }
+  function origin(r){
+    const b=r.getBoundingClientRect();
+    return {x:b.left+r.clientLeft,y:b.top+r.clientTop,w:r.clientWidth,h:r.clientHeight};
+  }
+  function pieces(){
+    return [...document.querySelectorAll("[data-place]")].filter(el=>{
+      if(el.closest(".hidden")) return false;
+      const b=el.getBoundingClientRect();
+      return b.width>2 && b.height>2;
+    });
+  }
+  function measure(){
+    const o=origin(root); pos={};
+    pieces().forEach(el=>{
+      const b=el.getBoundingClientRect();
+      const id=el.getAttribute("data-place");
+      pos[id]={
+        left:((b.left-o.x)/o.w)*100,
+        top:((b.top-o.y)/o.h)*100,
+        width:(b.width/o.w)*100,
+        css:el.getAttribute("data-place-css")||(el.id?"#"+el.id:"[data-place=\""+id+"\"]")
+      };
+    });
+  }
+  function applyEl(el){
+    const s=pos[el.getAttribute("data-place")]; if(!s||!root)return;
+    const o=origin(root);
+    el.style.left=(s.left/100*o.w)+"px";
+    el.style.top=(s.top/100*o.h)+"px";
+    el.style.width=(s.width/100*o.w)+"px";
+  }
+  function paintReadout(){
+    const box=document.getElementById("overlayPlacePanel");
+    if(!box||!on)return;
+    const name=root&&root.id==="game"?"#game":"#visualShell";
+    const lines=Object.keys(pos).map(id=>{
+      const s=pos[id];
+      return id+"  "+pct(s.left)+"L  "+pct(s.top)+"T  "+pct(s.width)+"W";
+    });
+    box.innerHTML="<b>Overlays · "+name+"</b><code>"+lines.join("<br>")+"</code>"
+      +'<div class="spotActs"><button type="button" id="overlayPlaceCopy">Copy</button><button type="button" id="overlayPlaceHide">Hide</button></div>';
+  }
+  function copyText(){
+    const name=root&&root.id==="game"?"#game":"#visualShell";
+    const human="overlays "+name+"\n"+Object.keys(pos).map(id=>{
+      const s=pos[id];
+      return id+"  "+pct(s.left)+"  "+pct(s.top)+"  "+pct(s.width);
+    }).join("\n");
+    const css=["/* % of "+name+". Bake, then Hide. */",name+"{position:relative}"]
+      .concat(Object.keys(pos).map(id=>{
+        const s=pos[id];
+        return s.css+"{position:absolute;left:"+pct(s.left)+"%;top:"+pct(s.top)+"%;width:"+pct(s.width)+"%;margin:0}";
+      })).join("\n");
+    const text=human+"\n\n"+css;
+    const done=()=>{const b=document.getElementById("overlayPlacePanel"); if(b) b.querySelector("b").textContent="Overlays · copied"};
+    if(navigator.clipboard&&navigator.clipboard.writeText)navigator.clipboard.writeText(text).then(done).catch(()=>fallback(text,done));
+    else fallback(text,done);
+  }
+  function fallback(text,done){
+    const ta=document.createElement("textarea"); ta.value=text; document.body.appendChild(ta); ta.select();
+    try{document.execCommand("copy")}catch(e){}
+    ta.remove(); done();
+  }
+  function onMove(e){
+    if(!drag||e.pointerId!==drag.pointer)return;
+    const o=origin(root); const s=pos[drag.id];
+    const hPct=(drag.el.getBoundingClientRect().height/o.h)*100;
+    s.left=Math.max(0,Math.min(100-s.width,((e.clientX-o.x)/o.w)*100+drag.grabL));
+    s.top=Math.max(0,Math.min(100-hPct,((e.clientY-o.y)/o.h)*100+drag.grabT));
+    drag.el.style.left=(s.left/100*o.w)+"px";
+    drag.el.style.top=(s.top/100*o.h)+"px";
+  }
+  function onUp(e){
+    if(!drag||e.pointerId!==drag.pointer)return;
+    drag.el.classList.remove("is-drag");
+    drag.el.removeEventListener("pointermove",onMove);
+    drag.el.removeEventListener("pointerup",onUp);
+    drag.el.removeEventListener("pointercancel",onUp);
+    drag=null;
+    paintReadout();
+  }
+  function onDown(e){
+    if(!on)return;
+    e.preventDefault(); e.stopPropagation();
+    const el=e.currentTarget; const id=el.getAttribute("data-place"); const o=origin(root); const s=pos[id];
+    if(!s)return;
+    drag={id:id,pointer:e.pointerId,el:el,
+      grabL:s.left-((e.clientX-o.x)/o.w)*100,
+      grabT:s.top-((e.clientY-o.y)/o.h)*100};
+    el.classList.add("is-drag");
+    try{el.setPointerCapture(e.pointerId)}catch(err){}
+    el.addEventListener("pointermove",onMove);
+    el.addEventListener("pointerup",onUp);
+    el.addEventListener("pointercancel",onUp);
+  }
+  function bind(){
+    pieces().forEach(el=>{
+      el.addEventListener("pointerdown",onDown);
+      binds.push(el);
+    });
+  }
+  function unbind(){
+    binds.forEach(el=>el.removeEventListener("pointerdown",onDown));
+    binds=[];
+    if(drag){
+      drag.el.classList.remove("is-drag");
+      drag.el.removeEventListener("pointermove",onMove);
+      drag.el.removeEventListener("pointerup",onUp);
+      drag.el.removeEventListener("pointercancel",onUp);
+      drag=null;
+    }
+  }
+  function setOn(next){
+    const btn=document.getElementById("overlayPlaceToggle");
+    if(next){
+      root=currentRoot();
+      on=true;
+      document.documentElement.classList.add("placeOn");
+      root.classList.add("placeOn");
+      measure();
+      pieces().forEach(applyEl);
+      bind();
+      paintReadout();
+    }else{
+      on=false;
+      unbind();
+      document.querySelectorAll("[data-place]").forEach(el=>{
+        el.style.left=el.style.top=el.style.width="";
+        el.classList.remove("is-drag");
+      });
+      if(root)root.classList.remove("placeOn");
+      document.documentElement.classList.remove("placeOn");
+      root=null; pos={};
+    }
+    if(btn)btn.textContent=on?"Hide":"Place";
+  }
+  function mount(){
+    const btn=document.createElement("button");
+    btn.type="button"; btn.id="overlayPlaceToggle"; btn.textContent="Place";
+    btn.addEventListener("click",()=>setOn(!on));
+    document.body.appendChild(btn);
+    const box=document.createElement("div");
+    box.id="overlayPlacePanel";
+    box.addEventListener("click",e=>{
+      if(e.target.id==="overlayPlaceCopy")copyText();
+      if(e.target.id==="overlayPlaceHide")setOn(false);
+    });
+    document.body.appendChild(box);
+    document.documentElement.classList.add("pinsReady");
   }
   window.addEventListener("load",function(){
     const unlock=/(?:^|[?&])pins=1(?:&|$)/.test(location.search);
