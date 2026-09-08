@@ -1,0 +1,22 @@
+---
+description: Card Road UI must fit phones of every width, not one desktop layout
+alwaysApply: true
+---
+
+# Scale across phones
+
+Card Road is played on many phone sizes (about 320px–430px wide, plus notched safe areas). **Every new or edited UI piece must stay fully on-screen** without clipping, overlapping, or forcing a horizontal scroll.
+
+**Do**
+- Inset chrome with `max(16px, env(safe-area-inset-* ) + 10px)`, not a single magic pixel.
+- Let the date/title flex and shrink (`min-width:0`, `%` / `vw` / `min()`). Pin Journal (and similar buttons) with `flex: 0 0 auto` in a padded row — never a fixed width that plus the date exceeds `100vw`.
+- Size standees and location tabs with `vw` / `%` of `.townScene`. Scene height is `100dvh` / `100svh`, **no** 690px+ min-height on phones.
+- Check a **narrow** width (~320px) and a **typical** phone (~390px) when changing layout.
+- Keep the location painting as bright as desktop on phones. Do **not** stack a heavy bottom vignette or a dark `linear-gradient` over the webp — a tall crop already shows more of the shadowed floor.
+
+**Do not**
+- Place controls with only `right:0` / `left:0` so scroll-caps or shadows get cropped (`#visualShell` is `overflow:hidden`).
+- Copy desktop `px` widths onto mobile (`min-width:280px` date bars, `200px` journal plaques).
+- Assume Marc’s pin % from a wide monitor will look identical on a tall phone crop; call that out if a change is placement-sensitive.
+
+The live top bar is the v38 flex row in `index.html`. Follow that pattern for future chrome.

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v23-mobile-fit';
+const CACHE_NAME = 'card-road-pwa-v24-mobile-bright';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',

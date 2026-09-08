@@ -2,6 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="color-scheme" content="light only">
 <title>The Card Road — UI Clarity v22</title>
 <style>
 body{margin:0;background:#11151a;color:#eee;font-family:system-ui,-apple-system,sans-serif}
@@ -4050,11 +4051,20 @@ if ('serviceWorker' in navigator) {
 })();
 </script>
 <style>
-/* v38 — pin journal to the top-right; date scroll ~20% narrower so it never shoves Journal off-screen. */
+/* v38 — top chrome is a padded flex row. Date shrinks; Journal stays fully on-screen
+   at a fixed inset from the top-right on every phone width. */
 #visualShell .worldTopbar{
   left:0!important;
   right:0!important;
   top:0!important;
+  display:flex!important;
+  flex-direction:row!important;
+  flex-wrap:nowrap!important;
+  align-items:flex-start!important;
+  justify-content:space-between!important;
+  gap:10px!important;
+  padding:max(16px,calc(env(safe-area-inset-top) + 10px)) max(16px,calc(env(safe-area-inset-right) + 10px)) 0 max(16px,calc(env(safe-area-inset-left) + 10px))!important;
+  box-sizing:border-box!important;
   pointer-events:none!important;
 }
 #visualShell .worldTopbar #advanceTime,
@@ -4062,22 +4072,35 @@ if ('serviceWorker' in navigator) {
   pointer-events:auto!important;
 }
 #visualShell #advanceTime.scrollPlaque{
-  position:absolute!important;
-  top:max(16px,calc(env(safe-area-inset-top) + 10px))!important;
-  left:max(16px,calc(env(safe-area-inset-left) + 10px))!important;
-  width:264px!important;
+  position:relative!important;
+  top:auto!important;
+  left:auto!important;
+  flex:1 1 auto!important;
+  width:auto!important;
   min-width:0!important;
-  max-width:calc(100vw - 160px)!important;
+  max-width:min(264px,calc(100% - 118px))!important;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))!important;
+}
+#visualShell #advanceTime .scrollCopy{
+  min-width:0!important;
+  overflow:hidden!important;
 }
 #visualShell #advanceTime .scrollCopy #visualDate,
 #visualShell #advanceTime #visualDate{
   font-size:13px!important;
   line-height:1.1!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
 }
 #visualShell #advanceTime #visualPhase{
   font-size:11px!important;
   margin-top:1px!important;
+  max-width:100%!important;
+  overflow:hidden!important;
+  text-overflow:ellipsis!important;
+  white-space:nowrap!important;
 }
 #visualShell #advanceTime .scrollSun{
   width:22px!important;
@@ -4086,12 +4109,14 @@ if ('serviceWorker' in navigator) {
 #visualShell #advanceTime .scrollWell{
   padding:0 6px!important;
   gap:6px!important;
+  min-width:0!important;
 }
 #visualShell .worldActions{
-  position:absolute!important;
-  top:max(16px,calc(env(safe-area-inset-top) + 10px))!important;
-  right:max(16px,calc(env(safe-area-inset-right) + 10px))!important;
+  position:relative!important;
+  top:auto!important;
+  right:auto!important;
   left:auto!important;
+  flex:0 0 auto!important;
   display:flex!important;
 }
 #visualShell #worldRecord.scrollPlaque{
@@ -4102,7 +4127,7 @@ if ('serviceWorker' in navigator) {
 }
 @media(max-width:620px){
   #visualShell #advanceTime.scrollPlaque{
-    width:min(224px,calc(100vw - 128px))!important;
+    max-width:min(224px,calc(100% - 110px))!important;
     height:58px!important;
     min-height:58px!important;
   }
@@ -4115,11 +4140,34 @@ if ('serviceWorker' in navigator) {
 }
 </style>
 <style>
+/* v39 — phones: show the location painting without the extra dark washes.
+   A tall crop already includes more of the shadowed floor; the 42% :after
+   vignette plus the rgba(20,15,11,.12) image overlay made it look muddy.
+   Do not shift background-position here — standee pins are baked to the crop. */
+html,body,#visualShell{color-scheme:only light}
+@media(max-width:620px){
+  .townScene:after{opacity:0!important}
+  .townScene[data-location="Market"]{
+    background-image:url("assets/locations/market.webp")!important;
+  }
+  .townScene[data-location="Riverside"]{
+    background-image:url("assets/locations/riverside.webp")!important;
+  }
+  .townScene[data-location="Inn"]{
+    background-image:url("assets/locations/inn.webp")!important;
+  }
+  .townScene[data-location="Card Club"]{
+    background-image:url("assets/locations/card_club.webp")!important;
+  }
+}
+</style>
+<style>
 /* Canonical location-anchor tool (locked). Off by default.
    New screens: add ?pins=1 to the URL, then Mark spots → pins 0–3 → Copy → bake v35 slot CSS.
    Hidden for players; not mounted unless that query (or localStorage cardRoadPins=1). */
 #spotToggle{
-  position:absolute;z-index:46;right:10px;
+  position:absolute;z-index:46;
+  right:max(10px,calc(env(safe-area-inset-right) + 8px));
   top:max(64px,calc(env(safe-area-inset-top) + 56px));
   min-width:108px;padding:7px 10px;white-space:nowrap;
   font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
