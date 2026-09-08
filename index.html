@@ -1,7 +1,7 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>The Card Road — UI Clarity v22</title>
 <style>
 body{margin:0;background:#11151a;color:#eee;font-family:system-ui,-apple-system,sans-serif}
@@ -152,8 +152,8 @@ main{max-width:none!important;padding:0!important;margin:0!important}
 /* Don't expose the old dashboard underneath the scene */
 #home>.panel{display:none!important}
 @media(max-width:620px){
-  #visualShell{min-height:100svh!important}
-  .townScene{height:100svh!important;min-height:690px!important;background-position:48% center!important}
+  #visualShell{min-height:100svh!important;min-height:100dvh!important}
+  .townScene{height:100svh!important;height:100dvh!important;min-height:0!important;background-position:center bottom!important}
   .sceneLabel{top:100px!important;max-width:57%!important}
   .sceneLabel span{font-size:20px!important}
   .npcHotspot.tomas-production{width:145px!important;min-height:215px!important}
@@ -4051,7 +4051,8 @@ if ('serviceWorker' in navigator) {
 </script>
 <style>
 /* Canonical location-anchor tool (locked). Off by default.
-   New screens: Mark spots → pins 0–3 (Tomas ghosts) → Copy → bake v35 slot CSS. */
+   New screens: add ?pins=1 to the URL, then Mark spots → pins 0–3 → Copy → bake v35 slot CSS.
+   Hidden for players; not mounted unless that query (or localStorage cardRoadPins=1). */
 #spotToggle{
   position:absolute;z-index:46;right:10px;
   top:max(64px,calc(env(safe-area-inset-top) + 56px));
@@ -4386,6 +4387,10 @@ if ('serviceWorker' in navigator) {
       bumpEnd(i===0?"front":"back",e.deltaY<0?1:-1);
     },{passive:false});
   }
-  window.addEventListener("load",mount);
+  window.addEventListener("load",function(){
+    const unlock=/(?:^|[?&])pins=1(?:&|$)/.test(location.search);
+    try{if(!unlock && localStorage.getItem("cardRoadPins")!=="1")return;}catch(e){if(!unlock)return}
+    mount();
+  });
 })();
 </script>

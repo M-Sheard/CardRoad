@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v22-spot-grid';
+const CACHE_NAME = 'card-road-pwa-v23-mobile-fit';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',

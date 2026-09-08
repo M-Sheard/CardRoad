@@ -8,7 +8,7 @@ alwaysApply: true
 Whenever we add or restage a **location / town screen**, use the existing **Mark spots** overlay in root `index.html` (v37 block, `#spotToggle`). Do not invent a new pin, grid, or scale widget.
 
 **How Marc places a screen**
-1. Hard-refresh, **Mark spots**.
+1. Open the game with `?pins=1` (players never see the tool). Hard-refresh, **Mark spots**.
 2. Tap the floor for pins **0–3** (Tomas ghost standees at real slot size).
 3. Pin **0** = front (large), pin **3** = back (small). Set those with Front/Back or the wheel. Pins **1–2** interpolate from how high they sit.
 4. **Copy**, then bake the CSS into the v35 slot rules for that `data-location`.
