@@ -613,19 +613,20 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <button type="button" id="beginMatch" disabled>Finished</button>
     </div>
     <div class="deckBinderStage">
-      <div class="deckSceneWrap">
-        <img class="deckScene" src="assets/ui/deck_binder_scene.png" alt="">
-        <div class="deckBinder">
-          <div class="binderPage">
-            <div id="binderPageNum" class="binderPageNum">14</div>
-            <div id="deckSelectPool" class="deckSelectPool"></div>
-          </div>
-          <div id="binderTabs" class="binderTabs" role="tablist" aria-label="Card totals"></div>
-          <div class="deckSelectFelt">
-            <div class="deckSelectTray">
-              <div id="deckSelectHand" class="hand"></div>
-            </div>
-          </div>
+      <div class="deckBinder">
+        <div class="binderSpine" aria-hidden="true"></div>
+        <div class="binderRings binderRings-back" aria-hidden="true"><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span></div>
+        <div class="binderPage">
+          <div class="binderHoles" aria-hidden="true"><span class="binderHole"></span><span class="binderHole"></span><span class="binderHole"></span><span class="binderHole"></span><span class="binderHole"></span></div>
+          <div id="binderPageNum" class="binderPageNum">14</div>
+          <div id="deckSelectPool" class="deckSelectPool"></div>
+        </div>
+        <div class="binderRings binderRings-front" aria-hidden="true"><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span></div>
+        <div id="binderTabs" class="binderTabs" role="tablist" aria-label="Card totals"></div>
+      </div>
+      <div class="deckSelectFelt">
+        <div class="deckSelectTray">
+          <div id="deckSelectHand" class="hand"></div>
         </div>
       </div>
     </div>
@@ -4943,13 +4944,16 @@ if ('serviceWorker' in navigator) {
 }
 </style>
 <style>
-/* v49 — binder picker uses Marc's locked still as the scene.
-   Five even brass rings are composited from that still. HTML only overlays
-   the interactive wells, page number, tabs, and tray. */
+/* v49 — binder picker (option 5b). Top rings, bottom index, 4×4 wells.
+   HTML leather + parchment so rings, page number, and tabs are not fighting
+   a painted still. Each brass hoop is split front/back through a punched hole. */
 #deckSelect{
   --card-ratio:5/7;
   --binder-tab:28px;
-  position:relative;
+  --binder-inset:10px;
+  --binder-ring:52px;
+  --binder-ring-h:52px;
+  --binder-spine:36px;
   position:relative;
   max-width:none!important;
   margin:0!important;
@@ -5031,64 +5035,138 @@ if ('serviceWorker' in navigator) {
   flex:1 1 auto;
   min-height:0;
   display:flex;
-  align-items:center;
-  justify-content:center;
-}
-#deckSelect .deckSceneWrap{
-  position:relative;
-  z-index:2;
-  width:min(100%, calc((100dvh - 5.6rem) * 720 / 1280));
-  max-height:100%;
-  aspect-ratio:720 / 1280;
-}
-#deckSelect .deckScene{
-  position:absolute;
-  inset:0;
-  width:100%;
-  height:100%;
-  object-fit:fill;
-  pointer-events:none;
-  z-index:0;
+  flex-direction:column;
+  gap:8px;
 }
 #deckSelect .deckBinder{
+  flex:1 1 auto;
+  position:relative;
+  z-index:2;
+  isolation:isolate;
+  display:grid;
+  grid-template-columns:minmax(0,1fr);
+  grid-template-rows:var(--binder-spine) minmax(0,1fr) var(--binder-tab);
+  grid-template-areas:"spine" "page" "tabs";
+  min-height:0;
+  overflow:visible;
+  background:
+    linear-gradient(180deg,rgba(20,10,4,.32),transparent 22%),
+    url("assets/ui/deck_binder_cover.png") center / cover no-repeat,
+    #3a2214;
+  border:4px solid #140c08;
+  border-radius:12px;
+  box-shadow:
+    inset 0 1px 0 rgba(232,194,122,.28),
+    0 16px 32px #000a;
+}
+#deckSelect .binderSpine{
+  grid-area:spine;
+  pointer-events:none;
+}
+#deckSelect .binderRings{
+  grid-area:spine;
   position:absolute;
-  inset:0;
-  z-index:1;
+  left:var(--binder-inset);
+  right:var(--binder-inset);
+  top:100%;
+  transform:translateY(-50%);
+  height:var(--binder-ring-h);
+  display:flex;
+  flex-direction:row;
+  justify-content:space-evenly;
+  align-items:center;
+  padding:0 8px;
+  margin:0;
+  pointer-events:none;
+}
+#deckSelect .binderRings-back{z-index:0}
+#deckSelect .binderRings-front{z-index:6}
+#deckSelect .binderRing{
   display:block;
+  flex:0 0 auto;
+  width:var(--binder-ring);
+  height:var(--binder-ring-h);
   background:none;
   border:0;
   box-shadow:none;
-  overflow:visible;
+}
+#deckSelect .binderRing img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+}
+#deckSelect .binderRings-back .binderRing img{
+  -webkit-clip-path:inset(0 0 46% 0);
+  clip-path:inset(0 0 46% 0);
+}
+#deckSelect .binderRings-front .binderRing img{
+  -webkit-clip-path:inset(46% 0 0 0);
+  clip-path:inset(46% 0 0 0);
+  filter:drop-shadow(0 2px 2px #0008);
+}
+#deckSelect .binderHoles{
+  position:absolute;
+  left:0;
+  right:0;
+  top:0;
+  height:18px;
+  display:flex;
+  flex-direction:row;
+  justify-content:space-evenly;
+  align-items:flex-end;
+  padding:0 8px;
+  pointer-events:none;
+  z-index:2;
+}
+#deckSelect .binderHole{
+  flex:0 0 auto;
+  width:var(--binder-ring);
+  height:14px;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
+#deckSelect .binderHole:before{
+  content:"";
+  width:11px;
+  height:10px;
+  border-radius:50%;
+  background:radial-gradient(circle at 40% 30%,#2c160c 0%,#0c0604 72%);
+  box-shadow:
+    inset 0 2px 3px #000c,
+    0 0 0 1px #c4a46a;
 }
 #deckSelect .binderPage{
-  position:absolute;
-  left:12.2%;
-  right:13.4%;
-  top:27.6%;
-  height:38.2%;
+  grid-area:page;
+  position:relative;
+  z-index:1;
   display:flex;
   flex-direction:column;
   min-width:0;
   min-height:0;
-  margin:0;
-  padding:0;
-  background:none;
-  border:0;
-  box-shadow:none;
+  overflow:visible;
+  margin:0 var(--binder-inset) 0;
+  padding:28px 8px 10px;
+  background:
+    linear-gradient(#f3e6c8,#f3e6c8) 0 0 / 100% 56px no-repeat,
+    url("assets/ui/deck_binder_page.png") center 40% / cover no-repeat,
+    #f3e6c8;
+  border:1px solid #c4a46a;
+  box-shadow:
+    0 6px 12px #0006,
+    inset 0 0 0 2px rgba(246,237,216,.55);
+  border-radius:4px;
 }
 #deckSelect .binderPageNum{
-  position:absolute;
-  left:0;
-  right:0;
-  top:-7.8%;
+  flex:0 0 auto;
   text-align:center;
-  font:700 clamp(15px,4.2vw,22px)/1 Palatino,"Palatino Linotype",Georgia,serif;
-  color:#1c120c;
+  font:700 clamp(15px,4vw,20px)/1 Palatino,"Palatino Linotype",Georgia,serif;
+  color:#4a2e16;
   letter-spacing:.08em;
-  padding:0 8px;
-  background:#e6d3ab;
-  width:max-content;
-  margin:0 auto;
+  padding:0 0 6px;
+  background:none;
+  text-shadow:0 1px 0 #fff8;
 }
 #deckSelect .deckSelectPool{
   flex:1 1 auto;
@@ -5097,25 +5175,30 @@ if ('serviceWorker' in navigator) {
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
   grid-template-rows:repeat(4,minmax(0,1fr));
-  gap:2.2%;
+  grid-auto-rows:minmax(0,1fr);
+  gap:5px;
   align-content:stretch;
   width:100%;
   height:100%;
-  margin:0;
-  padding:0;
+  margin:0 auto;
+  padding:0 2px 2px;
 }
 #deckSelect .deckPick{
+  container-type:size;
   min-width:0;
   min-height:0;
   height:100%;
+  overflow:hidden;
   display:flex;
   align-items:center;
   justify-content:center;
   cursor:pointer;
-  background:transparent;
+  background:
+    url("assets/ui/deck_binder_well.png") center / 100% 100% no-repeat,
+    #2a120e;
   border:0;
-  border-radius:4px;
-  box-shadow:none;
+  border-radius:6px;
+  box-shadow:inset 0 2px 6px #0007;
 }
 #deckSelect .deckPick.empty{
   cursor:default;
@@ -5127,94 +5210,116 @@ if ('serviceWorker' in navigator) {
   filter:grayscale(.35);
 }
 #deckSelect .deckPick .card{
-  width:100%;
-  height:100%!important;
+  width:min(100%, calc(100cqh * 5 / 7));
+  height:min(100%, calc(100cqw * 7 / 5));
   min-height:0!important;
+  max-width:100%;
   max-height:100%;
   aspect-ratio:var(--card-ratio);
 }
 #deckSelect .binderTabs{
-  position:absolute;
-  left:10.4%;
-  right:12.2%;
-  top:66.6%;
-  height:6.4%;
+  grid-area:tabs;
+  position:relative;
+  z-index:1;
   display:flex;
   flex-direction:row;
   justify-content:space-between;
   align-items:stretch;
+  gap:1px;
   min-width:0;
-  padding:0;
+  min-height:0;
+  padding:0 8px 3px;
 }
 #deckSelect .binderTab{
   flex:1 1 0;
   min-height:0;
   min-width:0;
-  margin:0 1px;
-  padding:0;
+  margin:0;
+  padding:6px 0 2px;
+  overflow:hidden;
+  white-space:nowrap;
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  font:700 clamp(8px,2.2vw,11px)/1 Palatino,"Palatino Linotype",Georgia,serif;
+  font:700 clamp(6.5px,2vw,10px)/1 Palatino,"Palatino Linotype",Georgia,serif;
+  letter-spacing:-.03em;
   color:#2a180c!important;
-  background:transparent!important;
-  border:0!important;
-  box-shadow:none!important;
-  border-radius:0!important;
+  background:
+    url("assets/ui/deck_binder_tab.png") center 30% / 140% 220% no-repeat,
+    linear-gradient(#e8d2a4,#c9a56a)!important;
+  border:1px solid #8a6418!important;
+  border-top:0!important;
+  border-radius:0 0 7px 7px!important;
+  box-shadow:inset 0 1px 0 #f6edd8, 0 2px 2px #0006!important;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
-  text-shadow:none;
+  text-shadow:0 1px 0 #f6edd8;
 }
 #deckSelect .binderTab.selected{
+  background-image:url("assets/ui/deck_binder_tab_on.png")!important;
   color:#1a1008!important;
-  transform:translateY(2px);
+  transform:translateY(3px);
   z-index:3;
-  filter:drop-shadow(0 0 5px rgba(232,194,122,.9));
+  filter:drop-shadow(0 0 6px rgba(232,194,122,.95));
 }
 #deckSelect .deckSelectFelt{
-  position:absolute;
-  left:9.2%;
-  right:12.8%;
-  top:76.4%;
-  height:15.8%;
-  background:none;
-  border:0;
-  padding:0;
-  box-shadow:none;
+  flex:0 0 auto;
+  position:relative;
+  z-index:2;
+  background:#163528;
+  border:8px solid #5a3a22;
+  border-radius:8px;
+  padding:8px 12px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    0 8px 16px #0007;
 }
 #deckSelect .deckSelectTray{
   position:relative;
+  flex:0 0 auto;
   width:100%;
-  height:100%;
-  margin:0;
+  margin:0 auto;
 }
 #deckSelect .deckSelectTray:before,
-#deckSelect .deckSelectTray:after{display:none}
+#deckSelect .deckSelectTray:after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width:11px;
+  height:26px;
+  transform:translateY(-50%);
+  background:linear-gradient(#6d4b32,#4a301c);
+  border:2px solid #2a1810;
+  z-index:0;
+}
+#deckSelect .deckSelectTray:before{left:-9px;border-radius:7px 0 0 7px;border-right:0}
+#deckSelect .deckSelectTray:after{right:-9px;border-radius:0 7px 7px 0;border-left:0}
 #deckSelect .hand{
   position:relative;
   z-index:1;
   display:grid;
   grid-template-columns:repeat(5,1fr);
-  gap:3.4%;
-  background:transparent;
-  border:0;
-  border-radius:0;
-  padding:0!important;
-  box-shadow:none;
+  gap:4px;
+  background:linear-gradient(#6d4b32,#4a301c);
+  border:3px solid #2a1810;
+  border-radius:6px;
+  padding:5px 6px!important;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.35),0 7px 16px #0007;
   min-height:0!important;
   margin:0!important;
-  height:100%;
-  align-items:stretch;
 }
 #deckSelect .hand>div,
 #deckSelect .handSlot{
   min-width:0;
-  height:100%;
-  aspect-ratio:auto;
+  overflow:hidden;
+  aspect-ratio:var(--card-ratio);
 }
 #deckSelect .handSlot.empty{
-  background:transparent;
-  box-shadow:none;
+  background:
+    url("assets/ui/deck_binder_well.png") center / 100% 100% no-repeat,
+    #2a120e;
+  border-radius:6px;
+  box-shadow:inset 0 2px 6px #0007;
 }
 #deckSelect .hand .card{
   width:100%;
@@ -5233,18 +5338,25 @@ if ('serviceWorker' in navigator) {
 }
 .placeGhost.cardLift-fly{transform:none}
 @media(max-width:620px){
+  #deckSelect{--binder-tab:26px;--binder-inset:8px;--binder-ring:46px;--binder-ring-h:46px;--binder-spine:32px}
   #deckSelect .deckSelectBar button,
   #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
+  #deckSelect .binderPage{padding:24px 6px 8px}
+  #deckSelect .deckSelectFelt{border-width:7px;padding:7px 10px}
+  #deckSelect .binderTabs{padding:0 6px 2px}
   .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
 }
 @media(max-width:360px){
-  #deckSelect .binderTab{font-size:8px}
+  #deckSelect{--binder-tab:24px;--binder-ring:40px;--binder-ring-h:44px;--binder-spine:30px}
+  #deckSelect .binderTab{padding:5px 0 1px;font-size:7px;letter-spacing:-.04em}
+  #deckSelect .binderTabs{padding:0 4px 2px;gap:0}
 }
 @media(prefers-reduced-motion:reduce){
   .placeGhost.cardLift-up{transform:none!important;transition:none!important}
   #deckSelect .binderTab.selected{transform:none}
 }
 </style>
+
 <style>
 /* v39 — phones: show the location painting without the extra dark washes.
    A tall crop already includes more of the shadowed floor; the 42% :after
