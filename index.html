@@ -237,6 +237,8 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 .worldStatus span{background:#3e332bba;border:1px solid #7d6957;border-radius:999px;padding:4px 8px}
 .journalDev{margin-top:28px;padding-top:12px;border-top:1px dashed #9e8868;font:12px system-ui;opacity:.75}
 .journalDev summary{cursor:pointer;font-weight:700}
+.journalDev .devToggle{display:flex;align-items:center;gap:8px;font-weight:700;color:#2a1c12}
+.journalDev .devToggle input{width:16px;height:16px;flex:0 0 auto;accent-color:#5a3a22}
 .cardMeta{font-size:10px;opacity:.7;margin-top:3px}
 @media(max-width:620px){#visualShell{min-height:0}.townScene{height:480px}.worldTopbar{position:relative}}
 
@@ -483,7 +485,14 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div class="journalHeader"><div><b>Travel Journal</b><div class="small">It records what you have actually learned.</div></div><button id="closeJournal">Close</button></div>
     <div class="journalTabs"><button data-jtab="calendar">Calendar</button><button data-jtab="people">People</button><button data-jtab="cards">Cards</button><button data-jtab="news">Card News</button><button data-jtab="history">History</button></div>
     <div id="journalContent"></div>
-    <details class="journalDev"><summary>Developer tools</summary><div style="margin-top:8px"><button id="devReset">Reset prototype save</button></div><div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div></details>
+    <details class="journalDev"><summary>Developer tools</summary>
+      <div style="margin-top:8px">
+        <label class="devToggle"><input type="checkbox" id="devSeeOpponentCards"> <span>See opponent cards</span></label>
+        <div class="small" style="margin:4px 0 10px">Off by default. Their hand stays in the same five slots as card backs. When they play, the chosen card lifts out and flips to show its face.</div>
+        <button id="devReset">Reset prototype save</button>
+      </div>
+      <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
+    </details>
   </div>
 </div>
 <section class="panel">
@@ -537,9 +546,9 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <div class="small">Development-only comparison control. Not intended for the finished player-facing game.</div>
 <label style="display:block;margin-top:8px">Opponent hand:
 <select id="handVisibilityMode">
+<option value="closed">Closed — card backs until played</option>
 <option value="open">Open — all cards visible</option>
 <option value="partial">Partial Open — 3 cards visible</option>
-<option value="closed">Closed — hidden until played</option>
 </select></label>
 <div id="handVisibilityHelp" class="small" style="margin-top:6px"></div>
 </section>
@@ -881,7 +890,11 @@ function ensureCopies(){
  });
  if(!state.exchangePool)state.exchangePool=[];
  if(!state.economyStats)state.economyStats={commonIssued:0,exchangeTrades:0,npcAcquisitions:0};
- if(!state.testSettings)state.testSettings={handVisibility:"open"};
+ if(!state.testSettings)state.testSettings={handVisibility:"closed",seeOpponentCards:false};
+ if(state.testSettings.seeOpponentCards===undefined){
+  state.testSettings.seeOpponentCards=false;
+  if(!state.testSettings.handVisibility||state.testSettings.handVisibility==="open")state.testSettings.handVisibility="closed";
+ }
  if(state.testSettings.comboCapture===undefined)state.testSettings.comboCapture=false;
  if(state.testSettings.reverseCapture===undefined)state.testSettings.reverseCapture=false;
  if(!state.season)state.season={day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]};
@@ -1091,6 +1104,12 @@ function cardHTML(c,owner="",sel=false){
  if(!c)return "";
  return `<div class="card gilt art${cardArtTone(c.name)} ${owner||""} ${sel?"sel":""}" data-card="${c.name}"><span class="n">${c.n}</span><span class="e">${c.e}</span><span class="s">${c.s}</span><span class="w">${c.w}</span><div class="giltWindow" aria-hidden="true"></div></div>`;
 }
+function cardBackHTML(owner=""){
+ return `<div class="card gilt cardBack ${owner||""}" aria-hidden="true"><div class="giltWindow"></div><div class="cardBackMark"></div></div>`;
+}
+function flipCardHTML(backHTML,faceHTML){
+ return `<div class="flipCard"><div class="flipCardInner"><div class="flipFace flipBack">${backHTML}</div><div class="flipFace flipFront">${faceHTML}</div></div></div>`;
+}
 
 
 
@@ -1101,7 +1120,7 @@ const RULE_HELP={
  "Reverse":"Lower adjacent side captures the higher side. Equal sides do not capture unless another selected rule says otherwise.",
  "Open Hand":"All remaining cards in the opponent's hand are visible.",
  "Partial Open":"Three opponent cards are revealed at the start. The other two remain hidden until played.",
- "Closed Hand":"Opponent cards remain hidden in hand until they are played.",
+ "Closed Hand":"Opponent cards show as backs in hand. The chosen card lifts out and flips as they play it.",
  "Draw":"A level final score is recorded as a draw.",
  "Final Capture":"If the final score is level, the player who made the final capture wins.",
  "Claim One":"The winner chooses one eligible card from the loser.",
@@ -1122,7 +1141,9 @@ function currentCaptureLabel(){
  if(currentTerms?.rule==="Match"&&comboOn())return "Match + Combo";
  return currentTerms?.rule||"Standard";
 }
-function handLabel(){return handMode()==="open"?"Open Hand":handMode()==="partial"?"Partial Open":"Closed Hand"}
+function opponentFacesVisible(){return !!state.testSettings?.seeOpponentCards}
+function matchHandMode(){return state.testSettings?.handVisibility||"closed"}
+function handLabel(){return matchHandMode()==="open"?"Open Hand":matchHandMode()==="partial"?"Partial Open":"Closed Hand"}
 function tieLabel(){return currentTerms?.tie==="final"?"Final Capture":"Draw"}
 function seriesLabel(){return seriesTarget===5?"Best of 5":seriesTarget===3?"Best of 3":"Best of 1"}
 function selectedRulesHTML(){
@@ -1164,14 +1185,18 @@ function comboCascade(startPositions,owner){
  }
  return extra;
 }
-function handMode(){return state.testSettings?.handVisibility||"open"}
+function handMode(){
+ if(opponentFacesVisible()) return matchHandMode()==="partial"?"partial":"open";
+ return "closed";
+}
 function handModeText(){
- if(handMode()==="open")return "All remaining opponent cards are visible.";
- if(handMode()==="partial")return "Three cards are revealed at the start. The other cards remain hidden until played.";
- return "All opponent cards are hidden in hand and reveal only when played.";
+ if(opponentFacesVisible()&&matchHandMode()==="partial")return "Developer view: three cards are revealed at the start.";
+ if(opponentFacesVisible())return "Developer view: all remaining opponent cards are visible.";
+ return "Opponent cards are face-down. The chosen card lifts out and flips as they play it.";
 }
 function setupAiHandVisibility(){
  aiVisibleCounts={};
+ if(!opponentFacesVisible())return;
  if(handMode()==="open"){
    aiHand.forEach(n=>aiVisibleCounts[n]=(aiVisibleCounts[n]||0)+1);
  }else if(handMode()==="partial"){
@@ -1181,16 +1206,36 @@ function setupAiHandVisibility(){
 }
 function renderOpponentHand(){
  if(!$("oppHand"))return;
- $("oppHandLabel").textContent=`${currentNpc}'s hand — ${handMode()==="open"?"OPEN":handMode()==="partial"?"PARTIAL OPEN":"CLOSED"} [TEST]`;
+ $("oppHandLabel").textContent=opponentFacesVisible()
+  ? `${currentNpc}'s hand — visible [DEV]`
+  : `${currentNpc}'s hand`;
  $("oppHand").innerHTML="";
  let remaining={...aiVisibleCounts};
  aiHand.forEach(n=>{
    let d=document.createElement("div");
-   let visible=(remaining[n]||0)>0;
+   d.dataset.card=n;
+   let visible=opponentFacesVisible()&&(remaining[n]||0)>0;
    if(visible){d.innerHTML=cardHTML(C[n],"ai");remaining[n]--}
-   else d.innerHTML=`<div class="card gilt ai" style="display:flex;align-items:center;justify-content:center;text-align:center"><b>Hidden<br>Card</b></div>`;
+   else{d.dataset.hidden="1";d.innerHTML=cardBackHTML("ai")}
    $("oppHand").appendChild(d);
  });
+}
+function syncDevControls(){
+ let box=$("devSeeOpponentCards");
+ if(box)box.checked=opponentFacesVisible();
+ if($("handVisibilityMode"))$("handVisibilityMode").value=matchHandMode();
+ if($("handVisibilityHelp"))$("handVisibilityHelp").textContent=handModeText();
+}
+function setSeeOpponentCards(on){
+ if(!state.testSettings)state.testSettings={};
+ state.testSettings.seeOpponentCards=!!on;
+ state.testSettings.handVisibility=on?(matchHandMode()==="partial"?"partial":"open"):"closed";
+ save();
+ syncDevControls();
+ if($("game")&&!$("game").classList.contains("hidden")){
+   if(on)setupAiHandVisibility();
+   renderGame({deferAi:true});
+ }
 }
 function consumeVisibleAiCard(n){
  if((aiVisibleCounts[n]||0)>0)aiVisibleCounts[n]--;
@@ -1324,7 +1369,7 @@ function runSeasonEvent(day){
 }
 
 function championshipTournamentRules(round="Quarterfinal"){
- return {rule:"Standard",tie:"final",wager:"Claim One",budget:92,series:round==="Final"?5:3,hand:"open",combo:false,reverse:false}
+ return {rule:"Standard",tie:"final",wager:"Claim One",budget:92,series:round==="Final"?5:3,hand:"closed",combo:false,reverse:false};
 }
 function createLocalChampionship(){
  state.activeTournament={
@@ -1446,7 +1491,7 @@ function finalizeChampionshipPlayerResult(playerWon){
 }
 
 function warmupTournamentRules(round="Semifinal"){
- return {rule:"Standard",tie:"final",wager:"Claim One",budget:86,series:round==="Final"?5:3,hand:"open",combo:false,reverse:false}
+ return {rule:"Standard",tie:"final",wager:"Claim One",budget:86,series:round==="Final"?5:3,hand:"closed",combo:false,reverse:false};
 }
 function tournamentRulesSummary(t){
  let r=t.rules,cap=r.rule==="Match"&&r.combo?"Match + Combo":(r.reverse?"Reverse":r.rule);
@@ -1481,7 +1526,9 @@ function beginWarmupTournament(){
 }
 function configureTournamentTerms(t){
  currentTerms={rule:t.rules.rule,tie:t.rules.tie,wager:t.rules.wager,budget:t.rules.budget,series:t.rules.series};
- seriesTarget=t.rules.series||1;state.testSettings.handVisibility=t.rules.hand;state.testSettings.comboCapture=!!t.rules.combo;state.testSettings.reverseCapture=!!t.rules.reverse;
+ seriesTarget=t.rules.series||1;
+ state.testSettings.comboCapture=!!t.rules.combo;
+ state.testSettings.reverseCapture=!!t.rules.reverse;
 }
 function beginTournamentPlayerMatch(opponent,resultField,round){
  let t=state.activeTournament;
@@ -1569,7 +1616,7 @@ function renderJournal(tab){
 }
 
 function renderHome(){
- ensureCopies();ensureVisualState();seedProvenance();renderWorldScene();renderJournal();
+ ensureCopies();ensureVisualState();seedProvenance();renderWorldScene();renderJournal();syncDevControls();
  // Legacy dashboard remains hidden in the DOM only so stable match/economy code can reference it safely.
  if($("playerStats"))$("playerStats").textContent=`${state.player.length} cards · ${state.matches} completed matches`;
  if(state.incoming){
@@ -1745,9 +1792,12 @@ $("closeInspect").onclick=()=>{
 };
 if($("handVisibilityMode"))$("handVisibilityMode").onchange=e=>{
  state.testSettings.handVisibility=e.target.value;
+ state.testSettings.seeOpponentCards=e.target.value!=="closed";
  $("handVisibilityHelp").textContent=handModeText();
  save();
+ syncDevControls();
 };
+if($("devSeeOpponentCards"))$("devSeeOpponentCards").onchange=e=>setSeeOpponentCards(e.target.checked);
 if($("reverseMode"))$("reverseMode").onchange=e=>{
  state.testSettings.reverseCapture=e.target.value==="on";
  $("reverseHelp").textContent=reverseModeText();save();
@@ -1994,30 +2044,44 @@ function findPlayerCardEl(design){
 }
 function findOppCardEl(design){
  let nodes=[...($("oppHand")?.children||[])];
- return nodes.find(d=>d.querySelector("[data-card]")?.dataset.card===design)||nodes.find(d=>/Hidden/.test(d.textContent))||nodes[0]||null;
+ return nodes.find(d=>d.dataset.card===design)||nodes.find(d=>d.querySelector("[data-card]")?.dataset.card===design)||nodes.find(d=>d.dataset.hidden==="1")||nodes[0]||null;
 }
-function flyCardToCell(fromRect,html,pos){
+function oppCardIsBack(el){return !!(el&&(el.dataset.hidden==="1"||el.querySelector(".cardBack")))}
+function flyCardToCell(fromRect,html,pos,opts){
+ opts=opts||{};
  return new Promise(done=>{
   let reduce=reducedPlaceMotion();
   let cell=$("board")?.children[pos];
   let to=cell?cell.getBoundingClientRect():null;
   if(reduce||!fromRect||!to||!to.width){done();return}
+  let reveal=!!opts.revealFromBack;
   let ghost=document.createElement("div");
-  ghost.className="placeGhost";
-  ghost.innerHTML=html;
+  ghost.className="placeGhost"+(reveal?" oppReveal":"");
+  ghost.innerHTML=reveal?flipCardHTML(cardBackHTML("ai"),html):html;
   ghost.style.left=fromRect.left+"px";
   ghost.style.top=fromRect.top+"px";
   ghost.style.width=fromRect.width+"px";
   ghost.style.height=fromRect.height+"px";
-  ghost.style.transition="left .28s cubic-bezier(.2,.7,.2,1),top .28s cubic-bezier(.2,.7,.2,1),width .28s ease,height .28s ease";
   document.body.appendChild(ghost);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>{
+  let liftMs=reveal?220:0;
+  let flipMs=reveal?420:0;
+  let flyMs=280;
+  function startFly(){
+   ghost.classList.add("oppReveal-fly");
+   ghost.style.transition="left .28s cubic-bezier(.2,.7,.2,1),top .28s cubic-bezier(.2,.7,.2,1),width .28s ease,height .28s ease";
    ghost.style.left=to.left+"px";
    ghost.style.top=to.top+"px";
    ghost.style.width=to.width+"px";
    ghost.style.height=to.height+"px";
-  }));
-  setTimeout(()=>{ghost.remove();done()},300);
+  }
+  if(reveal){
+   requestAnimationFrame(()=>requestAnimationFrame(()=>ghost.classList.add("oppReveal-lift")));
+   setTimeout(()=>ghost.querySelector(".flipCard")?.classList.add("isFlipped"),liftMs);
+   setTimeout(startFly,liftMs+flipMs);
+  }else{
+   requestAnimationFrame(()=>requestAnimationFrame(startFly));
+  }
+  setTimeout(()=>{ghost.remove();done()},liftMs+flipMs+flyMs+20);
  });
 }
 function nudgeToward(from,to){
@@ -2065,9 +2129,9 @@ function afterPlaceMotion(){
   $("status").textContent=chosen?"Choose a board space":"Choose a card";
  }
 }
-function runPlaceMotion(fromRect,html,pos,placer,captured){
+function runPlaceMotion(fromRect,html,pos,placer,captured,opts){
  matchAnimating=true;
- return flyCardToCell(fromRect,html,pos).then(()=>{
+ return flyCardToCell(fromRect,html,pos,opts).then(()=>{
   renderGame({deferAi:true,deferFinish:true,holdCaptures:captured});
   return animateCaptures(captured,placer,pos);
  }).then(afterPlaceMotion);
@@ -2154,6 +2218,7 @@ function aiOpeningMove(){
  let fromEl=findOppCardEl(n);
  let fromRect=elementRect(fromEl);
  let html=cardHTML(C[n],"ai");
+ let revealFromBack=oppCardIsBack(fromEl);
  if(fromEl) fromEl.style.visibility="hidden";
  let ix=aiHand.indexOf(n);if(ix>=0)aiHand.splice(ix,1);
  consumeVisibleAiCard(n);aiPlayed.push(n);
@@ -2161,7 +2226,7 @@ function aiOpeningMove(){
  markSeen(currentNpc,n);
  let before=boardOwners();
  board[pos]={card:C[n],owner:"ai"};resolve(pos,"ai");turn++;save();
- runPlaceMotion(fromRect,html,pos,"ai",ownerFlips(before,"ai"));
+ runPlaceMotion(fromRect,html,pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
  return true;
 }
 function aiMove(){
@@ -2191,6 +2256,7 @@ function aiMove(){
  let fromEl=findOppCardEl(best.n);
  let fromRect=elementRect(fromEl);
  let html=cardHTML(best.c,"ai");
+ let revealFromBack=oppCardIsBack(fromEl);
  if(fromEl) fromEl.style.visibility="hidden";
  consumeVisibleAiCard(best.n);
  let ix=aiHand.indexOf(best.n);if(ix>=0)aiHand.splice(ix,1);
@@ -2198,7 +2264,7 @@ function aiMove(){
  markSeen(currentNpc,best.n);
  let before=boardOwners();
  board[best.pos]={card:best.c,owner:"ai"};resolve(best.pos,"ai");turn++;save();
- runPlaceMotion(fromRect,html,best.pos,"ai",ownerFlips(before,"ai"));
+ runPlaceMotion(fromRect,html,best.pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
 }
 function settleSeries(winner){
  seriesWinner=winner;if(!window._tournamentMatch)scheduleActivityTime("match");
@@ -2387,7 +2453,7 @@ if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
 if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();renderHome();}};
 
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();renderHome()}};
-load();renderHome();show("home");
+load();renderHome();show("home");syncDevControls();
 document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
 </script>
 
@@ -4352,6 +4418,7 @@ if ('serviceWorker' in navigator) {
 }
 @media(prefers-reduced-motion:reduce){
   .placeGhost{transition:none!important}
+  .placeGhost .flipCardInner{transition:none!important}
   #game .card.play-capture{animation:none}
 }
 </style>
@@ -4641,6 +4708,74 @@ if ('serviceWorker' in navigator) {
   #game .card.gilt .e,
   #game .card.gilt .s,
   #game .card.gilt .w{font-size:clamp(10px,4.2vw,16px)}
+}
+</style>
+<style>
+/* v44 — opponent card backs (default) and lift-then-flip when they play. */
+.card.gilt.cardBack .n,
+.card.gilt.cardBack .e,
+.card.gilt.cardBack .s,
+.card.gilt.cardBack .w{display:none!important}
+.card.gilt.cardBack .giltWindow{
+  background:
+    radial-gradient(circle at 50% 46%,rgba(232,196,106,.3),transparent 48%),
+    repeating-linear-gradient(45deg,rgba(92,30,38,.5) 0 6px,rgba(42,14,18,.42) 6px 12px),
+    linear-gradient(165deg,#7a333c 0%,#3a151b 55%,#241014 100%);
+}
+.card.gilt.cardBack .cardBackMark{
+  position:absolute;
+  z-index:2;
+  left:50%;
+  top:50%;
+  width:26%;
+  aspect-ratio:1;
+  transform:translate(-50%,-50%) rotate(45deg);
+  border:2px solid rgba(236,205,122,.92);
+  box-shadow:0 0 0 3px rgba(58,18,22,.55),inset 0 0 0 3px rgba(236,205,122,.3);
+  background:radial-gradient(circle at 40% 35%,rgba(236,205,122,.42),rgba(90,28,36,.12) 70%);
+  pointer-events:none;
+}
+.placeGhost.oppReveal{z-index:90;overflow:visible}
+.placeGhost .flipCard{
+  width:100%;
+  height:100%;
+  perspective:780px;
+}
+.placeGhost .flipCardInner{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  transition:transform .22s cubic-bezier(.2,.7,.2,1);
+}
+.placeGhost.oppReveal-lift .flipCardInner{
+  transform:translateY(18px) scale(1.07);
+}
+.placeGhost.oppReveal-lift .flipCard.isFlipped .flipCardInner{
+  transform:translateY(18px) scale(1.07) rotateY(180deg);
+  transition:transform .42s cubic-bezier(.18,.7,.22,1);
+}
+.placeGhost.oppReveal-fly .flipCardInner,
+.placeGhost.oppReveal-fly .flipCard.isFlipped .flipCardInner{
+  transform:rotateY(180deg);
+  transition:transform .28s ease;
+}
+.placeGhost .flipFace{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+.placeGhost .flipFront{transform:rotateY(180deg)}
+.placeGhost .flipFace .card{
+  width:100%!important;
+  height:100%!important;
+  min-height:0!important;
+}
+@media(max-width:620px){
+  .placeGhost.oppReveal-lift .flipCardInner{transform:translateY(12px) scale(1.05)}
+  .placeGhost.oppReveal-lift .flipCard.isFlipped .flipCardInner{transform:translateY(12px) scale(1.05) rotateY(180deg)}
 }
 </style>
 <style>
