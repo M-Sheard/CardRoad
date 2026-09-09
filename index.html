@@ -614,13 +614,13 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     </div>
     <div class="deckBinderStage">
       <div class="deckBinder">
-        <div class="binderRings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i><i></i></div>
+        <div class="binderRings" aria-hidden="true"><i></i><i></i><i></i><i></i><i></i></div>
         <div class="binderPage">
           <div id="binderPageNum" class="binderPageNum">14</div>
           <div id="deckSelectPool" class="deckSelectPool"></div>
         </div>
+        <div id="binderTabs" class="binderTabs" role="tablist" aria-label="Card totals"></div>
       </div>
-      <div id="binderTabs" class="binderTabs" role="tablist" aria-label="Card totals"></div>
       <div class="deckSelectFelt">
         <div class="deckSelectTray">
           <div id="deckSelectHand" class="hand"></div>
@@ -2011,7 +2011,7 @@ function renderDeckSelect(opts){
  pool.innerHTML="";
  let hidPool=false;
  let pageRows=deckCardStates().filter(row=>C[row.n]&&C[row.n].budget===deckSelectPage&&!row.inHand);
- let cells=Math.max(12,pageRows.length);
+ let cells=Math.max(16,pageRows.length);
  for(let i=0;i<cells;i++){
    let row=pageRows[i],d=document.createElement("div");
    if(!row){
@@ -4941,12 +4941,11 @@ if ('serviceWorker' in navigator) {
 }
 </style>
 <style>
-/* v47 — binder picker (option 4e). Physical leather cover, cream parchment
-   with filigree, circular brass rings, brass-plaque tabs off the page edge,
-   recessed gilt wells, felt tray with a green margin above and below. */
+/* v48 — binder picker (option 5b). Top rings, bottom index tabs 14–26,
+   4×4 wells, five-card tray low on a felt well. */
 #deckSelect{
   --card-ratio:5/7;
-  --binder-tab:42px;
+  --binder-tab:28px;
   position:relative;
   max-width:none!important;
   margin:0!important;
@@ -4954,7 +4953,7 @@ if ('serviceWorker' in navigator) {
   max-height:100dvh;
   overflow:hidden;
   box-sizing:border-box;
-  padding:max(8px,env(safe-area-inset-top)) 0 max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+  padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
   background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
   color:#f4ead3!important;
 }
@@ -4979,7 +4978,7 @@ if ('serviceWorker' in navigator) {
   align-items:center;
   gap:8px;
   flex:0 0 auto;
-  margin:0 max(10px,env(safe-area-inset-right)) 8px 0;
+  margin:0 0 8px;
 }
 #deckSelect .deckSelectCopy{
   flex:1 1 auto;
@@ -5024,38 +5023,33 @@ if ('serviceWorker' in navigator) {
 #deckSelect .deckBinderStage{
   flex:1 1 auto;
   min-height:0;
-  display:grid;
-  grid-template-columns:minmax(0,1fr) var(--binder-tab);
-  grid-template-rows:minmax(0,1fr) auto;
-  column-gap:0;
-  row-gap:10px;
-  padding-right:max(4px,env(safe-area-inset-right));
+  display:flex;
+  flex-direction:column;
+  gap:8px;
 }
 #deckSelect .deckBinder{
-  grid-column:1;
-  grid-row:1;
+  flex:1 1 auto;
   position:relative;
   z-index:2;
   display:grid;
-  grid-template-columns:28px minmax(0,1fr);
+  grid-template-rows:26px minmax(0,1fr) var(--binder-tab);
   min-height:0;
-  margin-right:-10px;
   background:
-    linear-gradient(90deg,rgba(12,6,2,.45),transparent 22%),
+    linear-gradient(180deg,rgba(12,6,2,.4),transparent 18%),
     url("assets/ui/deck_binder_cover.png") center / cover no-repeat,
     #2a160c;
   border:4px solid #140c08;
-  border-radius:12px 8px 8px 12px;
+  border-radius:12px;
   box-shadow:
     inset 0 1px 0 rgba(232,194,122,.3),
     0 16px 32px #000a;
 }
 #deckSelect .binderRings{
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
   justify-content:space-evenly;
   align-items:center;
-  padding:14px 0;
+  padding:0 18px;
   z-index:3;
 }
 #deckSelect .binderRings i{
@@ -5072,24 +5066,24 @@ if ('serviceWorker' in navigator) {
   flex-direction:column;
   min-width:0;
   min-height:0;
-  margin:11px 10px 11px 0;
-  padding:8px 10px 10px;
+  margin: -6px 10px -8px;
+  padding:4px 8px 8px;
   background:
     url("assets/ui/deck_binder_page.png") center / cover no-repeat,
     #f3e6c8;
   border:1px solid #c4a46a;
   box-shadow:
-    4px 0 12px #0006,
+    0 6px 12px #0006,
     inset 0 0 0 2px rgba(246,237,216,.55);
-  border-radius:3px 6px 6px 4px;
+  border-radius:4px;
 }
 #deckSelect .binderPageNum{
   flex:0 0 auto;
   text-align:center;
-  font:700 clamp(22px,6vw,34px)/1 Palatino,"Palatino Linotype",Georgia,serif;
+  font:700 clamp(20px,5.6vw,32px)/1 Palatino,"Palatino Linotype",Georgia,serif;
   color:#4a2e16;
   letter-spacing:.08em;
-  padding:4px 0 8px;
+  padding:2px 0 6px;
   text-shadow:0 1px 0 #fff8;
 }
 #deckSelect .deckSelectPool{
@@ -5101,13 +5095,12 @@ if ('serviceWorker' in navigator) {
   overscroll-behavior:contain;
   display:grid;
   grid-template-columns:repeat(4,minmax(0,1fr));
-  grid-template-rows:repeat(3,minmax(0,1fr));
+  grid-template-rows:repeat(4,minmax(0,1fr));
   grid-auto-rows:minmax(0,1fr);
-  gap:6px;
-  align-content:start;
+  gap:5px;
+  align-content:stretch;
   width:100%;
-  max-height:100%;
-  aspect-ratio:20/21;
+  height:100%;
   margin:0 auto;
   padding:0 2px 2px;
 }
@@ -5139,38 +5132,38 @@ if ('serviceWorker' in navigator) {
   width:100%;
   height:100%!important;
   min-height:0!important;
+  max-height:100%;
   aspect-ratio:var(--card-ratio);
 }
 #deckSelect .binderTabs{
-  grid-column:2;
-  grid-row:1;
   position:relative;
   z-index:1;
   display:flex;
-  flex-direction:column;
+  flex-direction:row;
   justify-content:space-between;
+  align-items:stretch;
   min-width:0;
   min-height:0;
-  padding:14px 0 14px 0;
+  padding:0 10px 4px;
 }
 #deckSelect .binderTab{
   flex:1 1 0;
   min-height:0;
   min-width:0;
-  margin:1px 0;
-  padding:0 6px 0 12px;
+  margin:0 1px;
+  padding:8px 0 3px;
   display:flex;
-  align-items:center;
-  justify-content:flex-end;
-  font:700 clamp(10px,2.8vw,12px)/1 Palatino,"Palatino Linotype",Georgia,serif;
+  align-items:flex-end;
+  justify-content:center;
+  font:700 clamp(8px,2.4vw,11px)/1 Palatino,"Palatino Linotype",Georgia,serif;
   color:#2a180c!important;
   background:
-    url("assets/ui/deck_binder_tab.png") center / 100% 100% no-repeat,
+    url("assets/ui/deck_binder_tab.png") center 30% / 140% 220% no-repeat,
     linear-gradient(#e8d2a4,#c9a56a)!important;
   border:1px solid #8a6418!important;
-  border-left:0!important;
-  border-radius:0 8px 8px 0!important;
-  box-shadow:inset 0 1px 0 #f6edd8, 1px 1px 2px #0007!important;
+  border-top:0!important;
+  border-radius:0 0 7px 7px!important;
+  box-shadow:inset 0 1px 0 #f6edd8, 0 2px 2px #0006!important;
   cursor:pointer;
   -webkit-tap-highlight-color:transparent;
   text-shadow:0 1px 0 #f6edd8;
@@ -5178,22 +5171,20 @@ if ('serviceWorker' in navigator) {
 #deckSelect .binderTab.selected{
   background-image:url("assets/ui/deck_binder_tab_on.png")!important;
   color:#1a1008!important;
-  transform:translateX(3px);
+  transform:translateY(3px);
   z-index:3;
   filter:drop-shadow(0 0 6px rgba(232,194,122,.95));
 }
 #deckSelect .deckSelectFelt{
-  grid-column:1;
-  grid-row:2;
+  flex:0 0 auto;
   position:relative;
   z-index:2;
-  margin-right:6px;
   background:
     radial-gradient(circle at 28% 18%,rgba(72,130,96,.28),transparent 55%),
     #163528;
-  border:10px solid #5a3a22;
+  border:8px solid #5a3a22;
   border-radius:8px;
-  padding:10px 12px;
+  padding:8px 12px;
   box-shadow:
     inset 0 0 0 2px #24150e,
     inset 0 0 0 5px rgba(201,161,90,.45),
@@ -5203,14 +5194,14 @@ if ('serviceWorker' in navigator) {
 #deckSelect .deckSelectFelt:before{
   content:"";
   position:absolute;
-  inset:-12px;
+  inset:-10px;
   pointer-events:none;
   z-index:3;
   background:
-    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/18px 18px no-repeat,
-    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/18px 18px no-repeat,
-    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/18px 18px no-repeat,
-    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/18px 18px no-repeat;
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/16px 18px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/16px 18px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/16px 18px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/16px 18px no-repeat;
   filter:drop-shadow(0 1px 1px #0008);
 }
 #deckSelect .deckSelectTray{
@@ -5276,18 +5267,18 @@ if ('serviceWorker' in navigator) {
 }
 .placeGhost.cardLift-fly{transform:none}
 @media(max-width:620px){
-  #deckSelect{--binder-tab:38px}
+  #deckSelect{--binder-tab:26px}
   #deckSelect .deckSelectBar button,
   #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
-  #deckSelect .deckBinder{grid-template-columns:24px minmax(0,1fr);margin-right:-8px}
+  #deckSelect .deckBinder{grid-template-rows:22px minmax(0,1fr) var(--binder-tab)}
   #deckSelect .binderRings i{width:18px;height:18px}
-  #deckSelect .binderPage{margin:8px 8px 8px 0;padding:6px 7px 8px}
-  #deckSelect .deckSelectFelt{border-width:8px;padding:8px 10px}
+  #deckSelect .binderPage{margin:-4px 8px -6px;padding:3px 6px 6px}
+  #deckSelect .deckSelectFelt{border-width:7px;padding:7px 10px}
   .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
 }
 @media(max-width:360px){
-  #deckSelect{--binder-tab:34px}
-  #deckSelect .binderTab{padding:0 4px 0 10px;font-size:10px}
+  #deckSelect{--binder-tab:24px}
+  #deckSelect .binderTab{padding:6px 0 2px;font-size:8px}
   #deckSelect .binderRings i{width:16px;height:16px}
 }
 @media(prefers-reduced-motion:reduce){
