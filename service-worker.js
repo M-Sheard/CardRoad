@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v39-binder-loop';
+const CACHE_NAME = 'card-road-pwa-v40-binder-loop';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
