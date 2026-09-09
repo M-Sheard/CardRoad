@@ -802,6 +802,8 @@ The strongest current direction:
 
 Warm; hand-painted; whimsical; inviting; richly illustrated fantasy environments; readable game UI; cards visually belonging to the same world.
 
+Card-face creature paintings (the picture inside the gilt window, not the frame itself) are locked as **17d earthy Mary Blair gouache**. Canonical example: `mockups/card-art-dir-17d-blair-earthy-red-fox.png`. NPC standees remain a separate lock (Tomas bevel v19).
+
 ---
 
 # 53. VISUAL DIRECTIONS EXPLORED

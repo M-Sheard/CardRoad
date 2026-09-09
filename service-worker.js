@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v36-match-pins';
+const CACHE_NAME = 'card-road-pwa-v37-creature-names';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
