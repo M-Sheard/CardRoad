@@ -5050,8 +5050,7 @@ if ('serviceWorker' in navigator) {
   min-height:0;
   overflow:visible;
   background:
-    linear-gradient(180deg,rgba(20,10,4,.32),transparent 22%),
-    url("assets/ui/deck_binder_cover.png") center / cover no-repeat,
+    linear-gradient(180deg,rgba(20,10,4,.35),transparent 22%),
     #3a2214;
   border:4px solid #140c08;
   border-radius:12px;
@@ -5192,6 +5191,8 @@ if ('serviceWorker' in navigator) {
   display:flex;
   align-items:center;
   justify-content:center;
+  padding:4px;
+  box-sizing:border-box;
   cursor:pointer;
   background:
     url("assets/ui/deck_binder_well.png") center / 100% 100% no-repeat,
@@ -5350,6 +5351,13 @@ if ('serviceWorker' in navigator) {
   #deckSelect{--binder-tab:24px;--binder-ring:40px;--binder-ring-h:44px;--binder-spine:30px}
   #deckSelect .binderTab{padding:5px 0 1px;font-size:7px;letter-spacing:-.04em}
   #deckSelect .binderTabs{padding:0 4px 2px;gap:0}
+}
+@media(max-height:700px){
+  #deckSelect .deckSelectBar{margin:0 0 6px}
+  #deckSelect .deckBinderStage{gap:6px}
+  #deckSelect .binderPage{padding:20px 6px 6px}
+  #deckSelect .deckSelectFelt{border-width:6px;padding:5px 8px}
+  #deckSelect .hand{padding:3px 4px!important;gap:3px}
 }
 @media(prefers-reduced-motion:reduce){
   .placeGhost.cardLift-up{transform:none!important;transition:none!important}
