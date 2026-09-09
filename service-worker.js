@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v37-binder-patch';
+const CACHE_NAME = 'card-road-pwa-v38-binder-rings';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -24,7 +24,7 @@ const CORE_ASSETS = [
   './assets/ui/deck_binder_tab.png',
   './assets/ui/deck_binder_tab_on.png',
   './assets/ui/deck_binder_well.png',
-  './assets/ui/deck_binder_ring.svg'];
+  './assets/ui/deck_binder_ring.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {

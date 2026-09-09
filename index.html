@@ -614,7 +614,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     </div>
     <div class="deckBinderStage">
       <div class="deckBinder">
-        <div class="binderRings" aria-hidden="true"><span class="binderRing"></span><span class="binderRing"></span><span class="binderRing"></span><span class="binderRing"></span><span class="binderRing"></span></div>
+        <div class="binderRings" aria-hidden="true"><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span></div>
         <div class="binderPage">
           <div id="binderPageNum" class="binderPageNum">14</div>
           <div id="deckSelectPool" class="deckSelectPool"></div>
@@ -5036,7 +5036,7 @@ if ('serviceWorker' in navigator) {
   position:relative;
   z-index:2;
   display:grid;
-  grid-template-rows:32px minmax(0,1fr) var(--binder-tab);
+  grid-template-rows:48px minmax(0,1fr) var(--binder-tab);
   min-height:0;
   background:
     linear-gradient(180deg,rgba(20,10,4,.35),transparent 22%),
@@ -5053,24 +5053,26 @@ if ('serviceWorker' in navigator) {
   display:flex;
   flex-direction:row;
   justify-content:space-evenly;
-  align-items:center;
-  padding:0 22px;
-  margin-bottom:-16px;
+  align-items:flex-end;
+  padding:0 18px 0;
+  margin-bottom:-22px;
+  pointer-events:none;
 }
 #deckSelect .binderRing{
   display:block;
   flex:0 0 auto;
-  width:30px;
-  height:30px;
-  border-radius:50%;
-  box-sizing:border-box;
-  background:#2a160c;
-  border:7px solid #c9a45a;
-  border-top-color:#f4e0a8;
-  border-left-color:#e2c36a;
-  border-right-color:#8a6418;
-  border-bottom-color:#5a3a10;
-  box-shadow:1px 2px 3px #0009, inset 0 0 0 1px #4a2e0c;
+  width:44px;
+  height:36px;
+  background:none;
+  border:0;
+  box-shadow:none;
+}
+#deckSelect .binderRing img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  filter:drop-shadow(0 2px 2px #0009);
 }
 #deckSelect .binderPage{
   position:relative;
@@ -5265,8 +5267,8 @@ if ('serviceWorker' in navigator) {
   #deckSelect{--binder-tab:26px}
   #deckSelect .deckSelectBar button,
   #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
-  #deckSelect .deckBinder{grid-template-rows:28px minmax(0,1fr) var(--binder-tab)}
-  #deckSelect .binderRing{width:26px;height:26px;border-width:6px}
+  #deckSelect .deckBinder{grid-template-rows:42px minmax(0,1fr) var(--binder-tab)}
+  #deckSelect .binderRing{width:38px;height:30px}
   #deckSelect .binderPage{margin:0 8px;padding:16px 6px 8px}
   #deckSelect .deckSelectFelt{border-width:7px;padding:7px 10px}
   .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
@@ -5274,7 +5276,7 @@ if ('serviceWorker' in navigator) {
 @media(max-width:360px){
   #deckSelect{--binder-tab:24px}
   #deckSelect .binderTab{padding:6px 0 2px;font-size:8px}
-  #deckSelect .binderRing{width:24px;height:24px;border-width:6px}
+  #deckSelect .binderRing{width:34px;height:28px}
 }
 @media(prefers-reduced-motion:reduce){
   .placeGhost.cardLift-up{transform:none!important;transition:none!important}
