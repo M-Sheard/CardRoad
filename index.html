@@ -5055,17 +5055,17 @@ if ('serviceWorker' in navigator) {
   justify-content:space-evenly;
   align-items:center;
   padding:0 22px;
-  margin-bottom:-14px;
+  margin-bottom:-16px;
 }
 #deckSelect .binderRing{
   display:block;
   flex:0 0 auto;
-  width:28px;
-  height:28px;
+  width:30px;
+  height:30px;
   border-radius:50%;
   box-sizing:border-box;
-  background:transparent;
-  border:6px solid #c9a45a;
+  background:#2a160c;
+  border:7px solid #c9a45a;
   border-top-color:#f4e0a8;
   border-left-color:#e2c36a;
   border-right-color:#8a6418;
@@ -5078,10 +5078,10 @@ if ('serviceWorker' in navigator) {
   min-width:0;
   min-height:0;
   margin:0 10px 0;
-  padding:16px 8px 8px;
+  padding:18px 8px 10px;
   background:
-    linear-gradient(#f3e6c8,#f3e6c8) 0 0 / 100% 22px no-repeat,
-    url("assets/ui/deck_binder_page.png") center 28% / cover no-repeat,
+    linear-gradient(#f3e6c8,#f3e6c8) 0 0 / 100% 56px no-repeat,
+    url("assets/ui/deck_binder_page.png") center 40% / cover no-repeat,
     #f3e6c8;
   border:1px solid #c4a46a;
   box-shadow:
@@ -5266,15 +5266,15 @@ if ('serviceWorker' in navigator) {
   #deckSelect .deckSelectBar button,
   #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
   #deckSelect .deckBinder{grid-template-rows:28px minmax(0,1fr) var(--binder-tab)}
-  #deckSelect .binderRing{width:24px;height:24px;border-width:5px}
-  #deckSelect .binderPage{margin:0 8px;padding:14px 6px 6px}
+  #deckSelect .binderRing{width:26px;height:26px;border-width:6px}
+  #deckSelect .binderPage{margin:0 8px;padding:16px 6px 8px}
   #deckSelect .deckSelectFelt{border-width:7px;padding:7px 10px}
   .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
 }
 @media(max-width:360px){
   #deckSelect{--binder-tab:24px}
   #deckSelect .binderTab{padding:6px 0 2px;font-size:8px}
-  #deckSelect .binderRing{width:22px;height:22px;border-width:5px}
+  #deckSelect .binderRing{width:24px;height:24px;border-width:6px}
 }
 @media(prefers-reduced-motion:reduce){
   .placeGhost.cardLift-up{transform:none!important;transition:none!important}
