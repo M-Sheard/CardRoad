@@ -139,7 +139,7 @@ main{max-width:none!important;padding:0!important;margin:0!important}
 .journalTabs button{font-family:Georgia,serif!important;font-weight:800!important}
 .journalTabs button.active{background:#315c7c!important;color:#fff!important}
 /* Keep gameplay/readability strong once the world folds into a match */
-#challenge,#termsBuilder,#starter,#game,#result,#seriesSummary,#tournament,#profile,#cardInspector{
+#challenge,#termsBuilder,#starter,#deckSelect,#game,#result,#seriesSummary,#tournament,#profile,#cardInspector{
   max-width:900px!important;margin:0 auto!important;padding:8px!important;
 }
 #challenge .panel,#termsBuilder .panel,#starter .panel,#result .panel,#seriesSummary .panel,
@@ -598,9 +598,26 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </section>
 <section id="deckPanel" class="panel hidden">
 <h3>Full Match Rules</h3><div id="preMatchRules" style="margin-bottom:10px"></div>
-<h3>Select 5 cards</h3><div id="deckInfo" class="small"></div><div id="deckCards" class="cards"></div>
-<button id="beginMatch">Begin Match</button>
+<div id="deckInfo" class="small"></div><div id="deckCards" class="cards"></div>
 </section>
+</div>
+
+<div id="deckSelect" class="hidden">
+  <div class="deckSelectShell">
+    <div class="deckSelectBar">
+      <button type="button" id="deckSelectBack">Back</button>
+      <div class="deckSelectCopy">
+        <b id="deckSelectTitle">Your cards</b>
+        <span id="deckSelectInfo" class="small">0/5</span>
+      </div>
+      <button type="button" id="beginMatch" disabled>Finished</button>
+    </div>
+    <div id="deckSelectPool" class="deckSelectPool"></div>
+    <div class="deckSelectTray">
+      <div class="small">Your hand</div>
+      <div id="deckSelectHand" class="hand"></div>
+    </div>
+  </div>
 </div>
 
 
@@ -863,7 +880,7 @@ function advanceVisualTime(){
 function localNpcNames(){return Object.keys(npcDefs).filter(n=>!npcDefs[n].visitor)}
 function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
-let state, currentNpc=null, selectedDeck=[], playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
+let state, currentNpc=null, selectedDeck=[], playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
  let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0}};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
@@ -1098,7 +1115,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  save();
 }
 const $=x=>document.getElementById(x);
-function show(id){["home","challenge","termsBuilder","profile","cardInspector","starter","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id))}
+function show(id){["home","challenge","termsBuilder","profile","cardInspector","starter","deckSelect","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id))}
 function cardArtTone(name){return (parseInt(String(name).replace(/\D/g,""),10)||0)%6}
 function cardHTML(c,owner="",sel=false){
  if(!c)return "";
@@ -1537,7 +1554,7 @@ function beginTournamentPlayerMatch(opponent,resultField,round){
  challengeDirection="outgoing";selectedDeck=[];seriesGame=0;seriesWins={p:0,ai:0};seriesWinner=null;namedWagers=null;
  renderKnownCollection(opponent);$("challengeTitle").textContent=`${t.name} — ${round}`;$("challengeMsg").textContent=`Tournament match against ${opponent}.`;
  $("seriesSetup").textContent=`${round} · tournament rules are fixed.`;$("terms").innerHTML=tournamentRulesSummary(t);
- $("acceptTerms").classList.add("hidden");$("backHome").classList.add("hidden");$("deckPanel").classList.remove("hidden");renderDeck();show("challenge");refreshFullRules();
+ $("acceptTerms").classList.add("hidden");$("backHome").classList.add("hidden");openDeckSelect();refreshFullRules();
 }
 function finalizeTournamentPlayerResult(playerWon){
  let t=state.activeTournament,m=window._tournamentMatch;if(!t||!m)return;
@@ -1917,38 +1934,137 @@ function openChallenge(name){
  renderKnownCollection(name);
  $("deckPanel").classList.add("hidden");show("challenge");
 }
-$("acceptTerms").onclick=()=>{selectedDeck=[];$("deckPanel").classList.remove("hidden");renderDeck()};
+$("acceptTerms").onclick=()=>{selectedDeck=[];openDeckSelect()};
 $("backHome").onclick=()=>{show("home");renderHome()};
 function budget(arr){return arr.reduce((a,n)=>a+C[n].budget,0)}
-function renderDeck(){
- $("deckInfo").textContent=`${selectedDeck.length}/5 selected · budget ${budget(selectedDeck)} / ${currentTerms.budget} · one copy of each design`;
- $("deckCards").innerHTML="";
- let rendered={};
- state.player.forEach((n,collectionIndex)=>{
-   rendered[n]=(rendered[n]||0)+1;
-   let selected=selectedDeck.includes(n);
-   let duplicateBlocked=selected && rendered[n]>1;
-   let b=document.createElement("button");
-   b.className="cardbtn"+(selected&&rendered[n]===1?" sel":"");
-   if(duplicateBlocked){
-     b.style.borderColor="#b33";b.style.background="rgba(170,35,35,.18)";b.style.opacity=".75";
-     b.disabled=true;
-   }
-   b.innerHTML=`<b>${n}</b><br>${C[n].n}·${C[n].e}·${C[n].s}·${C[n].w} <span class="small">(${C[n].budget})</span>${duplicateBlocked?`<br><span class="small"><b>Duplicate — unavailable</b></span>`:""}`;
-   b.onclick=()=>{
-     if(duplicateBlocked)return;
-     if(selectedDeck.includes(n))selectedDeck=selectedDeck.filter(x=>x!==n);
-     else if(selectedDeck.length<5)selectedDeck.push(n);
-     renderDeck();
-   };
-   $("deckCards").appendChild(b);
+function deckCardStates(){
+ let used={};
+ selectedDeck.forEach(n=>used[n]=(used[n]||0)+1);
+ let seen={};
+ return (state.player||[]).map((n,i)=>{
+   seen[n]=(seen[n]||0)+1;
+   let inHand=seen[n]<=(used[n]||0);
+   return {n,i,inHand,locked:!inHand&&(used[n]||0)>0};
  });
- $("beginMatch").disabled=selectedDeck.length!==5||budget(selectedDeck)>currentTerms.budget;
- if(seriesGame>0 && selectedDeck.length===5 && budget(selectedDeck)<=currentTerms.budget){
+}
+function openDeckSelect(){
+ deckSelectAnimating=false;
+ if($("deckSelectTitle")){
+   if(window._tournamentMatch)$("deckSelectTitle").textContent=seriesGame>0?"Tournament replay":"Your cards";
+   else if(seriesGame>0)$("deckSelectTitle").textContent=`Game ${seriesGame+1}`;
+   else $("deckSelectTitle").textContent="Your cards";
+ }
+ show("deckSelect");
+ renderDeckSelect();
+}
+function renderDeckSelect(opts){
+ opts=opts||{};
+ if(!$("deckSelectHand"))return;
+ let cap=currentTerms?.budget||0;
+ let used=budget(selectedDeck);
+ let over=selectedDeck.length===5&&used>cap;
+ if($("deckSelectInfo"))$("deckSelectInfo").textContent=over
+  ? `${selectedDeck.length}/5 · ${used} / ${cap} — over budget`
+  : `${selectedDeck.length}/5 · ${used} / ${cap}`;
+ if($("deckSelectInfo"))$("deckSelectInfo").style.color=over?"#ffd0a8":"";
+ if($("deckInfo"))$("deckInfo").textContent=`${selectedDeck.length}/5 selected · budget ${used} / ${cap} · one copy of each design`;
+ let pool=$("deckSelectPool");
+ pool.innerHTML="";
+ let hidPool=false;
+ deckCardStates().forEach(row=>{
+   if(row.inHand)return;
+   let n=row.n,d=document.createElement("div");
+   d.dataset.card=n;
+   d.dataset.index=String(row.i);
+   d.innerHTML=cardHTML(C[n],"p");
+   if(row.locked){
+     d.className="deckPick locked";
+     d.setAttribute("aria-disabled","true");
+   }else{
+     d.className="deckPick";
+     d.onclick=()=>pickDeckCard(n,d);
+   }
+   if(opts.hidePoolDesign===n&&opts.hidePoolFromHand&&!hidPool){d.style.visibility="hidden";hidPool=true}
+   pool.appendChild(d);
+ });
+ let hand=$("deckSelectHand");
+ hand.innerHTML="";
+ for(let i=0;i<5;i++){
+   let slot=document.createElement("div");
+   slot.className="handSlot";
+   let n=selectedDeck[i];
+   if(n&&C[n]&&opts.hideHand!==i){
+     slot.innerHTML=cardHTML(C[n],"p");
+     slot.onclick=()=>returnDeckCard(i,slot);
+   }else slot.classList.add("empty");
+   hand.appendChild(slot);
+ }
+ if($("beginMatch"))$("beginMatch").disabled=deckSelectAnimating||selectedDeck.length!==5||used>cap;
+ if(seriesGame>0&&selectedDeck.length===5&&used<=cap){
    seriesPlayerDeck=[...selectedDeck];
    seriesPlayerCopyDeck=physicalCopiesForDeck("You",seriesPlayerDeck);
  }
 }
+function pickDeckCard(n,fromEl){
+ if(deckSelectAnimating||!C[n]||selectedDeck.length>=5||selectedDeck.includes(n))return;
+ let fromRect=elementRect(fromEl);
+ let html=cardHTML(C[n],"p");
+ if(fromEl)fromEl.style.visibility="hidden";
+ let slot=selectedDeck.length;
+ selectedDeck.push(n);
+ deckSelectAnimating=true;
+ $("deckSelect")?.classList.add("deckBusy");
+ renderDeckSelect({hideHand:slot});
+ let dest=$("deckSelectHand")?.children[slot];
+ liftFlyCard(fromRect,elementRect(dest),html).then(()=>{
+   deckSelectAnimating=false;
+   $("deckSelect")?.classList.remove("deckBusy");
+   renderDeckSelect();
+ });
+}
+function returnDeckCard(slot,fromEl){
+ if(deckSelectAnimating||selectedDeck[slot]==null)return;
+ let n=selectedDeck[slot];
+ let fromRect=elementRect(fromEl);
+ let html=cardHTML(C[n],"p");
+ if(fromEl)fromEl.style.visibility="hidden";
+ selectedDeck.splice(slot,1);
+ deckSelectAnimating=true;
+ $("deckSelect")?.classList.add("deckBusy");
+ renderDeckSelect({hidePoolDesign:n,hidePoolFromHand:true});
+ let dest=[...($("deckSelectPool")?.children||[])].find(d=>d.dataset.card===n);
+ liftFlyCard(fromRect,elementRect(dest),html).then(()=>{
+   deckSelectAnimating=false;
+   $("deckSelect")?.classList.remove("deckBusy");
+   renderDeckSelect();
+ });
+}
+function liftFlyCard(fromRect,toRect,html){
+ return new Promise(done=>{
+  let reduce=reducedPlaceMotion();
+  if(reduce||!fromRect||!toRect||!toRect.width){done();return}
+  let ghost=document.createElement("div");
+  ghost.className="placeGhost cardLift";
+  ghost.innerHTML=html;
+  ghost.style.left=fromRect.left+"px";
+  ghost.style.top=fromRect.top+"px";
+  ghost.style.width=fromRect.width+"px";
+  ghost.style.height=fromRect.height+"px";
+  document.body.appendChild(ghost);
+  requestAnimationFrame(()=>requestAnimationFrame(()=>ghost.classList.add("cardLift-up")));
+  setTimeout(()=>{
+   ghost.classList.add("cardLift-fly");
+   ghost.style.transition="left .28s cubic-bezier(.2,.7,.2,1),top .28s cubic-bezier(.2,.7,.2,1),width .28s ease,height .28s ease,transform .28s ease";
+   ghost.style.left=toRect.left+"px";
+   ghost.style.top=toRect.top+"px";
+   ghost.style.width=toRect.width+"px";
+   ghost.style.height=toRect.height+"px";
+   ghost.style.transform="none";
+  },220);
+  setTimeout(()=>{ghost.remove();done()},520);
+ });
+}
+function renderDeck(){renderDeckSelect()}
 function aiDeck(){
  let pool=[...state.npcs[currentNpc]],best=null;
  for(let k=0;k<700;k++){
@@ -1960,7 +2076,14 @@ function aiDeck(){
  console.warn("AI deck budget fallback",currentNpc,budget(fallback),currentTerms.budget);
  return fallback;
 }
+if($("deckSelectBack"))$("deckSelectBack").onclick=()=>{
+ if(deckSelectAnimating)return;
+ if(window._tournamentMatch){show("tournament");renderTournament();return}
+ if(seriesGame>0){show("result");return}
+ show("challenge");
+};
 $("beginMatch").onclick=()=>{
+ if(deckSelectAnimating||selectedDeck.length!==5||budget(selectedDeck)>(currentTerms?.budget||0))return;
  if(seriesGame===0){
    seriesPlayerDeck=[...selectedDeck];seriesAiDeck=aiDeck();
    seriesPlayerCopyDeck=physicalCopiesForDeck("You",seriesPlayerDeck);
@@ -2346,11 +2469,7 @@ function nextSeriesGame(){
  $("result").classList.add("hidden");
  // deck swaps between games are allowed: return to deck picker with same collection and cap.
  selectedDeck=[...seriesPlayerDeck];
- show("challenge");$("deckPanel").classList.remove("hidden");
- $("challengeTitle").textContent=`${currentNpc} — Series continues`;
- $("challengeMsg").textContent=`Series score: You ${seriesWins.p} — ${seriesWins.ai} ${currentNpc}. You may change cards before Game ${seriesGame+1}.`;
- $("seriesSetup").textContent=`Wager remains unchanged and settles only after the series.`;
- renderDeck();
+ openDeckSelect();
 }
 
 function finish(){
@@ -2378,11 +2497,7 @@ function finish(){
        seriesGame++;
        seriesAiDeck=adaptNpcDeck();seriesAiCopyDeck=physicalCopiesForDeck(currentNpc,seriesAiDeck);
        selectedDeck=[...seriesPlayerDeck];
-       show("challenge");$("deckPanel").classList.remove("hidden");
-       $("challengeTitle").textContent=`${currentNpc} — Tournament replay`;
-       $("challengeMsg").textContent=`Series score remains You ${seriesWins.p} — ${seriesWins.ai} ${currentNpc}.`;
-       $("seriesSetup").textContent=`No draw is recorded in tournament standings.`;
-       renderDeck();
+       openDeckSelect();
      };
      $("resultHome").classList.add("hidden");$("result").querySelector(".panel").appendChild(b);
    }else if(seriesTarget>1){
@@ -3270,7 +3385,7 @@ if ('serviceWorker' in navigator) {
   color:#fff8e8!important;
   border-color:#f4d78a!important;
 }
-#challenge,#termsBuilder,#starter,#game,#result,#seriesSummary,#tournament,#profile,#cardInspector{
+#challenge,#termsBuilder,#starter,#deckSelect,#game,#result,#seriesSummary,#tournament,#profile,#cardInspector{
   background:#1a140f!important;
   min-height:100vh!important;
   color:#1a120c!important;
@@ -4779,7 +4894,167 @@ if ('serviceWorker' in navigator) {
 }
 </style>
 <style>
-/* v39 — phones: show the location painting without the extra dark washes.
+/* v45 — own screen for choosing five cards. Collection scrolls; the tray
+   matches the in-match hand. Cards lift, then fly into (or back from) the tray. */
+#deckSelect{
+  --card-ratio:5/7;
+  position:relative;
+  max-width:none!important;
+  margin:0!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+}
+#deckSelect.deckBusy .deckSelectPool,
+#deckSelect.deckBusy .hand{pointer-events:none}
+#deckSelect .deckSelectShell{
+  display:flex;
+  flex-direction:column;
+  width:min(920px,100%);
+  height:100%;
+  max-height:calc(100dvh - 20px);
+  margin:0 auto;
+  min-height:0;
+}
+#deckSelect .deckSelectBar{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+  margin-bottom:8px;
+}
+#deckSelect .deckSelectCopy{
+  flex:1 1 auto;
+  min-width:0;
+}
+#deckSelect .deckSelectCopy b{
+  display:block;
+  font-size:clamp(14px,4.2vw,18px);
+  color:#f7efdc;
+  text-shadow:0 1px 3px #000c;
+}
+#deckSelect .deckSelectCopy .small{
+  display:block;
+  color:#e8d7b6!important;
+  text-shadow:0 1px 2px #000a;
+}
+#deckSelect .deckSelectBar button{
+  flex:0 0 auto;
+  min-height:44px;
+  padding:8px 12px;
+  font-size:14px;
+  font-weight:800;
+  background:#342319!important;
+  color:#fff!important;
+  border:2px solid #e7c47b!important;
+  box-shadow:0 6px 14px #0008;
+}
+#deckSelect #beginMatch{
+  position:static!important;
+  display:inline-block!important;
+  width:auto!important;
+  margin:0!important;
+  min-height:44px!important;
+  font-size:14px!important;
+}
+#deckSelect #beginMatch:disabled{
+  background:#9a938b!important;
+  color:#3b3835!important;
+  border-color:#706a64!important;
+  box-shadow:none;
+}
+#deckSelect .deckSelectPool{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  display:grid;
+  grid-template-columns:repeat(5,minmax(0,1fr));
+  gap:5px;
+  align-content:start;
+  width:min(100%,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 7.5rem) / 2.08));
+  margin:0 auto;
+  padding:2px 2px 10px;
+}
+#deckSelect .deckPick{
+  min-width:0;
+  aspect-ratio:var(--card-ratio);
+  cursor:pointer;
+}
+#deckSelect .deckPick.locked{
+  opacity:.38;
+  pointer-events:none;
+  filter:grayscale(.35);
+}
+#deckSelect .deckPick .card{
+  width:100%;
+  height:100%!important;
+  min-height:0!important;
+}
+#deckSelect .deckSelectTray{
+  flex:0 0 auto;
+  width:min(100%,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 7.5rem) / 2.08));
+  margin:0 auto;
+}
+#deckSelect .deckSelectTray>.small{
+  color:#e8d7b6!important;
+  text-shadow:0 1px 2px #000a;
+  margin:0 0 4px;
+}
+#deckSelect .hand{
+  display:grid;
+  grid-template-columns:repeat(5,1fr);
+  gap:4px;
+  background:linear-gradient(#6d4b32,#4a301c);
+  border:3px solid #2a1810;
+  border-radius:6px;
+  padding:5px 6px!important;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.35),0 7px 16px #0007;
+  min-height:0!important;
+  margin:0!important;
+}
+#deckSelect .hand>div,
+#deckSelect .handSlot{
+  min-width:0;
+  aspect-ratio:var(--card-ratio);
+}
+#deckSelect .handSlot.empty{
+  background:rgba(12,8,6,.35);
+  border-radius:8px;
+  box-shadow:inset 0 2px 6px #0007;
+}
+#deckSelect .hand .card{
+  width:100%;
+  height:100%!important;
+  min-height:0!important;
+  aspect-ratio:var(--card-ratio);
+}
+#deckSelect .card.gilt .n,
+#deckSelect .card.gilt .e,
+#deckSelect .card.gilt .s,
+#deckSelect .card.gilt .w{font-size:clamp(8px,3vw,13px)}
+.placeGhost.cardLift{z-index:90}
+.placeGhost.cardLift-up{
+  transform:translateY(-16px) scale(1.07);
+  transition:transform .22s cubic-bezier(.2,.7,.2,1);
+}
+.placeGhost.cardLift-fly{transform:none}
+@media(max-width:620px){
+  #deckSelect .deckSelectBar button,
+  #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
+  .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
+}
+@media(prefers-reduced-motion:reduce){
+  .placeGhost.cardLift-up{transform:none!important;transition:none!important}
+}
+</style>
+<style>
    A tall crop already includes more of the shadowed floor; the 42% :after
    vignette plus the rgba(20,15,11,.12) image overlay made it look muddy.
    Do not shift background-position here — standee pins are baked to the crop. */

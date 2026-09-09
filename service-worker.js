@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v32-opp-backs';
+const CACHE_NAME = 'card-road-pwa-v33-deck-select';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
