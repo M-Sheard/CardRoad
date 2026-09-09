@@ -615,13 +615,11 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div class="deckBinderStage">
       <div class="deckBinder">
         <div class="binderSpine" aria-hidden="true"></div>
-        <div class="binderRings binderRings-back" aria-hidden="true"><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span></div>
         <div class="binderPage">
-          <div class="binderHoles" aria-hidden="true"><span class="binderHole"></span><span class="binderHole"></span><span class="binderHole"></span><span class="binderHole"></span><span class="binderHole"></span></div>
           <div id="binderPageNum" class="binderPageNum">14</div>
           <div id="deckSelectPool" class="deckSelectPool"></div>
         </div>
-        <div class="binderRings binderRings-front" aria-hidden="true"><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span></div>
+        <div class="binderRings" aria-hidden="true"><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span><span class="binderRing"><img src="assets/ui/deck_binder_ring.png" alt=""></span></div>
         <div id="binderTabs" class="binderTabs" role="tablist" aria-label="Card totals"></div>
       </div>
       <div class="deckSelectFelt">
@@ -4951,9 +4949,9 @@ if ('serviceWorker' in navigator) {
   --card-ratio:5/7;
   --binder-tab:28px;
   --binder-inset:10px;
-  --binder-ring:52px;
-  --binder-ring-h:52px;
-  --binder-spine:36px;
+  --binder-ring:34px;
+  --binder-ring-h:80px;
+  --binder-spine:40px;
   position:relative;
   max-width:none!important;
   margin:0!important;
@@ -5037,6 +5035,7 @@ if ('serviceWorker' in navigator) {
   display:flex;
   flex-direction:column;
   gap:8px;
+  overflow:visible;
 }
 #deckSelect .deckBinder{
   flex:1 1 auto;
@@ -5068,18 +5067,17 @@ if ('serviceWorker' in navigator) {
   left:var(--binder-inset);
   right:var(--binder-inset);
   top:100%;
-  transform:translateY(-50%);
+  transform:translateY(-48%);
   height:var(--binder-ring-h);
   display:flex;
   flex-direction:row;
   justify-content:space-evenly;
-  align-items:center;
-  padding:0 8px;
+  align-items:flex-start;
+  padding:0 14px;
   margin:0;
   pointer-events:none;
+  z-index:6;
 }
-#deckSelect .binderRings-back{z-index:0}
-#deckSelect .binderRings-front{z-index:6}
 #deckSelect .binderRing{
   display:block;
   flex:0 0 auto;
@@ -5094,47 +5092,7 @@ if ('serviceWorker' in navigator) {
   width:100%;
   height:100%;
   object-fit:contain;
-}
-#deckSelect .binderRings-back .binderRing img{
-  -webkit-clip-path:inset(0 0 46% 0);
-  clip-path:inset(0 0 46% 0);
-}
-#deckSelect .binderRings-front .binderRing img{
-  -webkit-clip-path:inset(46% 0 0 0);
-  clip-path:inset(46% 0 0 0);
   filter:drop-shadow(0 2px 2px #0008);
-}
-#deckSelect .binderHoles{
-  position:absolute;
-  left:0;
-  right:0;
-  top:0;
-  height:18px;
-  display:flex;
-  flex-direction:row;
-  justify-content:space-evenly;
-  align-items:flex-end;
-  padding:0 8px;
-  pointer-events:none;
-  z-index:2;
-}
-#deckSelect .binderHole{
-  flex:0 0 auto;
-  width:var(--binder-ring);
-  height:14px;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
-}
-#deckSelect .binderHole:before{
-  content:"";
-  width:11px;
-  height:10px;
-  border-radius:50%;
-  background:radial-gradient(circle at 40% 30%,#2c160c 0%,#0c0604 72%);
-  box-shadow:
-    inset 0 2px 3px #000c,
-    0 0 0 1px #c4a46a;
 }
 #deckSelect .binderPage{
   grid-area:page;
@@ -5146,7 +5104,7 @@ if ('serviceWorker' in navigator) {
   min-height:0;
   overflow:visible;
   margin:0 var(--binder-inset) 0;
-  padding:28px 8px 10px;
+  padding:46px 8px 10px;
   background:
     linear-gradient(#f3e6c8,#f3e6c8) 0 0 / 100% 56px no-repeat,
     url("assets/ui/deck_binder_page.png") center 40% / cover no-repeat,
@@ -5339,23 +5297,23 @@ if ('serviceWorker' in navigator) {
 }
 .placeGhost.cardLift-fly{transform:none}
 @media(max-width:620px){
-  #deckSelect{--binder-tab:26px;--binder-inset:8px;--binder-ring:46px;--binder-ring-h:46px;--binder-spine:32px}
+  #deckSelect{--binder-tab:26px;--binder-inset:8px;--binder-ring:28px;--binder-ring-h:70px;--binder-spine:34px}
   #deckSelect .deckSelectBar button,
   #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
-  #deckSelect .binderPage{padding:24px 6px 8px}
+  #deckSelect .binderPage{padding:40px 6px 8px}
   #deckSelect .deckSelectFelt{border-width:7px;padding:7px 10px}
   #deckSelect .binderTabs{padding:0 6px 2px}
   .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
 }
 @media(max-width:360px){
-  #deckSelect{--binder-tab:24px;--binder-ring:40px;--binder-ring-h:44px;--binder-spine:30px}
+  #deckSelect{--binder-tab:24px;--binder-ring:24px;--binder-ring-h:62px;--binder-spine:30px}
   #deckSelect .binderTab{padding:5px 0 1px;font-size:7px;letter-spacing:-.04em}
   #deckSelect .binderTabs{padding:0 4px 2px;gap:0}
 }
 @media(max-height:700px){
   #deckSelect .deckSelectBar{margin:0 0 6px}
   #deckSelect .deckBinderStage{gap:6px}
-  #deckSelect .binderPage{padding:20px 6px 6px}
+  #deckSelect .binderPage{padding:36px 6px 6px}
   #deckSelect .deckSelectFelt{border-width:6px;padding:5px 8px}
   #deckSelect .hand{padding:3px 4px!important;gap:3px}
 }
