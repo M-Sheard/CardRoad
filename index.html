@@ -612,10 +612,20 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       </div>
       <button type="button" id="beginMatch" disabled>Finished</button>
     </div>
-    <div id="deckSelectPool" class="deckSelectPool"></div>
-    <div class="deckSelectTray">
-      <div class="small">Your hand</div>
-      <div id="deckSelectHand" class="hand"></div>
+    <div class="deckBinderStage">
+      <div class="deckBinder">
+        <div class="binderRings" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span></div>
+        <div class="binderPage">
+          <div id="binderPageNum" class="binderPageNum">14</div>
+          <div id="deckSelectPool" class="deckSelectPool"></div>
+        </div>
+      </div>
+      <div id="binderTabs" class="binderTabs" role="tablist" aria-label="Card totals"></div>
+      <div class="deckSelectFelt">
+        <div class="deckSelectTray">
+          <div id="deckSelectHand" class="hand"></div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
@@ -880,7 +890,7 @@ function advanceVisualTime(){
 function localNpcNames(){return Object.keys(npcDefs).filter(n=>!npcDefs[n].visitor)}
 function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
-let state, currentNpc=null, selectedDeck=[], playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
+let state, currentNpc=null, selectedDeck=[], playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
  let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0}};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
@@ -1947,8 +1957,34 @@ function deckCardStates(){
    return {n,i,inHand,locked:!inHand&&(used[n]||0)>0};
  });
 }
+function firstOwnedDeckPage(){
+ let remaining=deckCardStates().filter(row=>C[row.n]&&!row.inHand);
+ for(let t=14;t<=26;t++) if(remaining.some(row=>C[row.n].budget===t)) return t;
+ return 14;
+}
+function setDeckSelectPage(t){
+ if(deckSelectAnimating||t<14||t>26||t===deckSelectPage)return;
+ deckSelectPage=t;
+ renderDeckSelect();
+}
+function renderBinderTabs(){
+ let el=$("binderTabs");
+ if(!el)return;
+ el.innerHTML="";
+ for(let t=14;t<=26;t++){
+   let b=document.createElement("button");
+   b.type="button";
+   b.className="binderTab"+(t===deckSelectPage?" selected":"");
+   b.textContent=String(t);
+   b.setAttribute("role","tab");
+   b.setAttribute("aria-selected",t===deckSelectPage?"true":"false");
+   b.onclick=()=>setDeckSelectPage(t);
+   el.appendChild(b);
+ }
+}
 function openDeckSelect(){
  deckSelectAnimating=false;
+ deckSelectPage=firstOwnedDeckPage();
  if($("deckSelectTitle")){
    if(window._tournamentMatch)$("deckSelectTitle").textContent=seriesGame>0?"Tournament replay":"Your cards";
    else if(seriesGame>0)$("deckSelectTitle").textContent=`Game ${seriesGame+1}`;
@@ -1960,6 +1996,7 @@ function openDeckSelect(){
 function renderDeckSelect(opts){
  opts=opts||{};
  if(!$("deckSelectHand"))return;
+ if(deckSelectPage<14||deckSelectPage>26)deckSelectPage=14;
  let cap=currentTerms?.budget||0;
  let used=budget(selectedDeck);
  let over=selectedDeck.length===5&&used>cap;
@@ -1968,12 +2005,21 @@ function renderDeckSelect(opts){
   : `${selectedDeck.length}/5 · ${used} / ${cap}`;
  if($("deckSelectInfo"))$("deckSelectInfo").style.color=over?"#ffd0a8":"";
  if($("deckInfo"))$("deckInfo").textContent=`${selectedDeck.length}/5 selected · budget ${used} / ${cap} · one copy of each design`;
+ if($("binderPageNum"))$("binderPageNum").textContent=String(deckSelectPage);
+ renderBinderTabs();
  let pool=$("deckSelectPool");
  pool.innerHTML="";
  let hidPool=false;
- deckCardStates().forEach(row=>{
-   if(row.inHand)return;
-   let n=row.n,d=document.createElement("div");
+ let pageRows=deckCardStates().filter(row=>C[row.n]&&C[row.n].budget===deckSelectPage&&!row.inHand);
+ let cells=Math.max(12,pageRows.length);
+ for(let i=0;i<cells;i++){
+   let row=pageRows[i],d=document.createElement("div");
+   if(!row){
+     d.className="deckPick empty";
+     pool.appendChild(d);
+     continue;
+   }
+   let n=row.n;
    d.dataset.card=n;
    d.dataset.index=String(row.i);
    d.innerHTML=cardHTML(C[n],"p");
@@ -1986,7 +2032,7 @@ function renderDeckSelect(opts){
    }
    if(opts.hidePoolDesign===n&&opts.hidePoolFromHand&&!hidPool){d.style.visibility="hidden";hidPool=true}
    pool.appendChild(d);
- });
+ }
  let hand=$("deckSelectHand");
  hand.innerHTML="";
  for(let i=0;i<5;i++){
@@ -2029,6 +2075,7 @@ function returnDeckCard(slot,fromEl){
  let html=cardHTML(C[n],"p");
  if(fromEl)fromEl.style.visibility="hidden";
  selectedDeck.splice(slot,1);
+ if(C[n]&&C[n].budget>=14&&C[n].budget<=26)deckSelectPage=C[n].budget;
  deckSelectAnimating=true;
  $("deckSelect")?.classList.add("deckBusy");
  renderDeckSelect({hidePoolDesign:n,hidePoolFromHand:true});
@@ -4894,10 +4941,12 @@ if ('serviceWorker' in navigator) {
 }
 </style>
 <style>
-/* v45 — own screen for choosing five cards. Collection scrolls; the tray
-   matches the in-match hand. Cards lift, then fly into (or back from) the tray. */
+/* v46 — binder picker (option 4e). Pages by card total; 3×4 wells;
+   tabs 14–26 sit in the right margin, tucked behind the sheet. Hand tray
+   on a felt well with a small felt margin above and below. */
 #deckSelect{
   --card-ratio:5/7;
+  --binder-tab:28px;
   position:relative;
   max-width:none!important;
   margin:0!important;
@@ -4905,18 +4954,23 @@ if ('serviceWorker' in navigator) {
   max-height:100dvh;
   overflow:hidden;
   box-sizing:border-box;
-  padding:max(8px,env(safe-area-inset-top)) max(10px,env(safe-area-inset-right)) max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
+  padding:max(8px,env(safe-area-inset-top)) 0 max(10px,env(safe-area-inset-bottom)) max(10px,env(safe-area-inset-left))!important;
   background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
   color:#f4ead3!important;
 }
+#deckSelect:not(.hidden){
+  display:flex;
+  flex-direction:column;
+}
 #deckSelect.deckBusy .deckSelectPool,
-#deckSelect.deckBusy .hand{pointer-events:none}
+#deckSelect.deckBusy .hand,
+#deckSelect.deckBusy .binderTabs{pointer-events:none}
 #deckSelect .deckSelectShell{
   display:flex;
   flex-direction:column;
-  width:min(920px,100%);
+  width:100%;
   height:100%;
-  max-height:calc(100dvh - 20px);
+  max-height:calc(100dvh - 18px);
   margin:0 auto;
   min-height:0;
 }
@@ -4925,7 +4979,7 @@ if ('serviceWorker' in navigator) {
   align-items:center;
   gap:8px;
   flex:0 0 auto;
-  margin-bottom:8px;
+  margin:0 max(10px,env(safe-area-inset-right)) 8px 0;
 }
 #deckSelect .deckSelectCopy{
   flex:1 1 auto;
@@ -4967,6 +5021,93 @@ if ('serviceWorker' in navigator) {
   border-color:#706a64!important;
   box-shadow:none;
 }
+#deckSelect .deckBinderStage{
+  flex:1 1 auto;
+  min-height:0;
+  display:grid;
+  grid-template-columns:minmax(0,1fr) var(--binder-tab);
+  grid-template-rows:minmax(0,1fr) auto;
+  column-gap:0;
+  row-gap:8px;
+  padding-right:max(4px,env(safe-area-inset-right));
+}
+#deckSelect .deckBinder{
+  grid-column:1;
+  grid-row:1;
+  position:relative;
+  z-index:2;
+  display:grid;
+  grid-template-columns:22px minmax(0,1fr);
+  min-height:0;
+  margin-right:-12px;
+  background:
+    linear-gradient(90deg,rgba(18,10,6,.35),transparent 18%),
+    linear-gradient(#4a2e1c,#2f1b10);
+  border:3px solid #24150e;
+  border-radius:10px 6px 6px 10px;
+  box-shadow:
+    inset 0 1px 0 rgba(232,194,122,.28),
+    0 10px 22px #0008;
+}
+#deckSelect .deckBinder:before{
+  content:"";
+  position:absolute;
+  inset:-4px;
+  pointer-events:none;
+  z-index:4;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/18px 18px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/18px 18px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/18px 18px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/18px 18px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#deckSelect .binderRings{
+  display:flex;
+  flex-direction:column;
+  justify-content:space-evenly;
+  align-items:center;
+  padding:10px 0;
+  z-index:3;
+}
+#deckSelect .binderRings span{
+  width:14px;
+  height:18px;
+  border:3px solid #c9a45a;
+  border-right-color:transparent;
+  border-radius:50%;
+  box-shadow:0 1px 2px #0008, inset 1px 1px 0 #f4e0a8;
+  background:radial-gradient(circle at 30% 30%,rgba(244,224,168,.35),transparent 60%);
+}
+#deckSelect .binderPage{
+  position:relative;
+  z-index:2;
+  display:flex;
+  flex-direction:column;
+  min-width:0;
+  min-height:0;
+  margin:8px 6px 8px 2px;
+  padding:6px 8px 8px;
+  background:
+    linear-gradient(180deg,rgba(255,248,230,.35),transparent 18%),
+    repeating-linear-gradient(90deg,transparent 0 11px,rgba(160,120,60,.05) 11px 12px),
+    #f3e6c8;
+  border:1px solid #c9a56a;
+  box-shadow:
+    inset 0 0 0 3px #f6edd8,
+    inset 0 0 0 4px #d4b56a,
+    2px 0 8px #0005;
+  border-radius:2px 5px 5px 3px;
+}
+#deckSelect .binderPageNum{
+  flex:0 0 auto;
+  text-align:center;
+  font:700 clamp(20px,5.6vw,30px)/1 Palatino,"Palatino Linotype",Georgia,serif;
+  color:#5a3a22;
+  letter-spacing:.04em;
+  padding:2px 0 6px;
+  text-shadow:0 1px 0 #fff8;
+}
 #deckSelect .deckSelectPool{
   flex:1 1 auto;
   min-height:0;
@@ -4975,17 +5116,33 @@ if ('serviceWorker' in navigator) {
   -webkit-overflow-scrolling:touch;
   overscroll-behavior:contain;
   display:grid;
-  grid-template-columns:repeat(5,minmax(0,1fr));
+  grid-template-columns:repeat(4,minmax(0,1fr));
+  grid-template-rows:repeat(3,minmax(0,1fr));
+  grid-auto-rows:minmax(0,1fr);
   gap:5px;
-  align-content:start;
-  width:min(100%,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 7.5rem) / 2.08));
-  margin:0 auto;
-  padding:2px 2px 10px;
+  align-content:stretch;
+  width:100%;
+  margin:0;
+  padding:0;
 }
 #deckSelect .deckPick{
   min-width:0;
-  aspect-ratio:var(--card-ratio);
+  min-height:0;
+  height:100%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
   cursor:pointer;
+  background:
+    radial-gradient(circle at 28% 18%,rgba(90,50,28,.18),transparent 55%),
+    #3a2216;
+  border:1px solid #6a4a28;
+  border-radius:5px;
+  box-shadow:inset 0 2px 6px #0008, inset 0 0 0 1px rgba(201,161,90,.28);
+}
+#deckSelect .deckPick.empty{
+  cursor:default;
+  pointer-events:none;
 }
 #deckSelect .deckPick.locked{
   opacity:.38;
@@ -4996,18 +5153,87 @@ if ('serviceWorker' in navigator) {
   width:100%;
   height:100%!important;
   min-height:0!important;
+  aspect-ratio:var(--card-ratio);
+}
+#deckSelect .binderTabs{
+  grid-column:2;
+  grid-row:1;
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+  min-width:0;
+  min-height:0;
+  padding:10px 0 10px 0;
+}
+#deckSelect .binderTab{
+  flex:1 1 0;
+  min-height:0;
+  min-width:0;
+  margin:1px 0;
+  padding:0 3px 0 14px;
+  display:flex;
+  align-items:center;
+  justify-content:flex-end;
+  font:700 clamp(9px,2.6vw,11px)/1 Palatino,"Palatino Linotype",Georgia,serif;
+  color:#3a2818;
+  background:linear-gradient(#f3e6c8,#dcc9a0);
+  border:1px solid #8a6a32;
+  border-left:0;
+  border-radius:0 7px 7px 0;
+  box-shadow:inset 0 1px 0 #f6edd8, 1px 1px 2px #0006;
+  cursor:pointer;
+  -webkit-tap-highlight-color:transparent;
+}
+#deckSelect .binderTab.selected{
+  background:linear-gradient(#f6e27a,#c9a12a);
+  color:#2a180c;
+  box-shadow:0 0 8px rgba(232,194,122,.75), inset 0 1px 0 #fff4;
+  transform:translateX(2px);
+  z-index:3;
+}
+#deckSelect .deckSelectFelt{
+  grid-column:1;
+  grid-row:2;
+  position:relative;
+  z-index:2;
+  margin-right:4px;
+  background:
+    radial-gradient(circle at 28% 18%,rgba(72,130,96,.28),transparent 55%),
+    #163528;
+  border:8px solid #5a3a22;
+  border-radius:7px;
+  padding:8px 10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.4),
+    inset 0 8px 14px #0005,
+    0 8px 18px #0007;
 }
 #deckSelect .deckSelectTray{
+  position:relative;
   flex:0 0 auto;
-  width:min(100%,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 7.5rem) / 2.08));
+  width:100%;
   margin:0 auto;
 }
-#deckSelect .deckSelectTray>.small{
-  color:#e8d7b6!important;
-  text-shadow:0 1px 2px #000a;
-  margin:0 0 4px;
+#deckSelect .deckSelectTray:before,
+#deckSelect .deckSelectTray:after{
+  content:"";
+  position:absolute;
+  top:50%;
+  width:10px;
+  height:22px;
+  transform:translateY(-50%);
+  background:linear-gradient(#6d4b32,#4a301c);
+  border:2px solid #2a1810;
+  z-index:0;
 }
+#deckSelect .deckSelectTray:before{left:-8px;border-radius:6px 0 0 6px;border-right:0}
+#deckSelect .deckSelectTray:after{right:-8px;border-radius:0 6px 6px 0;border-left:0}
 #deckSelect .hand{
+  position:relative;
+  z-index:1;
   display:grid;
   grid-template-columns:repeat(5,1fr);
   gap:4px;
@@ -5025,9 +5251,11 @@ if ('serviceWorker' in navigator) {
   aspect-ratio:var(--card-ratio);
 }
 #deckSelect .handSlot.empty{
-  background:rgba(12,8,6,.35);
-  border-radius:8px;
-  box-shadow:inset 0 2px 6px #0007;
+  background:
+    radial-gradient(circle at 28% 18%,rgba(90,50,28,.18),transparent 55%),
+    #3a2216;
+  border-radius:6px;
+  box-shadow:inset 0 2px 6px #0007, inset 0 0 0 1px rgba(201,161,90,.22);
 }
 #deckSelect .hand .card{
   width:100%;
@@ -5038,7 +5266,7 @@ if ('serviceWorker' in navigator) {
 #deckSelect .card.gilt .n,
 #deckSelect .card.gilt .e,
 #deckSelect .card.gilt .s,
-#deckSelect .card.gilt .w{font-size:clamp(8px,3vw,13px)}
+#deckSelect .card.gilt .w{font-size:clamp(8px,2.6vw,12px)}
 .placeGhost.cardLift{z-index:90}
 .placeGhost.cardLift-up{
   transform:translateY(-16px) scale(1.07);
@@ -5046,15 +5274,25 @@ if ('serviceWorker' in navigator) {
 }
 .placeGhost.cardLift-fly{transform:none}
 @media(max-width:620px){
+  #deckSelect{--binder-tab:26px}
   #deckSelect .deckSelectBar button,
   #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
+  #deckSelect .deckBinder{grid-template-columns:18px minmax(0,1fr);margin-right:-10px}
+  #deckSelect .binderPage{margin:6px 5px 8px 0;padding:4px 6px 6px}
+  #deckSelect .deckSelectFelt{border-width:7px;padding:7px 8px}
   .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
+}
+@media(max-width:360px){
+  #deckSelect{--binder-tab:24px}
+  #deckSelect .binderTab{padding-left:12px;font-size:9px}
 }
 @media(prefers-reduced-motion:reduce){
   .placeGhost.cardLift-up{transform:none!important;transition:none!important}
+  #deckSelect .binderTab.selected{transform:none}
 }
 </style>
 <style>
+/* v39 — phones: show the location painting without the extra dark washes.
    A tall crop already includes more of the shadowed floor; the 42% :after
    vignette plus the rgba(20,15,11,.12) image overlay made it look muddy.
    Do not shift background-position here — standee pins are baked to the crop. */
