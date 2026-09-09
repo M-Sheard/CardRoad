@@ -4949,7 +4949,7 @@ if ('serviceWorker' in navigator) {
 #deckSelect{
   --card-ratio:5/7;
   --binder-tab:28px;
-  --binder-ring:46px;
+  --binder-ring:56px;
   position:relative;
   max-width:none!important;
   margin:0!important;
@@ -5041,7 +5041,7 @@ if ('serviceWorker' in navigator) {
   isolation:isolate;
   display:grid;
   grid-template-columns:minmax(0,1fr);
-  grid-template-rows:40px minmax(0,1fr) var(--binder-tab);
+  grid-template-rows:28px minmax(0,1fr) var(--binder-tab);
   grid-template-areas:"spine" "page" "tabs";
   min-height:0;
   overflow:visible;
@@ -5060,8 +5060,8 @@ if ('serviceWorker' in navigator) {
   display:flex;
   flex-direction:row;
   justify-content:space-evenly;
-  align-items:flex-end;
-  padding:0 10px;
+  align-items:center;
+  padding:0 8px;
   margin:0 10px -28px;
   pointer-events:none;
 }
@@ -5071,7 +5071,7 @@ if ('serviceWorker' in navigator) {
   display:block;
   flex:0 0 auto;
   width:var(--binder-ring);
-  height:48px;
+  height:56px;
   background:none;
   border:0;
   box-shadow:none;
@@ -5083,45 +5083,45 @@ if ('serviceWorker' in navigator) {
   object-fit:contain;
 }
 #deckSelect .binderRings-back .binderRing img{
-  -webkit-clip-path:inset(0 0 34% 0);
-  clip-path:inset(0 0 34% 0);
+  -webkit-clip-path:inset(0 0 48% 0);
+  clip-path:inset(0 0 48% 0);
 }
 #deckSelect .binderRings-front .binderRing img{
-  -webkit-clip-path:inset(44% 0 0 0);
-  clip-path:inset(44% 0 0 0);
-  filter:drop-shadow(0 2px 2px #0009);
+  -webkit-clip-path:inset(48% 0 0 0);
+  clip-path:inset(48% 0 0 0);
+  filter:drop-shadow(0 2px 2px #0008);
 }
 #deckSelect .binderHoles{
   position:absolute;
   left:0;
   right:0;
-  top:3px;
-  height:18px;
+  top:10px;
+  height:14px;
   display:flex;
   flex-direction:row;
   justify-content:space-evenly;
   align-items:center;
-  padding:0 10px;
+  padding:0 8px;
   pointer-events:none;
   z-index:2;
 }
 #deckSelect .binderHole{
   flex:0 0 auto;
   width:var(--binder-ring);
-  height:14px;
+  height:12px;
   display:flex;
   align-items:center;
   justify-content:center;
 }
 #deckSelect .binderHole:before{
   content:"";
-  width:13px;
-  height:13px;
+  width:9px;
+  height:8px;
   border-radius:50%;
-  background:radial-gradient(circle at 38% 32%,#3a1a10 0%,#120804 68%);
+  background:radial-gradient(circle at 38% 32%,#3a1a10 0%,#120804 70%);
   box-shadow:
-    inset 0 2px 3px #000c,
-    0 0 0 1.5px #c4a46a;
+    inset 0 1px 2px #000c,
+    0 0 0 1px #c4a46a;
 }
 #deckSelect .binderPage{
   grid-area:page;
@@ -5133,7 +5133,7 @@ if ('serviceWorker' in navigator) {
   min-height:0;
   overflow:visible;
   margin:0 10px 0;
-  padding:30px 8px 10px;
+  padding:32px 8px 10px;
   background:
     linear-gradient(#f3e6c8,#f3e6c8) 0 0 / 100% 56px no-repeat,
     url("assets/ui/deck_binder_page.png") center 40% / cover no-repeat,
@@ -5318,22 +5318,20 @@ if ('serviceWorker' in navigator) {
 }
 .placeGhost.cardLift-fly{transform:none}
 @media(max-width:620px){
-  #deckSelect{--binder-tab:26px}
+  #deckSelect{--binder-tab:26px;--binder-ring:48px}
   #deckSelect .deckSelectBar button,
   #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
-  #deckSelect{--binder-ring:40px}
-  #deckSelect .deckBinder{grid-template-rows:36px minmax(0,1fr) var(--binder-tab)}
-  #deckSelect .binderRing{height:42px}
-  #deckSelect .binderRings{margin-bottom:-24px}
-  #deckSelect .binderPage{margin:0 8px;padding:26px 6px 8px}
+  #deckSelect .deckBinder{grid-template-rows:24px minmax(0,1fr) var(--binder-tab)}
+  #deckSelect .binderRing{height:50px}
+  #deckSelect .binderRings{margin-bottom:-26px}
+  #deckSelect .binderPage{margin:0 8px;padding:28px 6px 8px}
   #deckSelect .deckSelectFelt{border-width:7px;padding:7px 10px}
   .placeGhost.cardLift-up{transform:translateY(-12px) scale(1.05)}
 }
 @media(max-width:360px){
-  #deckSelect{--binder-tab:24px}
+  #deckSelect{--binder-tab:24px;--binder-ring:42px}
   #deckSelect .binderTab{padding:6px 0 2px;font-size:8px}
-  #deckSelect{--binder-ring:36px}
-  #deckSelect .binderRing{height:38px}
+  #deckSelect .binderRing{height:46px}
 }
 @media(prefers-reduced-motion:reduce){
   .placeGhost.cardLift-up{transform:none!important;transition:none!important}
