@@ -684,16 +684,22 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <section class="panel"><h2>Series Summary</h2><div id="seriesSummaryBody"></div><button id="summaryHome">Return to World</button></section>
 </div>
 <div id="result" class="hidden">
-<section class="panel">
-<h2 id="resultTitle"></h2><div id="resultText"></div>
-<div id="claimPanel" class="hidden" style="max-height:70vh;overflow-y:auto;padding-bottom:10px">
-<h3>Choose a card to claim</h3>
-<div class="small">Each card shows N / E / S / W values and its total score.</div>
-<div class="small">Your current ownership count is shown for each option. Inspect the physical copy and its provenance before deciding.</div>
-<div id="claimCards" class="claimCards"></div>
-</div>
-<button id="resultHome" style="margin-top:10px">Return</button>
-</section>
+  <div class="resultTable">
+    <div class="resultWell">
+      <h2 id="resultTitle" class="resultPlaque"></h2>
+      <div id="resultScore" class="resultScore"></div>
+      <div id="resultCaption" class="resultCaption"></div>
+      <div id="resultText" class="resultFlavor"></div>
+      <div class="resultStage">
+        <div id="claimPanel" class="hidden">
+          <div id="claimCards" class="claimCards"></div>
+        </div>
+        <div id="resultCeremony" class="resultCeremony hidden" aria-live="polite"></div>
+      </div>
+    </div>
+    <div id="resultActions" class="resultActions"></div>
+    <button id="resultHome" class="resultPlaqueBtn" type="button">Return</button>
+  </div>
 </div>
 <div id="historyModal" class="hidden" style="position:fixed;inset:0;background:#000b;z-index:10;padding:18px;overflow:auto">
 <section class="panel" style="max-width:500px;margin:40px auto">
@@ -2443,51 +2449,128 @@ function aiMove(){
  board[best.pos]={card:best.c,owner:"ai"};resolve(best.pos,"ai");turn++;save();
  runPlaceMotion(fromRect,html,best.pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
 }
+let resultFlipTimer=null;
+function prefersReducedMotion(){
+  return window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+}
+function resetResultChrome(){
+  if(resultFlipTimer){clearTimeout(resultFlipTimer);resultFlipTimer=null}
+  window._claimSettling=false;
+  $("claimPanel").classList.add("hidden");
+  $("claimPanel").classList.remove("isFading");
+  $("claimCards").innerHTML="";
+  $("resultCeremony").classList.add("hidden");
+  $("resultCeremony").classList.remove("isLive");
+  $("resultCeremony").innerHTML="";
+  $("resultCaption").textContent="";
+  $("resultScore").textContent="";
+  $("resultText").textContent="";
+  $("resultActions").innerHTML="";
+  $("resultHome").classList.remove("hidden");
+}
+function addResultContinue(label,handler){
+  $("resultHome").classList.add("hidden");
+  const b=document.createElement("button");
+  b.type="button";
+  b.className="resultPlaqueBtn";
+  b.textContent=label;
+  b.onclick=()=>{b.remove();handler();};
+  $("resultActions").appendChild(b);
+}
+function playResultFlip(card,owner){
+  if(!card){$("resultHome").classList.remove("hidden");return}
+  const stage=$("resultCeremony");
+  stage.classList.remove("hidden");
+  stage.innerHTML=flipCardHTML(cardBackHTML(owner||""),cardHTML(card,owner||""));
+  const flipEl=stage.querySelector(".flipCard");
+  const reveal=()=>{
+    if(flipEl)flipEl.classList.add("isFlipped");
+    const wait=prefersReducedMotion()?0:1250;
+    resultFlipTimer=setTimeout(()=>$("resultHome").classList.remove("hidden"),wait);
+  };
+  requestAnimationFrame(()=>{
+    stage.classList.add("isLive");
+    if(prefersReducedMotion()){reveal();return}
+    resultFlipTimer=setTimeout(reveal,320);
+  });
+}
+function beginPlayerClaim(pickEl,n,copyId){
+  if(window._claimSettling)return;
+  window._claimSettling=true;
+  pickEl.classList.add("isChosen");
+  $("claimPanel").classList.add("isFading");
+  $("resultCaption").textContent="You claimed this copy.";
+  claim(n,copyId);
+  const wait=prefersReducedMotion()?0:480;
+  resultFlipTimer=setTimeout(()=>{
+    $("claimPanel").classList.add("hidden");
+    $("claimPanel").classList.remove("isFading");
+    playResultFlip(C[n],"p");
+  },wait);
+}
+
 function settleSeries(winner){
  seriesWinner=winner;if(!window._tournamentMatch)scheduleActivityTime("match");
  if(seriesTarget>1&&!npcDefs[currentNpc]?.visitor){
    let reaction=postMatchRelationship(currentNpc,winner==="p"?"player":"npc",true);
    if(reaction)$("resultText").textContent+=` ${reaction}`;
  }
- $("claimPanel").classList.add("hidden");$("resultHome").classList.remove("hidden");
+ $("claimPanel").classList.add("hidden");
+ $("resultHome").classList.add("hidden");
 
  if(winner==="p"){
-   $("resultTitle").textContent=seriesTarget>1?`You win the series ${seriesWins.p}-${seriesWins.ai}`:"You win";
+   $("resultTitle").textContent="You win";
+   if(seriesTarget>1)$("resultText").textContent+=` Series ${seriesWins.p}–${seriesWins.ai}.`;
    if(namedWagers){
       let n=namedWagers.ai;
       if(state.npcs[currentNpc].includes(n)){
         transfer(n,currentNpc,"You",`${currentNpc} lost named stake ${n} to you after the series.`);
         mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);
         news(`You defeated ${currentNpc} ${seriesWins.p}-${seriesWins.ai} and won ${n}.`);
-        $("resultText").textContent+=` You win ${n}.`;
+        $("resultCaption").textContent="You claimed this copy.";
+        playResultFlip(C[n],"p");
+      }else{
+        $("resultHome").classList.remove("hidden");
       }
       save();
    }else{
-      $("claimPanel").classList.remove("hidden");$("resultHome").classList.add("hidden");
       let eligible=[...new Set(seriesAiExposed)];
       eligible.forEach(c=>markSeen(currentNpc,c));
+      if(!eligible.length){
+        $("resultCaption").textContent="No copies were exposed.";
+        $("resultHome").classList.remove("hidden");
+        return;
+      }
+      $("claimPanel").classList.remove("hidden");
+      $("resultCaption").textContent="Choose a copy";
       $("claimCards").innerHTML="";
       eligible.forEach(n=>{
- let cp=getCopy(currentNpc,n),owned=playerOwnedCount(n),w=document.createElement("div");w.className="claimCard";
- let ownership=owned===0?`<div style="margin:6px 0"><b>NEW CARD</b> · Owned: 0</div>`:`<div style="margin:6px 0"><b>Owned: ${owned} ${owned===1?"copy":"copies"}</b></div>`;
- w.innerHTML=`<b>${n}</b><br>N ${C[n].n} · E ${C[n].e} · S ${C[n].s} · W ${C[n].w}<br><span class="small">Total ${C[n].budget}</span>${ownership}`;
- let actions=document.createElement("div");actions.className="claimCardActions";
- let i=document.createElement("button");i.type="button";i.textContent="Inspect / Flip";
- i.onclick=e=>{e.preventDefault();e.stopPropagation();inspectCopy(cp||{design:n,owner:currentNpc,origin:"Match copy",signatures:[],stamps:[]},"result")};
- actions.appendChild(i);
- let b=document.createElement("button");b.textContent="Claim this copy";b.onclick=()=>claim(n,cp?cp.id:null);actions.appendChild(b);
- w.appendChild(actions);$("claimCards").appendChild(w)
-});
+        let cp=getCopy(currentNpc,n),owned=playerOwnedCount(n);
+        let w=document.createElement("div");w.className="claimPick";
+        let face=document.createElement("button");face.type="button";face.className="claimFace";
+        face.setAttribute("aria-label",owned===0?`Claim ${n}, new card`:`Claim ${n}, owned ${owned}`);
+        face.innerHTML=cardHTML(C[n],"ai");
+        face.onclick=()=>beginPlayerClaim(w,n,cp?cp.id:null);
+        let meta=document.createElement("div");meta.className="claimMeta";
+        meta.innerHTML=owned===0?`<b>NEW</b> · 0`:`Owned: ${owned}`;
+        let inspect=document.createElement("button");inspect.type="button";inspect.className="claimInspect";
+        inspect.textContent="Inspect";
+        inspect.onclick=e=>{e.preventDefault();e.stopPropagation();inspectCopy(cp||{design:n,owner:currentNpc,origin:"Match copy",signatures:[],stamps:[]},"result")};
+        w.appendChild(face);w.appendChild(meta);w.appendChild(inspect);
+        $("claimCards").appendChild(w);
+      });
    }
  }else{
-   $("resultTitle").textContent=seriesTarget>1?`${currentNpc} wins the series ${seriesWins.ai}-${seriesWins.p}`:`${currentNpc} wins`;
+   $("resultTitle").textContent=`${currentNpc} wins`;
+   if(seriesTarget>1)$("resultText").textContent+=` Series ${seriesWins.ai}–${seriesWins.p}.`;
    let eligible=[...new Set(seriesPlayerExposed)];
    let take=namedWagers?namedWagers.p:npcClaim(currentNpc,eligible);pendingLossCard=take;
-   $("resultText").innerHTML+=`<br><br><b>${currentNpc} chooses to claim:</b><div style="max-width:190px;margin:12px auto">${cardHTML(C[take],"ai")}</div><div class="small">N ${C[take].n} · E ${C[take].e} · S ${C[take].s} · W ${C[take].w} · Total ${C[take].budget}</div>`;
+   $("resultCaption").textContent=`${currentNpc} claims this copy.`;
    transfer(take,"You",currentNpc,`${currentNpc} claimed ${take} from you after winning the series.`);
    mem(currentNpc).cardsLost.push(take);cardRelationship(currentNpc,"theyTook",take);
    news(`${currentNpc} defeated you ${seriesWins.ai}-${seriesWins.p} and claimed ${take}.`);
    recovery();save();
+   playResultFlip(C[take],"ai");
  }
 }
 
@@ -2529,12 +2612,13 @@ function nextSeriesGame(){
 function finish(){
  let [p,a]=score(),winner=p>a?"p":a>p?"ai":null;
  if(!winner&&currentTerms.tie==="final")winner=lastCapture;
- show("result");$("claimPanel").classList.add("hidden");$("resultHome").classList.remove("hidden");
-
- let txt=`Game ${seriesGame+1}: ${p}-${a}.`;
+ resetResultChrome();
+ show("result");
+ $("resultScore").textContent=`${p} \u2014 ${a}`;
  seriesResults.push({game:seriesGame+1,p,a,starter:startingPlayer});
- if(p===a&&currentTerms.tie==="final")txt+=` Final Capture: ${winner==="p"?"you":winner==="ai"?currentNpc:"nobody"} held the tiebreak.`;
- $("resultText").textContent=txt;
+ let extra="";
+ if(p===a&&currentTerms.tie==="final")extra=`Final Capture: ${winner==="p"?"you":winner==="ai"?currentNpc:"nobody"} held the tiebreak.`;
+ $("resultText").textContent=extra;
  state.matches++;
 
  if(!winner){
@@ -2544,20 +2628,15 @@ function finish(){
    if(window._tournamentMatch){
      $("resultTitle").textContent="Tournament game replay";
      $("resultText").textContent+=` No capture was available to resolve the tie, so this game is replayed.`;
-     let b=document.createElement("button");b.textContent="Replay Game";
-     b.onclick=()=>{
-       b.remove();
-       // Replay without awarding a series point; alternate the starter for the replay.
+     addResultContinue("Replay Game",()=>{
        seriesGame++;
        seriesAiDeck=adaptNpcDeck();seriesAiCopyDeck=physicalCopiesForDeck(currentNpc,seriesAiDeck);
        selectedDeck=[...seriesPlayerDeck];
        openDeckSelect();
-     };
-     $("resultHome").classList.add("hidden");$("result").querySelector(".panel").appendChild(b);
+     });
    }else if(seriesTarget>1){
-     $("resultTitle").textContent="Drawn game";
-     let b=document.createElement("button");b.textContent="Next Series Game";b.onclick=nextSeriesGame;
-     $("resultHome").classList.add("hidden");$("result").querySelector(".panel").appendChild(b);
+     $("resultTitle").textContent="Draw";
+     addResultContinue("Next Series Game",nextSeriesGame);
    }else{
      $("resultTitle").textContent="Draw";scheduleActivityTime("match");save();
    }
@@ -2574,10 +2653,10 @@ function finish(){
  if(complete){
    settleSeries(seriesWins.p>seriesWins.ai?"p":"ai");
  }else{
-   $("resultTitle").textContent=winner==="p"?"You win this game":`${currentNpc} wins this game`;
+   $("resultTitle").textContent=winner==="p"?"You win":`${currentNpc} wins`;
+   $("resultCaption").textContent=`Series ${seriesWins.p} — ${seriesWins.ai}`;
    $("resultText").textContent+=` Series score: You ${seriesWins.p} — ${seriesWins.ai} ${currentNpc}.`;
-   let b=document.createElement("button");b.textContent="Next Series Game";b.onclick=nextSeriesGame;
-   $("resultHome").classList.add("hidden");$("result").querySelector(".panel").appendChild(b);
+   addResultContinue("Next Series Game",nextSeriesGame);
  }
  save();
 }
@@ -2587,7 +2666,6 @@ function playerOwnedCount(design){
 function claim(n,copyIdChosen=null){
  let cp=getCopy(currentNpc,n,copyIdChosen),fp=state.npcs[currentNpc],ix=fp.indexOf(n);if(ix>=0)fp.splice(ix,1);state.player.push(n);moveCopy(cp,currentNpc,"You",`${currentNpc} lost ${n} to you after your victory.`);hist(n,`${currentNpc} lost ${n} to you after your victory.`);
  mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);state.log.push(`You defeated ${currentNpc} and claimed ${n}.`);news(`You defeated ${currentNpc} and claimed ${n}.`);recovery();maybeIncoming({npc:currentNpc,type:"lostCard",card:n});save();
- $("claimPanel").classList.add("hidden");$("resultHome").classList.remove("hidden");$("resultText").textContent+=` You claimed ${n}.`;
 }
 
 function showSeriesSummary(){
@@ -5444,6 +5522,308 @@ html,body,#visualShell{color-scheme:only light}
   #spotToggle{top:max(58px,calc(env(safe-area-inset-top) + 50px));font-size:11px;padding:6px 8px}
   #spotListToggle{top:max(92px,calc(env(safe-area-inset-top) + 84px))}
   #spotReadout{top:max(126px,calc(env(safe-area-inset-top) + 118px));font-size:10px;width:min(180px,calc(100% - 20px))}
+}
+</style>
+<style>
+/* v50 — result felt (option 1 lose board + win claim row). Same oak plaque
+   and club-table well as the match; claimed copy starts on its back and flips. */
+#result{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#result.hidden{display:none!important}
+#result .resultTable{
+  width:min(100%,440px);
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#result .resultWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:14px 12px 16px;
+  overflow:auto;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#result .resultWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#result .resultPlaque{
+  position:relative;
+  z-index:1;
+  margin:0;
+  width:min(92%,280px);
+  padding:12px 18px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(17px,5.8vw,26px);
+  font-weight:800;
+  letter-spacing:.14em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#result .resultScore{
+  position:relative;
+  z-index:1;
+  margin:10px 0 0;
+  padding:5px 16px;
+  background:#e8dcc4;
+  color:#3a2a18;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(14px,4vw,18px);
+  font-weight:700;
+  transform:rotate(-1.4deg);
+  box-shadow:0 2px 6px #0005;
+}
+#result .resultScore:empty{display:none}
+#result .resultCaption{
+  position:relative;
+  z-index:1;
+  margin:10px 0 0;
+  padding:6px 12px;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,3.4vw,15px);
+  color:#f0e2c4;
+  background:#3d2a18;
+  border:2px solid #24150c;
+  border-radius:4px;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.25);
+}
+#result .resultCaption:empty{display:none}
+#result .resultFlavor{
+  position:relative;
+  z-index:1;
+  margin:8px 10px 0;
+  max-width:28em;
+  font-family:Georgia,serif;
+  font-size:clamp(11px,3.1vw,13px);
+  line-height:1.35;
+  color:#d9cba8;
+  text-align:center;
+  text-shadow:0 1px 2px #000a;
+}
+#result .resultFlavor:empty{display:none}
+#result .resultStage{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  width:100%;
+  min-height:min(42vw,188px);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#result #claimPanel{
+  width:100%;
+  max-height:none;
+  overflow:visible;
+  padding:0;
+}
+#result #claimPanel.hidden{display:none!important}
+#result .claimCards{
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:flex-start;
+  gap:8px 8px;
+  margin:0;
+}
+#result .claimPick{
+  width:calc((100% - 16px) / 3);
+  max-width:92px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  transition:opacity .42s ease,transform .42s ease;
+}
+#result .claimFace{
+  width:100%;
+  padding:0!important;
+  margin:0;
+  background:transparent!important;
+  border:0!important;
+  border-radius:8px;
+  box-shadow:none!important;
+  min-height:0!important;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+#result .claimFace .card{
+  width:100%;
+  max-width:none;
+  height:auto;
+  min-height:0;
+  aspect-ratio:5/7;
+  pointer-events:none;
+}
+#result .claimMeta{
+  font-family:Georgia,serif;
+  font-size:10px;
+  line-height:1.2;
+  color:#ead9b0;
+  text-align:center;
+  text-shadow:0 1px 2px #000a;
+}
+#result .claimInspect{
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  color:#ead9b0!important;
+  font-size:11px!important;
+  font-weight:700!important;
+  text-decoration:underline;
+  padding:2px 4px!important;
+  min-height:0!important;
+  min-width:0!important;
+}
+#result #claimPanel.isFading .claimPick:not(.isChosen){
+  opacity:0;
+  transform:scale(.88);
+  pointer-events:none;
+}
+#result #claimPanel.isFading .claimPick.isChosen{
+  opacity:0;
+  transform:scale(1.08);
+  transition-delay:.06s;
+  pointer-events:none;
+}
+#result .resultCeremony{
+  position:absolute;
+  left:50%;
+  top:50%;
+  width:min(34vw,118px);
+  aspect-ratio:5/7;
+  transform:translate(-50%,-50%);
+  opacity:0;
+  pointer-events:none;
+}
+#result .resultCeremony.isLive{
+  opacity:1;
+  transition:opacity .4s ease;
+}
+#result .resultCeremony.hidden{display:none!important}
+#result .resultCeremony .flipCard{
+  width:100%;
+  height:100%;
+  perspective:900px;
+}
+#result .resultCeremony .flipCardInner{
+  position:relative;
+  width:100%;
+  height:100%;
+  transform-style:preserve-3d;
+  -webkit-transform-style:preserve-3d;
+  transition:transform 1.15s cubic-bezier(.4,.05,.2,1);
+}
+#result .resultCeremony .flipCard.isFlipped .flipCardInner{
+  transform:rotateY(180deg);
+}
+#result .resultCeremony .flipFace{
+  position:absolute;
+  inset:0;
+  backface-visibility:hidden;
+  -webkit-backface-visibility:hidden;
+}
+#result .resultCeremony .flipFront{transform:rotateY(180deg)}
+#result .resultCeremony .flipFace .card,
+#result .resultCeremony .card{
+  width:100%!important;
+  height:100%!important;
+  max-width:none;
+  min-height:0!important;
+}
+#result .resultActions{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(92%,280px);
+}
+#result .resultPlaqueBtn{
+  flex:0 0 auto;
+  width:min(92%,280px);
+  min-height:48px;
+  padding:10px 18px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(16px,4.6vw,20px)!important;
+  font-weight:800!important;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:
+    linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+#result .resultPlaqueBtn.hidden,
+#result #resultHome.hidden{display:none!important}
+@media(max-width:620px){
+  #result .resultWell{border-width:8px;padding:12px 10px 14px}
+  #result .claimPick{width:calc((100% - 12px) / 3);max-width:84px}
+  #result .resultCeremony{width:min(36vw,108px)}
+}
+@media(prefers-reduced-motion:reduce){
+  #result #claimPanel.isFading .claimPick,
+  #result .resultCeremony.isLive,
+  #result .resultCeremony .flipCardInner{transition:none}
 }
 </style>
 <script>
