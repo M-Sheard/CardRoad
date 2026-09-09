@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v39-creature-faces';
+const CACHE_NAME = 'card-road-pwa-v43-creature-faces';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
