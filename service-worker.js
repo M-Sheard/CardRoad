@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v34-deck-binder';
+const CACHE_NAME = 'card-road-pwa-v35-binder-art';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -18,7 +18,13 @@ const CORE_ASSETS = [
   './assets/ui/noticeboard_frame.png',
   './assets/ui/presence_message_frame.png',
   './assets/ui/match_club_table.png',
-  './assets/ui/card_gilt_frame.png'];
+  './assets/ui/card_gilt_frame.png',
+  './assets/ui/deck_binder_cover.png',
+  './assets/ui/deck_binder_page.png',
+  './assets/ui/deck_binder_tab.png',
+  './assets/ui/deck_binder_tab_on.png',
+  './assets/ui/deck_binder_well.png',
+  './assets/ui/deck_binder_ring.svg'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
