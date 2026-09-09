@@ -1,0 +1,18 @@
+---
+description: Locked 17d earthy Mary Blair gouache style for card-face creature paintings
+alwaysApply: true
+---
+
+# Card-face creature art lock (17d earthy Mary Blair gouache)
+
+Canonical painting: `mockups/card-art-dir-17d-blair-earthy-red-fox.png`
+
+This is the **picture inside the gilt window**, not a new card frame. Physical chrome stays `assets/ui/card_gilt_frame.png`. NPC wood standees stay Tomas bevel v19 (`npc-standee-style.mdc`) — never mix the two.
+
+**Style:** Mary Blair mid-century storybook **gouache**, **earthy/muted** (not candy-bright 17), slightly more naturalistic silhouette than flat Blair, still **cartoon**. Visible paper/gouache texture. Pastoral English countryside OK. The animal is an animal (no cloak, staff, or clothes).
+
+**Tiers:** Higher rarity = more detail and finish **in this same 17d style**, not a different style.
+
+**Do not** paint Harper geometry, gilt-oil miniature as the *painting*, photoreal, ukiyo-e, mosaic, Mucha, linocut, stained glass, pixel, felt puppet, canal-ware, Kells, Victorian plate, inn-sign board, tea-card chrome, or a clothed adventurer fox — unless Marc unlocks this.
+
+Live faces are `assets/cards/C001.png`–`C120.png` (copied from `mockups/card-art/`). Do not change C001–C120 stats for art.
