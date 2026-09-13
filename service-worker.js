@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v52-screen-fit';
+const CACHE_NAME = 'card-road-pwa-v53-challenge-tips';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
