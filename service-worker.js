@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v53-beph-stall';
+const CACHE_NAME = 'card-road-pwa-v54-beph-pilgrimage';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
