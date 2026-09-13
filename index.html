@@ -693,7 +693,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
               <div id="npcRune" class="banditReel"></div>
             </div>
             <img class="banditArt" src="assets/ui/rune_bandit_cabinet.png" alt="" draggable="false">
-            <span class="banditWhoNpc" id="runeNpcName">Opponent</span>
+            <span class="banditWhoNpc hidden" id="runeNpcName">Opponent</span>
             <button id="drawRunes" class="banditDraw" type="button">Draw Runes</button>
             <button id="banditLever" class="banditLever" type="button" tabindex="-1" aria-hidden="true"></button>
           </div>
@@ -6730,17 +6730,6 @@ html,body,#visualShell{color-scheme:only light}
   aspect-ratio:520 / 574;
   max-height:100%;
 }
-#starter .banditStage:before{
-  content:"";
-  position:absolute;
-  z-index:0;
-  left:16%;
-  top:27.5%;
-  width:51%;
-  height:30%;
-  background:#e6d4a8;
-  pointer-events:none;
-}
 #starter .banditArt{
   position:absolute;
   inset:0;
@@ -6752,27 +6741,7 @@ html,body,#visualShell{color-scheme:only light}
   user-select:none;
 }
 #starter .bandit.is-pulling .banditArt{filter:brightness(.93)}
-#starter .banditWhoNpc{
-  position:absolute;
-  left:46%;
-  top:16.4%;
-  width:19.6%;
-  height:8.2%;
-  display:flex;
-  align-items:center;
-  justify-content:center;
-  z-index:5;
-  pointer-events:none;
-  font-family:Georgia,"Times New Roman",serif;
-  font-size:3.5cqw;
-  font-weight:800;
-  letter-spacing:.04em;
-  text-transform:uppercase;
-  color:#2a1a10;
-  overflow:hidden;
-  white-space:nowrap;
-  text-overflow:ellipsis;
-}
+#starter .banditWhoNpc{display:none!important}
 #starter .banditWindow{
   --reel-window:1.32;
   --reel-cell:calc(100% / var(--reel-window));
@@ -6785,16 +6754,16 @@ html,body,#visualShell{color-scheme:only light}
   border-radius:50%;
 }
 #starter .banditWindowYou{
-  left:16.6%;
-  top:28.5%;
-  width:20.7%;
-  height:25.3%;
+  left:17.8%;
+  top:34.2%;
+  width:18.8%;
+  height:17.1%;
 }
 #starter .banditWindowNpc{
-  left:42%;
-  top:30.6%;
-  width:23.8%;
-  height:24.6%;
+  left:43.8%;
+  top:35.6%;
+  width:19.6%;
+  height:17.8%;
 }
 #starter .banditWindow:after{
   content:"";
