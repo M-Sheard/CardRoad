@@ -5923,6 +5923,7 @@ html,body,#visualShell{color-scheme:only light}
 #challenge .challengePlaque{
   position:relative;
   z-index:1;
+  flex:0 0 auto;
   margin:0;
   width:min(92%,280px);
   padding:12px 18px;
@@ -5947,6 +5948,7 @@ html,body,#visualShell{color-scheme:only light}
 #challenge .challengeCaption{
   position:relative;
   z-index:1;
+  flex:0 0 auto;
   margin:10px 0 0;
   padding:6px 12px;
   font-family:Georgia,serif;
@@ -5963,6 +5965,7 @@ html,body,#visualShell{color-scheme:only light}
 #challenge .challengeTerms{
   position:relative;
   z-index:1;
+  flex:0 0 auto;
   display:flex;
   flex-wrap:wrap;
   justify-content:center;
@@ -5982,6 +5985,7 @@ html,body,#visualShell{color-scheme:only light}
 #challenge .challengeFlavor{
   position:relative;
   z-index:1;
+  flex:0 0 auto;
   margin:8px 10px 0;
   max-width:28em;
   font-family:Georgia,serif;
@@ -5995,6 +5999,7 @@ html,body,#visualShell{color-scheme:only light}
 #challenge .challengeKnownHead{
   position:relative;
   z-index:1;
+  flex:0 0 auto;
   margin:12px 0 0;
   font-family:Georgia,serif;
   font-size:clamp(12px,3.4vw,14px);
@@ -6007,6 +6012,7 @@ html,body,#visualShell{color-scheme:only light}
 #challenge .challengeKnownHint{
   position:relative;
   z-index:1;
+  flex:0 0 auto;
   margin:4px 10px 8px;
   font-family:Georgia,serif;
   font-size:clamp(10px,2.8vw,12px);
@@ -6014,6 +6020,7 @@ html,body,#visualShell{color-scheme:only light}
   text-align:center;
 }
 #challenge .challengeKnown{
+  /* Long collections stay in this well and page vertically — never sideways. */
   position:relative;
   z-index:1;
   flex:1 1 auto;
