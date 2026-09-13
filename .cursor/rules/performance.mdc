@@ -1,0 +1,27 @@
+---
+description: Keep Card Road fast when adding town, art, or overlays
+alwaysApply: true
+---
+
+# Performance lock
+
+The playable core is already cheap. Lag has come from **town chrome** (watchers, layout reads, huge PNGs), not from C001–C120 or Claim One.
+
+## Town standees
+
+One function: `syncTownStandees()` in root `index.html`, called from `renderWorldScene()`. That is the only place that creates, shows, hides, or slots Tomas, Nessa, Bram, Elira, and Beph.
+
+**Do not** add another `MutationObserver` for a new NPC, overlay, or nameplate. **Do not** watch `document.body`, `style`, or the whole subtree. **Do not** `getBoundingClientRect` / `getComputedStyle` / `offsetParent` inside a watcher — that is how the open-game freeze happened.
+
+Names live on the wood plaques. Keep HTML `.npcNameplate` hidden. Do not JS-sync plate positions.
+
+## Art and cache
+
+- Live standees stay Tomas-bevel packing. Call out any **new or replacement PNG over ~500KB** before it ships.
+- `CORE_ASSETS` in `service-worker.js` is town chrome only (html, icons, location webps, date/notice frames). Do not precache standees, gilt, binder, or the club table — they cache on first use.
+- Unused standee versions belong in `mockups/`, not `assets/npcs/`.
+- Bump `CACHE_NAME` when `index.html` or `service-worker.js` changes.
+
+## Future features
+
+Same look, same rules. If a task needs a new observer, a layout loop, or a multi-megabyte install, stop and tell Marc. Do not split `index.html` for speed unless the current task is blocked (see design-and-structure).

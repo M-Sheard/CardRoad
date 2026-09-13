@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v57-open-lag';
+const CACHE_NAME = 'card-road-pwa-v58-town-sync-tips';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
