@@ -7,7 +7,21 @@ alwaysApply: true
 
 Canonical construction: `assets/npcs/tomas_standee_bevel_v19.png` (option 3 routed wood-sign).
 
-Every **current and future** generated character uses this exact physical design. Change clothes, face, pose, and name only.
+Every **current and future** generated character uses this exact physical design. Change clothes, face, **pose**, props, and name — not the oak construction.
+
+## Variety (required on every new character)
+
+The bevel is the lock. **The figure is not.** Do not clone the last NPC.
+
+**Do not default to** the Nessa/Beph template: over-the-shoulder look-back, matching brown lace-up boots, matching tooled satchel, same hip charm-belt.
+
+**Must vary from whoever is already in the game:**
+- Stance (front, 3/4, walking, seated, hands busy — not always looking back)
+- Silhouette and costume family (gown vs coat vs work clothes vs Club kit)
+- Footwear and bags (or no bag)
+- Held object (fan of cards, pipe, stall goods, nothing)
+
+Oak board, wood foot, one ALL-CAPS plaque, no HUD nameplate — those stay. Repeating pose + boots + bag is a miss even if the face is new.
 
 **Must match Tomas:**
 - Painted figure on a **chunky routed oak board** that follows the silhouette

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v55-beph-scale';
+const CACHE_NAME = 'card-road-pwa-v56-bright-dossier';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
