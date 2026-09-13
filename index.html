@@ -6797,9 +6797,9 @@ html,body,#visualShell{color-scheme:only light}
 })();
 </script>
 <style>
-/* v53 — Beph is a Market stall placeholder, not a duelist pin.
-   Placement is a first-pass stall on the right produce awnings; re-pin with
-   Mark spots if the crop is wrong. She does not use slots 0–3. */
+/* v55 — Beph stall sprite is packed on the same 1024×1536 canvas as Tomas,
+   so width/scale match the other standees. Floor % is still a first-pass
+   stall pin (Market slot 1 depth, scale .89); re-pin with Mark spots if needed. */
 .townScene .bephCutout{
   position:absolute;
   left:66%!important;
@@ -6813,11 +6813,11 @@ html,body,#visualShell{color-scheme:only light}
   cursor:pointer;
   pointer-events:auto!important;
   transform-origin:50% 100%!important;
-  transform:scale(.70)!important;
+  transform:scale(.89)!important;
   filter:drop-shadow(4px 10px 8px rgba(18,12,8,.42))!important;
 }
 .townScene .bephCutout:active{
-  transform:scale(.68)!important;
+  transform:scale(.87)!important;
 }
 .townScene:not([data-location="Market"]) .bephCutout{
   display:none!important;
@@ -6881,7 +6881,7 @@ html,body,#visualShell{color-scheme:only light}
     if(!img){
       img=document.createElement("img");
       img.className="bephCutout";
-      img.src="./assets/npcs/beph_standee_bevel_v1.png";
+      img.src="./assets/npcs/beph_standee_bevel_v2.png";
       img.alt="Beph";
       img.setAttribute("role","button");
       img.setAttribute("tabindex","0");
