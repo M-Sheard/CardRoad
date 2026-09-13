@@ -2925,13 +2925,17 @@ if(window.visualViewport){
    }
    img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="Tomas"]');if(btn)btn.click();};
    img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
-   img.style.display=isVisible?'block':'none';
-   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
+   const vis=isVisible?'block':'none';
+   if(img.style.display!==vis) img.style.display=vis;
+   if(old){if(old.style.opacity!=='0')old.style.opacity='0';if(old.style.pointerEvents!=='none')old.style.pointerEvents='none';}
  }
  const obs=new MutationObserver(()=>requestAnimationFrame(syncTomasCutout));
  window.addEventListener('load',()=>{
    syncTomasCutout();
-   obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','data-location']});
+   const scene=document.querySelector('.townScene');
+   const spots=document.getElementById('npcHotspots');
+   if(scene) obs.observe(scene,{attributes:true,attributeFilter:['data-location']});
+   if(spots) obs.observe(spots,{childList:true});
  });
 })();
 </script>
@@ -2989,13 +2993,17 @@ if ('serviceWorker' in navigator) {
    }
    img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="Nessa"]');if(btn)btn.click();};
    img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
-   img.style.display=isVisible?'block':'none';
-   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
+   const vis=isVisible?'block':'none';
+   if(img.style.display!==vis) img.style.display=vis;
+   if(old){if(old.style.opacity!=='0')old.style.opacity='0';if(old.style.pointerEvents!=='none')old.style.pointerEvents='none';}
  }
  const obs=new MutationObserver(()=>requestAnimationFrame(syncNessaCutout));
  window.addEventListener('load',()=>{
    syncNessaCutout();
-   obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','data-location']});
+   const scene=document.querySelector('.townScene');
+   const spots=document.getElementById('npcHotspots');
+   if(scene) obs.observe(scene,{attributes:true,attributeFilter:['data-location']});
+   if(spots) obs.observe(spots,{childList:true});
  });
 })();
 </script>
@@ -3021,14 +3029,18 @@ if ('serviceWorker' in navigator) {
    }
    img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="'+d.name+'"]');if(btn)btn.click();};
    img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
-   img.style.display=visible?'block':'none';
-   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
+   const vis=visible?'block':'none';
+   if(img.style.display!==vis) img.style.display=vis;
+   if(old){if(old.style.opacity!=='0')old.style.opacity='0';if(old.style.pointerEvents!=='none')old.style.pointerEvents='none';}
   });
  }
  const obs=new MutationObserver(()=>requestAnimationFrame(syncApprovedCutouts));
  window.addEventListener('load',()=>{
   syncApprovedCutouts();
-  obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','data-location']});
+  const scene=document.querySelector('.townScene');
+  const spots=document.getElementById('npcHotspots');
+  if(scene) obs.observe(scene,{attributes:true,attributeFilter:['data-location']});
+  if(spots) obs.observe(spots,{childList:true});
  });
 })();
 </script>
@@ -3678,6 +3690,7 @@ if ('serviceWorker' in navigator) {
   z-index:28!important;
 }
 .npcNameplate{
+  display:none!important;
   position:absolute;
   z-index:23;
   transform:translate(-50%,0);
@@ -4717,43 +4730,17 @@ if ('serviceWorker' in navigator) {
   const crowdObs=new MutationObserver(()=>requestAnimationFrame(syncNpcCrowdSlots));
   window.addEventListener("load",()=>{
     syncNpcCrowdSlots();
-    crowdObs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
+    const scene=document.querySelector(".townScene");
+    const spots=document.getElementById("npcHotspots");
+    if(scene) crowdObs.observe(scene,{attributes:true,attributeFilter:["data-location"]});
+    if(spots) crowdObs.observe(spots,{childList:true});
   });
 })();
 </script>
 <script>
 (function(){
-  function syncNpcNameplates(){
-    const scene=document.querySelector(".townScene");
-    if(!scene)return;
-    ["nessaCutout","bramCutout","eliraCutout"].forEach(cls=>{
-      const img=scene.querySelector("."+cls);
-      let plate=scene.querySelector('[data-plate="'+cls+'"]');
-      const visible=!!(img&&img.style.display!=="none"&&img.offsetParent!==null);
-      if(!visible){
-        if(plate)plate.style.display="none";
-        return;
-      }
-      if(!plate){
-        plate=document.createElement("div");
-        plate.className="npcNameplate";
-        plate.dataset.plate=cls;
-        scene.appendChild(plate);
-      }
-      plate.textContent=img.alt||"";
-      plate.style.display="block";
-      const ir=img.getBoundingClientRect();
-      const sr=scene.getBoundingClientRect();
-      plate.style.left=(ir.left-sr.left+ir.width/2)+"px";
-      plate.style.top=(ir.bottom-sr.top-28)+"px";
-    });
-  }
-  const obs=new MutationObserver(()=>requestAnimationFrame(syncNpcNameplates));
-  window.addEventListener("load",()=>{
-    syncNpcNameplates();
-    obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
-    window.addEventListener("resize",syncNpcNameplates);
-  });
+  /* Nameplates stay CSS-hidden (plaque is on the art). Do not measure/write
+     styles here — that used to retrigger town MutationObservers on every tick. */
 })();
 </script>
 <style>
@@ -6961,7 +6948,8 @@ html,body,#visualShell{color-scheme:only light}
         if(e.key==="Enter"||e.key===" "){e.preventDefault();openBephStall()}
       });
     }
-    img.style.display=onMarket?"block":"none";
+    const vis=onMarket?"block":"none";
+    if(img.style.display!==vis) img.style.display=vis;
     if(!onMarket)closeBephStall();
   }
   window.addEventListener("load",()=>{
@@ -6971,7 +6959,8 @@ html,body,#visualShell{color-scheme:only light}
     const el=stall();
     if(el)el.addEventListener("click",e=>{if(e.target===el)closeBephStall()});
     const obs=new MutationObserver(()=>requestAnimationFrame(syncBephCutout));
-    obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
+    const scene=document.querySelector(".townScene");
+    if(scene) obs.observe(scene,{attributes:true,attributeFilter:["data-location"]});
   });
 })();
 </script>
@@ -6996,16 +6985,6 @@ html,body,#visualShell{color-scheme:only light}
 }
 .townScene[data-location="Card Club"]{
   background-image:url("assets/locations/card_club.webp")!important;
-}
-@media (max-width:900px), (orientation:portrait){
-  .townScene:before{
-    content:"";
-    position:absolute;
-    inset:0;
-    z-index:1;
-    pointer-events:none;
-    background:rgba(255,246,220,.11);
-  }
 }
 
 /* v56 — challenge name opens a leftover-space portrait + short bio. */
