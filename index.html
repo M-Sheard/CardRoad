@@ -478,6 +478,13 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
   <button type="button" id="closeNotice" class="noticeDismiss">Close</button>
   <button id="noticeBoard" class="worldObject notice" type="button">Noticeboard</button>
 </div>
+<div id="bephStall" class="bephStall hidden" role="dialog" aria-modal="true" aria-labelledby="bephStallTitle">
+  <div class="bephStallCard">
+    <h2 id="bephStallTitle">Beph</h2>
+    <p>She keeps a stall among the fruit. Not trading yet.</p>
+    <button type="button" id="closeBephStall">Close</button>
+  </div>
+</div>
 </section>
 
 <div id="journalOverlay" class="journalOverlay hidden">
@@ -5690,7 +5697,8 @@ html,body,#visualShell{color-scheme:only light}
 .townScene.spotOn .tomasCutout,
 .townScene.spotOn .nessaCutout,
 .townScene.spotOn .bramCutout,
-.townScene.spotOn .eliraCutout{
+.townScene.spotOn .eliraCutout,
+.townScene.spotOn .bephCutout{
   visibility:hidden!important;
   pointer-events:none!important
 }
@@ -6788,3 +6796,114 @@ html,body,#visualShell{color-scheme:only light}
   });
 })();
 </script>
+<style>
+/* v53 — Beph is a Market stall placeholder, not a duelist pin.
+   Placement is a first-pass stall on the right produce awnings; re-pin with
+   Mark spots if the crop is wrong. She does not use slots 0–3. */
+.townScene .bephCutout{
+  position:absolute;
+  left:66%!important;
+  bottom:6.8%!important;
+  width:min(30vw,220px)!important;
+  max-width:220px!important;
+  height:auto;
+  z-index:21!important;
+  object-fit:contain!important;
+  background:transparent!important;
+  cursor:pointer;
+  pointer-events:auto!important;
+  transform-origin:50% 100%!important;
+  transform:scale(.70)!important;
+  filter:drop-shadow(4px 10px 8px rgba(18,12,8,.42))!important;
+}
+.townScene .bephCutout:active{
+  transform:scale(.68)!important;
+}
+.townScene:not([data-location="Market"]) .bephCutout{
+  display:none!important;
+}
+@media(max-width:620px){
+  .townScene .bephCutout{
+    width:min(42vw,200px)!important;
+    max-width:200px!important;
+  }
+}
+.bephStall{
+  position:absolute;
+  inset:0;
+  z-index:55;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(12,9,7,.72);
+  padding:max(16px, env(safe-area-inset-top) + 10px) max(16px, env(safe-area-inset-right) + 10px) max(16px, env(safe-area-inset-bottom) + 10px) max(16px, env(safe-area-inset-left) + 10px);
+}
+.bephStall.hidden{display:none!important}
+.bephStallCard{
+  width:min(92%, 340px);
+  margin:0;
+  padding:18px 16px 14px;
+  background:#efe3c8;
+  color:#1a120c;
+  border:3px solid #513b2c;
+  box-shadow:inset 0 1px 0 #f6ecd4, 0 10px 22px #0008;
+}
+.bephStallCard h2{
+  margin:0 0 8px;
+  font:800 22px Georgia,serif;
+  letter-spacing:.04em;
+}
+.bephStallCard p{
+  margin:0 0 14px;
+  font:400 15px/1.35 Georgia,serif;
+}
+.bephStallCard button{
+  min-height:44px;
+  padding:8px 16px;
+  background:#e9ddc3;
+  color:#1a120c;
+  border:2px solid #24160f;
+  font:800 12px Georgia,serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+</style>
+<script>
+(function(){
+  function stall(){return document.getElementById("bephStall")}
+  function closeBephStall(){const el=stall();if(el)el.classList.add("hidden")}
+  function openBephStall(){const el=stall();if(el)el.classList.remove("hidden")}
+  function syncBephCutout(){
+    const scene=document.querySelector(".townScene");
+    if(!scene)return;
+    const onMarket=scene.dataset.location==="Market";
+    let img=scene.querySelector(".bephCutout");
+    if(!img){
+      img=document.createElement("img");
+      img.className="bephCutout";
+      img.src="./assets/npcs/beph_standee_bevel_v1.png";
+      img.alt="Beph";
+      img.setAttribute("role","button");
+      img.setAttribute("tabindex","0");
+      img.setAttribute("aria-label","Beph, stallholder");
+      scene.appendChild(img);
+      img.addEventListener("click",openBephStall);
+      img.addEventListener("keydown",e=>{
+        if(e.key==="Enter"||e.key===" "){e.preventDefault();openBephStall()}
+      });
+    }
+    img.style.display=onMarket?"block":"none";
+    if(!onMarket)closeBephStall();
+  }
+  window.addEventListener("load",()=>{
+    syncBephCutout();
+    const closeBtn=document.getElementById("closeBephStall");
+    if(closeBtn)closeBtn.addEventListener("click",closeBephStall);
+    const el=stall();
+    if(el)el.addEventListener("click",e=>{if(e.target===el)closeBephStall()});
+    const obs=new MutationObserver(()=>requestAnimationFrame(syncBephCutout));
+    obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
+  });
+})();
+</script>
+

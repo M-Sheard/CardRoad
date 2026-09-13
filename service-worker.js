@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v52-screen-fit';
+const CACHE_NAME = 'card-road-pwa-v53-beph-stall';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -13,6 +13,7 @@ const CORE_ASSETS = [
 ,
   './assets/npcs/bram_standee_v15.png',
   './assets/npcs/elira_standee_v17.png',
+  './assets/npcs/beph_standee_bevel_v1.png',
   './assets/ui/date_time_frame.png',
   './assets/ui/location_title_frame.png',
   './assets/ui/noticeboard_frame.png',
