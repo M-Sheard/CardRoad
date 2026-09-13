@@ -1136,7 +1136,56 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  save();
 }
 const $=x=>document.getElementById(x);
-function show(id){["home","challenge","termsBuilder","profile","cardInspector","starter","deckSelect","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id))}
+function show(id){
+ ["home","challenge","termsBuilder","profile","cardInspector","starter","deckSelect","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
+ if(id==="game")scheduleMatchLayout();
+}
+function matchViewBox(){
+ const vv=window.visualViewport;
+ if(vv)return{left:vv.offsetLeft,top:vv.offsetTop,right:vv.offsetLeft+vv.width,bottom:vv.offsetTop+vv.height};
+ return{left:0,top:0,right:innerWidth,bottom:innerHeight};
+}
+let matchLayoutQueued=false,matchLayoutLock=false,matchLayoutW=0;
+function scheduleMatchLayout(){
+ if(matchLayoutQueued)return;
+ matchLayoutQueued=true;
+ requestAnimationFrame(()=>{matchLayoutQueued=false;layoutMatchTable();});
+}
+function layoutMatchTable(){
+ const game=$("game"),panel=game&&game.querySelector(".panel"),board=$("board"),hand=$("hand"),opp=$("oppHand");
+ if(!game||game.classList.contains("hidden")||!panel||!board||!hand||!opp||matchLayoutLock)return;
+ matchLayoutLock=true;
+ const gCS=getComputedStyle(game),pCS=getComputedStyle(panel);
+ const pad={l:parseFloat(gCS.paddingLeft)||0,r:parseFloat(gCS.paddingRight)||0,t:parseFloat(gCS.paddingTop)||0,b:parseFloat(gCS.paddingBottom)||0};
+ const inner={l:parseFloat(pCS.paddingLeft)||0,r:parseFloat(pCS.paddingRight)||0};
+ const maxW=Math.max(132,panel.clientWidth-inner.l-inner.r);
+ const view=matchViewBox();
+ function overflowAt(w){
+  panel.style.setProperty("--board-w",w+"px");
+  const g=game.getBoundingClientRect(),b=board.getBoundingClientRect(),h=hand.getBoundingClientRect(),o=opp.getBoundingClientRect();
+  const brass=(parseFloat(getComputedStyle(board).borderTopWidth)||0)*1.15;
+  const clip={
+   left:Math.max(view.left,g.left+pad.l),
+   top:Math.max(view.top,g.top+pad.t),
+   right:Math.min(view.right,g.right-pad.r),
+   bottom:Math.min(view.bottom,g.bottom-pad.b)
+  };
+  const left=Math.min(b.left,o.left,h.left)-brass;
+  const right=Math.max(b.right,o.right,h.right)+brass;
+  const top=Math.min(o.top,b.top);
+  const bottom=Math.max(h.bottom,b.bottom);
+  return Math.max(0,clip.left-left,right-clip.right,clip.top-top,bottom-clip.bottom);
+ }
+ let lo=132,hi=maxW,best=132;
+ for(let i=0;i<14;i++){
+  const mid=(lo+hi)/2;
+  if(overflowAt(mid)<=1){best=mid;lo=mid;}else hi=mid;
+ }
+ const w=Math.round(best*10)/10;
+ panel.style.setProperty("--board-w",w+"px");
+ matchLayoutW=w;
+ matchLayoutLock=false;
+}
 function cardArtTone(name){return (parseInt(String(name).replace(/\D/g,""),10)||0)%6}
 function cardArtSrc(name){
  if(!name)return "";
@@ -2357,6 +2406,7 @@ function renderGame(opts){
   $("board").appendChild(c)
  });
  $("hand").innerHTML="";playerHand.forEach(n=>{let d=document.createElement("div");d.innerHTML=cardHTML(C[n],"p",chosen===n);d.onclick=()=>{if(matchAnimating)return;chosen=n;renderGame()};$("hand").appendChild(d)});
+ scheduleMatchLayout();
  $("comboStatus").textContent=comboOn()?(lastComboCount?`Combo captured ${lastComboCount} extra card${lastComboCount===1?"":"s"}.`:"Combo rule active."):"";
  if(turn>=9){
    // Let the final board state paint before moving to the result screen.
@@ -2722,6 +2772,11 @@ if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?"))
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();renderHome()}};
 load();renderHome();show("home");syncDevControls();
 document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
+window.addEventListener("resize",scheduleMatchLayout);
+if(window.visualViewport){
+ visualViewport.addEventListener("resize",scheduleMatchLayout);
+ visualViewport.addEventListener("scroll",scheduleMatchLayout);
+}
 </script>
 
 
@@ -4716,7 +4771,8 @@ if ('serviceWorker' in navigator) {
 #game .score,#game #status,#game #comboStatus,#game #seriesScore,
 #game #oppHandLabel,#game .panel>div.small{flex:0 0 auto}
 #game .board,#game .hand{
-  width:min(100%,calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8.25rem) / 2.08));
+  width:min(100%,var(--board-w, calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8.25rem) / 2.08)));
+  max-width:100%;
   margin-left:auto;
   margin-right:auto;
 }
@@ -4975,6 +5031,107 @@ if ('serviceWorker' in navigator) {
   #game .card.gilt .e,
   #game .card.gilt .s,
   #game .card.gilt .w{font-size:clamp(10px,4.2vw,16px)}
+}
+</style>
+<style>
+/* v48 — match table scales from leftover screen, not a 320/390 guess.
+   One --board-w drives the 3×3, both hands, oak lip, and gilt numbers so
+   placed cards stay centred in the wells on short, tall, and notched phones. */
+#game{
+  --card-ratio:5/7;
+  width:100%!important;
+  min-height:0!important;
+  height:100svh!important;
+  height:100dvh!important;
+  max-height:100svh;
+  max-height:100dvh;
+  overflow:hidden!important;
+  box-sizing:border-box;
+}
+#game .panel{
+  --board-w:calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8.25rem) / 2.08);
+  --board-border:clamp(6px, calc(var(--board-w) * 0.034), 13px);
+  --board-pad:clamp(4px, calc(var(--board-w) * 0.022), 8px);
+  --board-gap:clamp(3px, calc(var(--board-w) * 0.014), 5px);
+  --cell-pad:clamp(2px, calc(var(--board-w) * 0.014), 5px);
+  --hand-pad-y:clamp(3px, calc(var(--board-w) * 0.014), 5px);
+  --hand-pad-x:clamp(4px, calc(var(--board-w) * 0.016), 6px);
+  --hand-gap:clamp(3px, calc(var(--board-w) * 0.012), 4px);
+  --brass-outset:calc(var(--board-border) * 1.15);
+  --brass-size:clamp(12px, calc(var(--board-w) * 0.06), 22px);
+  height:100%!important;
+  max-height:none!important;
+  min-height:0!important;
+  overflow:visible!important;
+  box-sizing:border-box;
+}
+#game .board,
+#game .hand{
+  width:min(100%, var(--board-w))!important;
+  max-width:100%!important;
+  min-width:0;
+  box-sizing:border-box;
+}
+#game .board{
+  display:grid!important;
+  grid-template-columns:repeat(3, minmax(0, 1fr))!important;
+  gap:var(--board-gap)!important;
+  padding:var(--board-pad)!important;
+  border-width:var(--board-border)!important;
+}
+#game .board:before{
+  inset:calc(var(--brass-outset) * -1);
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/var(--brass-size) var(--brass-size) no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/var(--brass-size) var(--brass-size) no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/var(--brass-size) var(--brass-size) no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/var(--brass-size) var(--brass-size) no-repeat;
+}
+#game .cell{
+  min-width:0!important;
+  min-height:0!important;
+  padding:var(--cell-pad)!important;
+  box-sizing:border-box!important;
+}
+#game .cell .card{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  aspect-ratio:auto!important;
+  box-sizing:border-box!important;
+}
+#game .hand{
+  display:grid!important;
+  grid-template-columns:repeat(5, minmax(0, 1fr))!important;
+  gap:var(--hand-gap)!important;
+  padding:var(--hand-pad-y) var(--hand-pad-x)!important;
+}
+#game .hand>div{
+  min-width:0;
+  min-height:0;
+  aspect-ratio:var(--card-ratio);
+}
+#game .hand>div .card{
+  width:100%!important;
+  height:100%!important;
+  max-width:100%!important;
+  max-height:100%!important;
+  aspect-ratio:auto!important;
+  min-height:0!important;
+  box-sizing:border-box!important;
+}
+#game .card.gilt .n,
+#game .card.gilt .e,
+#game .card.gilt .s,
+#game .card.gilt .w{
+  font-size:clamp(8px, calc(var(--board-w) * 0.046), 22px)!important;
+}
+#game .hand .card.gilt .n,
+#game .hand .card.gilt .e,
+#game .hand .card.gilt .s,
+#game .hand .card.gilt .w{
+  font-size:clamp(7px, calc(var(--board-w) * 0.032), 16px)!important;
 }
 </style>
 <style>
