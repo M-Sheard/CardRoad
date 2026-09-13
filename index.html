@@ -1138,18 +1138,68 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
 const $=x=>document.getElementById(x);
 function show(id){
  ["home","challenge","termsBuilder","profile","cardInspector","starter","deckSelect","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
- if(id==="game")scheduleMatchLayout();
+ scheduleScreenLayout(id);
 }
 function matchViewBox(){
  const vv=window.visualViewport;
  if(vv)return{left:vv.offsetLeft,top:vv.offsetTop,right:vv.offsetLeft+vv.width,bottom:vv.offsetTop+vv.height};
  return{left:0,top:0,right:innerWidth,bottom:innerHeight};
 }
-let matchLayoutQueued=false,matchLayoutLock=false,matchLayoutW=0;
-function scheduleMatchLayout(){
+let matchLayoutQueued=false,matchLayoutLock=false,matchLayoutW=0,matchLayoutId=null;
+function scheduleScreenLayout(id){
+ matchLayoutId=id||matchLayoutId;
  if(matchLayoutQueued)return;
  matchLayoutQueued=true;
- requestAnimationFrame(()=>{matchLayoutQueued=false;layoutMatchTable();});
+ requestAnimationFrame(()=>{
+  matchLayoutQueued=false;
+  const next=matchLayoutId;
+  matchLayoutId=null;
+  layoutScreenFit(next);
+ });
+}
+function scheduleMatchLayout(){scheduleScreenLayout("game")}
+function layoutScreenFit(id){
+ const vis=["game","challenge","result","deckSelect","starter","termsBuilder","profile","tournament","seriesSummary","cardInspector"].find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
+ id=id||vis;
+ if(id==="game")return layoutMatchTable();
+ if(id==="challenge"){
+  const root=$("challenge");
+  return layoutStageWidth(root,root&&root.querySelector(".challengeTable"),"--stage-w",200);
+ }
+ if(id==="result"){
+  const root=$("result");
+  return layoutStageWidth(root,root&&root.querySelector(".resultTable"),"--stage-w",200);
+ }
+ if(id==="deckSelect"){
+  const root=$("deckSelect");
+  return layoutStageWidth(root,root&&root.querySelector(".deckSelectShell"),"--stage-w",220);
+ }
+}
+function layoutStageWidth(root,stage,varName,minW){
+ if(!root||!stage||root.classList.contains("hidden")||matchLayoutLock)return;
+ matchLayoutLock=true;
+ const gCS=getComputedStyle(root);
+ const pad={l:parseFloat(gCS.paddingLeft)||0,r:parseFloat(gCS.paddingRight)||0,t:parseFloat(gCS.paddingTop)||0,b:parseFloat(gCS.paddingBottom)||0};
+ const maxW=Math.max(minW,root.clientWidth-pad.l-pad.r);
+ const view=matchViewBox();
+ function overflowAt(w){
+  root.style.setProperty(varName,w+"px");
+  const g=root.getBoundingClientRect(),s=stage.getBoundingClientRect();
+  const clip={
+   left:Math.max(view.left,g.left+pad.l),
+   top:Math.max(view.top,g.top+pad.t),
+   right:Math.min(view.right,g.right-pad.r),
+   bottom:Math.min(view.bottom,g.bottom-pad.b)
+  };
+  return Math.max(0,clip.left-s.left,s.right-clip.right,clip.top-s.top,s.bottom-clip.bottom);
+ }
+ let lo=minW,hi=maxW,best=minW;
+ for(let i=0;i<12;i++){
+  const mid=(lo+hi)/2;
+  if(overflowAt(mid)<=1){best=mid;lo=mid;}else hi=mid;
+ }
+ root.style.setProperty(varName,(Math.round(best*10)/10)+"px");
+ matchLayoutLock=false;
 }
 function layoutMatchTable(){
  const game=$("game"),panel=game&&game.querySelector(".panel"),board=$("board"),hand=$("hand"),opp=$("oppHand");
@@ -1820,6 +1870,7 @@ function renderKnownCollection(npc){
    }
    $("knownNpcCards").appendChild(d);
  });
+ scheduleScreenLayout("challenge");
 }
 
 function news(text){if(!state.news)state.news=[];state.news.push(text)}
@@ -2132,6 +2183,7 @@ function renderDeckSelect(opts){
    seriesPlayerDeck=[...selectedDeck];
    seriesPlayerCopyDeck=physicalCopiesForDeck("You",seriesPlayerDeck);
  }
+ scheduleScreenLayout("deckSelect");
 }
 function pickDeckCard(n,fromEl){
  if(deckSelectAnimating||!C[n]||selectedDeck.length>=5||selectedDeck.includes(n))return;
@@ -2609,6 +2661,7 @@ function settleSeries(winner){
       if(!eligible.length){
         $("resultCaption").textContent="No copies were exposed.";
         $("resultHome").classList.remove("hidden");
+        scheduleScreenLayout("result");
         return;
       }
       $("claimPanel").classList.remove("hidden");
@@ -2642,6 +2695,7 @@ function settleSeries(winner){
    recovery();save();
    playResultFlip(C[take],"ai");
  }
+ scheduleScreenLayout("result");
 }
 
 
@@ -2710,6 +2764,7 @@ function finish(){
    }else{
      $("resultTitle").textContent="Draw";scheduleActivityTime("match");save();
    }
+   scheduleScreenLayout("result");
    return;
  }
 
@@ -2729,6 +2784,7 @@ function finish(){
    addResultContinue("Next Series Game",nextSeriesGame);
  }
  save();
+ scheduleScreenLayout("result");
 }
 function playerOwnedCount(design){
  return state.player.reduce((count,n)=>count+(n===design?1:0),0);
@@ -2772,10 +2828,10 @@ if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?"))
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();renderHome()}};
 load();renderHome();show("home");syncDevControls();
 document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
-window.addEventListener("resize",scheduleMatchLayout);
+window.addEventListener("resize",()=>scheduleScreenLayout());
 if(window.visualViewport){
- visualViewport.addEventListener("resize",scheduleMatchLayout);
- visualViewport.addEventListener("scroll",scheduleMatchLayout);
+ visualViewport.addEventListener("resize",()=>scheduleScreenLayout());
+ visualViewport.addEventListener("scroll",()=>scheduleScreenLayout());
 }
 </script>
 
@@ -6264,6 +6320,221 @@ html,body,#visualShell{color-scheme:only light}
 #challenge .challengePlaqueBtn.hidden{display:none!important}
 @media(max-width:620px){
   #challenge .challengeWell{border-width:8px;padding:12px 10px 14px}
+}
+</style>
+<style>
+/* v52 — leftover-space fit on every live screen. Chrome stays planted;
+   the stage sizes from the visible box. Town pins stay Mark-spots %. */
+#visualShell{
+  min-height:100svh!important;
+  min-height:100dvh!important;
+  height:100svh;
+  height:100dvh;
+  overflow:hidden!important;
+}
+#visualShell .townScene{
+  height:100svh!important;
+  height:100dvh!important;
+  min-height:0!important;
+}
+#visualShell .worldTopbar{
+  position:absolute!important;
+}
+#challenge,
+#result,
+#deckSelect{
+  --stage-w:440px;
+}
+#challenge .challengeTable,
+#result .resultTable{
+  width:min(100%,var(--stage-w,440px))!important;
+  max-width:100%;
+  touch-action:pan-y;
+}
+#challenge .challengeWell,
+#result .resultWell{
+  overflow-x:hidden!important;
+  border-width:clamp(6px,calc(var(--stage-w,440px) * .028),10px)!important;
+}
+#result{
+  touch-action:pan-y;
+}
+#result .resultPlaque,
+#result .resultScore,
+#result .resultCaption,
+#result .resultFlavor{
+  flex:0 0 auto;
+}
+#result .resultWell{
+  overflow-y:hidden!important;
+}
+#result .resultStage{
+  min-height:0!important;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+#result .claimPick{
+  max-width:none;
+}
+#result .claimPick .card,
+#result .claimFace .card{
+  width:100%;
+  max-width:none;
+  height:auto;
+  min-height:0;
+  aspect-ratio:5/7;
+}
+#result .resultCeremony{
+  width:min(32%,118px)!important;
+}
+#result .claimFace .card .n,
+#result .claimFace .card .e,
+#result .claimFace .card .s,
+#result .claimFace .card .w,
+#challenge .challengeCopy .card .n,
+#challenge .challengeCopy .card .e,
+#challenge .challengeCopy .card .s,
+#challenge .challengeCopy .card .w{
+  font-size:clamp(8px,calc(var(--stage-w,440px) * .042),18px)!important;
+}
+#deckSelect .deckSelectShell{
+  width:min(100%,var(--stage-w,430px))!important;
+}
+#deckSelect{
+  --binder-tab:clamp(22px,calc(var(--stage-w,430px) * .065),28px);
+  --binder-inset:clamp(6px,calc(var(--stage-w,430px) * .024),10px);
+  --binder-ring:clamp(22px,calc(var(--stage-w,430px) * .08),34px);
+  --binder-ring-h:clamp(52px,calc(var(--stage-w,430px) * .18),80px);
+  --binder-spine:clamp(28px,calc(var(--stage-w,430px) * .09),40px);
+}
+#deckSelect .hand{
+  grid-template-columns:repeat(5,minmax(0,1fr))!important;
+}
+#deckSelect .card.gilt .n,
+#deckSelect .card.gilt .e,
+#deckSelect .card.gilt .s,
+#deckSelect .card.gilt .w{
+  font-size:clamp(7px,calc(var(--stage-w,430px) * .028),12px)!important;
+}
+#starter,
+#termsBuilder,
+#profile,
+#tournament,
+#seriesSummary{
+  max-width:none!important;
+  width:100%!important;
+  margin:0!important;
+  height:100svh!important;
+  height:100dvh!important;
+  max-height:100dvh;
+  min-height:0!important;
+  overflow:hidden!important;
+  box-sizing:border-box;
+  padding:max(12px,env(safe-area-inset-top) + 8px) max(12px,env(safe-area-inset-right) + 8px) max(12px,env(safe-area-inset-bottom) + 8px) max(12px,env(safe-area-inset-left) + 8px)!important;
+  display:flex!important;
+  flex-direction:column;
+  align-items:center;
+}
+#starter.hidden,
+#termsBuilder.hidden,
+#profile.hidden,
+#tournament.hidden,
+#seriesSummary.hidden{
+  display:none!important;
+}
+#starter #runeChoice.hidden,
+#starter #startAfterRune.hidden{
+  display:none!important;
+}
+#starter .panel,
+#termsBuilder .panel,
+#profile .panel,
+#tournament .panel,
+#seriesSummary .panel{
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  width:min(100%,520px);
+  max-width:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  box-sizing:border-box;
+  touch-action:pan-y;
+}
+#cardInspector:not(.hidden){
+  display:flex!important;
+  flex-direction:column;
+  align-items:center;
+  overflow:hidden!important;
+}
+#cardInspector .panel{
+  flex:1 1 auto;
+  min-height:0;
+  width:min(100%,520px);
+  max-width:100%;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  box-sizing:border-box;
+}
+#cardInspector .inspectCardWrap{
+  max-width:min(180px,42vw);
+}
+.journalOverlay:not(.hidden){
+  position:fixed!important;
+  inset:0!important;
+  z-index:100!important;
+  display:flex!important;
+  flex-direction:column;
+  padding:max(12px,env(safe-area-inset-top) + 8px) max(12px,env(safe-area-inset-right) + 8px) max(12px,env(safe-area-inset-bottom) + 8px) max(12px,env(safe-area-inset-left) + 8px)!important;
+  overflow:hidden!important;
+  box-sizing:border-box;
+}
+.journalBook{
+  flex:1 1 auto;
+  min-height:0!important;
+  max-height:100%;
+  width:min(100%,800px);
+  margin:0 auto!important;
+  display:flex;
+  flex-direction:column;
+  overflow:hidden;
+  box-sizing:border-box;
+}
+.journalHeader,
+.journalTabs,
+.journalDev{flex:0 0 auto}
+#journalContent{
+  flex:1 1 auto;
+  min-height:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+}
+#historyModal:not(.hidden){
+  display:flex!important;
+  flex-direction:column;
+  padding:max(12px,env(safe-area-inset-top) + 8px) max(12px,env(safe-area-inset-right) + 8px) max(12px,env(safe-area-inset-bottom) + 8px) max(12px,env(safe-area-inset-left) + 8px)!important;
+  overflow:hidden!important;
+  box-sizing:border-box;
+}
+#historyModal .panel{
+  flex:1 1 auto;
+  min-height:0;
+  width:min(100%,500px);
+  max-width:100%;
+  margin:0 auto;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+}
+#historyModal #historyBody{max-height:none}
+@media(max-width:620px){
+  #visualShell .townScene{height:100svh!important;height:100dvh!important;min-height:0!important}
+  .journalBook{min-height:0!important}
 }
 </style>
 <script>

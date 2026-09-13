@@ -1,23 +1,54 @@
 ---
-description: Card Road UI must fit phones of every width, not one desktop layout
+description: Card Road UI must fit leftover screen space on every phone, not one device
 alwaysApply: true
 ---
 
-# Scale across phones
+# Scale across phones (leftover-space fit)
 
-Card Road is played on many phone sizes (about 320px–430px wide, plus notched safe areas). **Every new or edited UI piece must stay fully on-screen** without clipping, overlapping, or forcing a horizontal scroll.
+Card Road is played on many phone sizes (about 320px–430px wide, plus notched safe areas) and on laptops. **Every current and future screen must keep its pieces where they belong** — no clipping, overlapping, sideways drag, or horizontal scroll — unless Marc explicitly says a screen does not need it.
 
-**Do**
-- Inset chrome with `max(16px, env(safe-area-inset-* ) + 10px)`, not a single magic pixel.
-- Let the date/title flex and shrink (`min-width:0`, `%` / `vw` / `min()`). Pin Journal (and similar buttons) with `flex: 0 0 auto` in a padded row — never a fixed width that plus the date exceeds `100vw`.
-- Size standees and location tabs with `vw` / `%` of `.townScene`. Scene height is `100dvh` / `100svh`, **no** 690px+ min-height on phones.
-- Match cards are playing-card rectangles (`aspect-ratio: 5/7`), not squares. Size the board from `dvh` so the 3×3 plus both hands stay on-screen at ~320px and ~390px.
-- Check a **narrow** width (~320px) and a **typical** phone (~390px) when changing layout.
-- Keep the location painting as bright as desktop on phones. Do **not** stack a heavy bottom vignette or a dark `linear-gradient` over the webp — a tall crop already shows more of the shadowed floor.
+## Default for every screen
 
-**Do not**
-- Place controls with only `right:0` / `left:0` so scroll-caps or shadows get cropped (`#visualShell` is `overflow:hidden`).
-- Copy desktop `px` widths onto mobile (`min-width:280px` date bars, `200px` journal plaques).
-- Assume Marc’s pin % from a wide monitor will look identical on a tall phone crop; call that out if a change is placement-sensitive.
+Treat the visible viewport (`100svh` / `100dvh` + `env(safe-area-inset-*)`) as a box.
+
+1. **Chrome stays planted** (title, plaque, score, Accept/Back, location tabs): `flex: 0 0 auto`.
+2. **The stage takes leftover space** (3×3, known-collection well, binder page, claim row, journal body): `flex: 1 1 auto; min-height: 0; min-width: 0`.
+3. **Size the stage from leftover space**, not from Marc’s phone or a magic `8.25rem / 2.08` guess. Prefer one CSS variable (`--board-w` / `--stage-w`) set by measuring the real box. Card chrome (gilt numbers, oak lip, cell padding) follows that variable — **not** raw `vw` when that drifts numbers off the art.
+4. **Overflow is up/down only** on the stage (`overflow-x: hidden; overflow-y: auto; touch-action: pan-y`). Never pan the whole felt board sideways.
+5. **Inset chrome** with `max(16px, env(safe-area-inset-*) + 10px)`.
+6. Check a **narrow** width (~320px), a **typical** phone (~390px), a **tall** phone (~430px), and a **short** height when changing layout.
+
+Live match layout is `layoutMatchTable()` / `layoutScreenFit()` in root `index.html`. Reuse that instead of a new per-screen widget.
+
+## Screen types
+
+- **Felt table / cards** (match, challenge, result, binder): leftover-space sizing **is** the point. Same club-table well; cards stay 5:7 and centred in their slots.
+- **Document / list** (rune draw, terms, profile, tournament, series summary, inspector, journal): fill the viewport; pin the header/actions; **vertical scroll** the body. Do not invent a second board scaler unless cards are the main stage.
+- **Town**: scene is `100dvh` / `100svh` (no 690px+ or 480px phone height). Top bar and location strip stay on-screen (v38 flex row). NPC standees stay **Mark spots** baked `%` of `.townScene` — do not shrink-to-fit live NPCs. Call out that a friend’s tall crop will not match Marc’s monitor pins.
+
+## New screens — tell Marc first
+
+When we add a screen and figure out what sits on it, **say whether leftover-space scaling helps**, in plain language:
+
+- **Yes (do it):** a board, card grid, binder, felt well, or anything that must keep a 5:7 card / oak lip lined up.
+- **Partial:** a plaque + scrolling list (challenge known copies) — pin chrome, scroll the list, still no sideways pan.
+- **Probably not:** a short dialog or a few buttons that already fit at 320px with normal document flow. Still forbid horizontal overflow.
+- **Different tool:** a new location painting — use Mark spots, not a match-table scaler.
+
+If Marc says a screen does not need it, skip the scaler and say so.
+
+## Do
+
+- Let titles flex (`min-width:0`, `%` / `min()`). Pin Journal-like buttons with `flex: 0 0 auto`.
+- Size standees and location tabs with `vw` / `%` of `.townScene`.
+- Match cards are playing-card rectangles (`aspect-ratio: 5/7`), not squares.
+- Keep the location painting as bright as desktop on phones. Do **not** stack a heavy bottom vignette over the webp.
+
+## Do not
+
+- Place controls with only `right:0` / `left:0` so scroll-caps get cropped (`#visualShell` is `overflow:hidden`).
+- Copy desktop `px` widths onto mobile (`min-width:280px` date bars, `200px` journal plaques, `min-height:620px` journal books).
+- Assume Marc’s pin `%` from a wide monitor will look identical on a tall phone crop.
+- Split `index.html` just to add a layout helper.
 
 The live top bar is the v38 flex row in `index.html`. Follow that pattern for future chrome.
