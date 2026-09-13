@@ -2567,6 +2567,7 @@ function sizeBanditWindows(){
     if(h)win.style.setProperty("--reel-cell",(h/BANDIT_REEL_WINDOW)+"px");
   });
 }
+function relockBanditReels(){
   ["playerRune","npcRune"].forEach(id=>{
     const el=$(id);
     if(!el||!el.classList.contains("is-locked"))return;
