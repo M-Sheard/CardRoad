@@ -585,21 +585,25 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="challenge" class="hidden">
-<section class="panel">
-<h2 id="challengeTitle"></h2>
-<div id="terms"></div>
-<div id="challengeMsg" class="small"></div><div id="seriesSetup" class="small" style="margin-top:6px"></div>
-
-<h3 style="margin-top:14px">Known Collection</h3>
-<div class="small">Cards you have previously seen are identified. Other owned cards remain Unknown.</div>
-<div id="knownNpcCards" class="cards" style="margin-top:8px"></div>
-
-<div style="margin-top:10px"><button id="acceptTerms">Accept</button> <button id="backHome">Back</button></div>
-</section>
-<section id="deckPanel" class="panel hidden">
-<h3>Full Match Rules</h3><div id="preMatchRules" style="margin-bottom:10px"></div>
-<div id="deckInfo" class="small"></div><div id="deckCards" class="cards"></div>
-</section>
+  <div class="challengeTable">
+    <div class="challengeWell">
+      <h2 id="challengeTitle" class="challengePlaque"></h2>
+      <div id="challengeMsg" class="challengeCaption"></div>
+      <div id="terms" class="challengeTerms"></div>
+      <div id="seriesSetup" class="challengeFlavor"></div>
+      <div class="challengeKnownHead">Known collection</div>
+      <p class="challengeKnownHint">Seen copies show their face. The rest stay unknown.</p>
+      <div id="knownNpcCards" class="challengeKnown"></div>
+    </div>
+    <div class="challengeActions">
+      <button id="acceptTerms" class="challengePlaqueBtn" type="button">Accept</button>
+      <button id="backHome" class="challengePlaqueBtn challengePlaqueBtnAlt" type="button">Back</button>
+    </div>
+  </div>
+  <section id="deckPanel" class="panel hidden">
+    <h3>Full Match Rules</h3><div id="preMatchRules" style="margin-bottom:10px"></div>
+    <div id="deckInfo" class="small"></div><div id="deckCards" class="cards"></div>
+  </section>
 </div>
 
 <div id="deckSelect" class="hidden">
@@ -1736,17 +1740,34 @@ function markSeen(npc,card){
  if(!state.seenByNpc[npc])state.seenByNpc[npc]=[];
  if(!state.seenByNpc[npc].includes(card))state.seenByNpc[npc].push(card);
 }
+function cardLabel(n){return (C[n]&&C[n].display)||n}
+function fillChallengeTerms(){
+  if(!currentTerms)return;
+  const bits=[currentTerms.rule,currentTerms.wager,currentTerms.tie==="final"?"Final Capture":"Draws allowed","Budget "+currentTerms.budget];
+  if(seriesTarget>1)bits.push("Best of "+seriesTarget);
+  if(namedWagers)bits.push(cardLabel(namedWagers.p)+" vs "+cardLabel(namedWagers.ai));
+  $("terms").innerHTML=bits.map(t=>`<span class="challengeTerm">${t}</span>`).join("");
+}
 function renderKnownCollection(npc){
  let seen=state.seenByNpc[npc]||[];
  let owned=state.npcs[npc]||[];
  $("knownNpcCards").innerHTML="";
- owned.forEach(card=>{
-   let known=seen.includes(card);
-   let d=document.createElement("div");d.className="npc";
-   if(known){
-     d.innerHTML=`<b>${card}</b><div class="small">N ${C[card].n} · E ${C[card].e} · S ${C[card].s} · W ${C[card].w} · Total ${C[card].budget}</div>`;
+ owned.forEach(n=>{
+   let known=seen.includes(n),card=C[n];
+   let d=document.createElement("div");
+   d.className="challengeCopy"+(known?" isKnown":" isUnknown");
+   if(known&&card){
+     d.innerHTML=cardHTML(card,"ai")+`<div class="challengeCopyName">${cardLabel(n)}</div>`;
+     d.setAttribute("role","button");
+     d.tabIndex=0;
+     const open=()=>{
+       let cp=getCopy(npc,n);
+       inspectCopy(cp||{design:n,owner:npc,origin:"Match copy",signatures:[],stamps:[]},"challenge");
+     };
+     d.onclick=open;
+     d.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();open();}};
    }else{
-     d.innerHTML=`<b>Unknown</b><div class="small">Owned card not yet seen</div>`;
+     d.innerHTML=cardBackHTML("ai")+`<div class="challengeCopyName">Unknown</div>`;
    }
    $("knownNpcCards").appendChild(d);
  });
@@ -1939,9 +1960,8 @@ $("proposeTerms").onclick=()=>{
    namedWagers={p:offer,ai:stake};
  }
  state.incoming=null;save();
- $("challengeTitle").textContent=`Challenge ${currentNpc}`;
- $("terms").innerHTML=`<b>${currentTerms.rule}</b><br>${currentTerms.wager}<br>${currentTerms.tie==="final"?"Final Capture":"Draws allowed"}<br>Deck budget ${currentTerms.budget}<br>Best of ${seriesTarget}`+
- (namedWagers?`<br><b>Stakes:</b> ${namedWagers.p} vs ${namedWagers.ai}`:"");
+ $("challengeTitle").textContent=currentNpc;
+ fillChallengeTerms();
  $("challengeMsg").textContent=`${currentNpc} accepted your terms.`;$("seriesSetup").textContent=`Series: first to ${Math.floor(seriesTarget/2)+1} wins the matchup. Wager settles only after the series.`;
  renderKnownCollection(currentNpc);$("deckPanel").classList.add("hidden");show("challenge");
 };
@@ -1951,8 +1971,8 @@ $("declineIncoming").onclick=()=>{let n=state.incoming.npc,m=mem(n);m.declines++
 function openChallenge(name){
  $("acceptTerms").classList.remove("hidden");$("backHome").classList.remove("hidden");
  currentNpc=name;state.seasonStats.playerChallenges++;challengeDirection="outgoing";seriesTarget=1;seriesWins={p:0,ai:0};seriesGame=0;namedWagers=null;currentTerms={...npcDefs[name].terms};
- $("challengeTitle").textContent=`Challenge ${name}`;
- $("terms").innerHTML=`<b>${currentTerms.rule}</b><br>${currentTerms.wager}<br>${currentTerms.tie==="final"?"Final Capture tiebreak":"Draws allowed"}<br>Deck budget ${currentTerms.budget}`;
+ $("challengeTitle").textContent=name;
+ fillChallengeTerms();
  $("challengeMsg").textContent=`You challenged ${name}, so ${name} sets the rules.`;$("seriesSetup").textContent="Series: single game. Wager settles after the match.";
  renderKnownCollection(name);
  $("deckPanel").classList.add("hidden");show("challenge");
@@ -5824,6 +5844,246 @@ html,body,#visualShell{color-scheme:only light}
   #result #claimPanel.isFading .claimPick,
   #result .resultCeremony.isLive,
   #result .resultCeremony .flipCardInner{transition:none}
+}
+</style>
+<style>
+/* v51 — challenge felt. Same club table as match/result so town → wager
+   → binder never drops into the old parchment panel. */
+#challenge{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#challenge.hidden{display:none!important}
+#challenge #deckPanel.hidden{display:none!important}
+#challenge .challengeTable{
+  width:min(100%,440px);
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#challenge .challengeWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:14px 12px 16px;
+  overflow:auto;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#challenge .challengeWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#challenge .challengePlaque{
+  position:relative;
+  z-index:1;
+  margin:0;
+  width:min(92%,280px);
+  padding:12px 18px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(17px,5.8vw,26px);
+  font-weight:800;
+  letter-spacing:.14em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#challenge .challengeCaption{
+  position:relative;
+  z-index:1;
+  margin:10px 0 0;
+  padding:6px 12px;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,3.4vw,15px);
+  color:#f0e2c4;
+  background:#3d2a18;
+  border:2px solid #24150c;
+  border-radius:4px;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.25);
+  text-align:center;
+  max-width:28em;
+}
+#challenge .challengeCaption:empty{display:none}
+#challenge .challengeTerms{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  gap:6px;
+  margin:10px 0 0;
+  width:100%;
+}
+#challenge .challengeTerm{
+  padding:5px 10px;
+  background:#e8dcc4;
+  color:#3a2a18;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(12px,3.3vw,14px);
+  font-weight:700;
+  box-shadow:0 2px 5px #0005;
+}
+#challenge .challengeFlavor{
+  position:relative;
+  z-index:1;
+  margin:8px 10px 0;
+  max-width:28em;
+  font-family:Georgia,serif;
+  font-size:clamp(11px,3.1vw,13px);
+  line-height:1.35;
+  color:#d9cba8;
+  text-align:center;
+  text-shadow:0 1px 2px #000a;
+}
+#challenge .challengeFlavor:empty{display:none}
+#challenge .challengeKnownHead{
+  position:relative;
+  z-index:1;
+  margin:12px 0 0;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,3.4vw,14px);
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#ead9b0;
+  text-shadow:0 1px 2px #000a;
+}
+#challenge .challengeKnownHint{
+  position:relative;
+  z-index:1;
+  margin:4px 10px 8px;
+  font-family:Georgia,serif;
+  font-size:clamp(10px,2.8vw,12px);
+  color:#cbbfa0;
+  text-align:center;
+}
+#challenge .challengeKnown{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-wrap:wrap;
+  justify-content:center;
+  align-items:flex-start;
+  gap:8px 8px;
+  width:100%;
+  margin:0;
+}
+#challenge .challengeCopy{
+  width:calc((100% - 24px) / 4);
+  max-width:72px;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:4px;
+  background:transparent;
+  border:0;
+  padding:0;
+  min-width:0;
+}
+#challenge .challengeCopy.isKnown{cursor:pointer;touch-action:manipulation}
+#challenge .challengeCopy .card{
+  width:100%;
+  max-width:none;
+  height:auto;
+  min-height:0;
+  aspect-ratio:5/7;
+  pointer-events:none;
+}
+#challenge .challengeCopyName{
+  font-family:Georgia,serif;
+  font-size:10px;
+  line-height:1.2;
+  color:#ead9b0;
+  text-align:center;
+  text-shadow:0 1px 2px #000a;
+  max-width:100%;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+#challenge .challengeActions{
+  display:flex;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+}
+#challenge .challengePlaqueBtn{
+  flex:1 1 0;
+  min-width:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(15px,4.4vw,18px)!important;
+  font-weight:800!important;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:
+    linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+#challenge .challengePlaqueBtnAlt{
+  background:
+    linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+}
+#challenge .challengePlaqueBtn.hidden{display:none!important}
+@media(max-width:620px){
+  #challenge .challengeWell{border-width:8px;padding:12px 10px 14px}
+  #challenge .challengeCopy{width:calc((100% - 18px) / 4);max-width:64px}
 }
 </style>
 <script>

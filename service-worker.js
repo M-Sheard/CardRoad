@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v45-result-felt';
+const CACHE_NAME = 'card-road-pwa-v46-challenge-felt';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
