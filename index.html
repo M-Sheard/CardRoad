@@ -2559,7 +2559,7 @@ function lockBanditReel(el,n){
     if(cellH)win.style.setProperty("--reel-cell",cellH+"px");
   }
   const face=el.querySelector(".banditFace");
-  if(face){face.hidden=true;face.textContent=String(n);}
+  if(face){face.hidden=false;face.textContent=String(n);}
 }
 function sizeBanditWindows(){
   document.querySelectorAll("#starter .banditWindow").forEach(win=>{
@@ -3179,6 +3179,16 @@ if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("b
 
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();renderHome()}};
 load();renderHome();show("home");syncDevControls();
+if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
+ resetRuneBandit();
+ const name=$("runeNpcName");
+ if(name)name.textContent="NESSA";
+ show("starter");
+ ensureBanditReels();
+ sizeBanditWindows();
+ lockBanditReel($("playerRune"),2);
+ lockBanditReel($("npcRune"),6);
+}
 document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
 window.addEventListener("resize",()=>scheduleScreenLayout());
 if(window.visualViewport){
@@ -6759,6 +6769,7 @@ html,body,#visualShell{color-scheme:only light}
   z-index:1;
   overflow:hidden;
   pointer-events:none;
+  container-type:size;
   background:linear-gradient(#efe0c0,#e4d2a8 55%,#d4bf90);
   border-radius:42% / 38%;
 }
@@ -6818,15 +6829,20 @@ html,body,#visualShell{color-scheme:only light}
   display:flex;
   align-items:center;
   justify-content:center;
+  margin:0;
+  padding:0;
   background:linear-gradient(#f4e6c4,#e2d0a8);
   font-family:Georgia,"Times New Roman",serif;
-  font-size:calc(var(--reel-cell) * .9);
+  font-size:calc(var(--reel-cell) * .95);
+  font-size:70cqh;
   font-weight:800;
-  color:#3a2a18;
+  line-height:1;
+  color:#1a0c08;
+  text-align:center;
 }
 #starter .banditReel.is-spinning .banditFace,
-#starter .banditReel.is-locked .banditFace,
 #starter .banditFace[hidden]{display:none}
+#starter .banditReel.is-locked .banditStrip{visibility:hidden}
 #starter .banditDraw{
   appearance:none;
   -webkit-appearance:none;
