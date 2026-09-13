@@ -686,13 +686,13 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <div class="starterRunes">
         <div class="bandit" id="runeBandit">
           <div class="banditStage">
+            <img class="banditArt" src="assets/ui/rune_bandit_cabinet.png" alt="" draggable="false">
             <div class="banditWindow banditWindowYou">
               <div id="playerRune" class="banditReel"></div>
             </div>
             <div class="banditWindow banditWindowNpc">
               <div id="npcRune" class="banditReel"></div>
             </div>
-            <img class="banditArt" src="assets/ui/rune_bandit_cabinet.png" alt="" draggable="false">
             <span class="banditWhoNpc hidden" id="runeNpcName">Opponent</span>
             <button id="drawRunes" class="banditDraw" type="button">Draw Runes</button>
             <button id="banditLever" class="banditLever" type="button" tabindex="-1" aria-hidden="true"></button>
@@ -6726,14 +6726,14 @@ html,body,#visualShell{color-scheme:only light}
 #starter .banditStage{
   position:relative;
   container-type:inline-size;
-  width:min(100%, calc(100cqh * 520 / 574));
-  aspect-ratio:520 / 574;
+  width:min(100%, calc(100cqh * 755 / 846));
+  aspect-ratio:755 / 846;
   max-height:100%;
 }
 #starter .banditArt{
   position:absolute;
   inset:0;
-  z-index:4;
+  z-index:1;
   width:100%;
   height:100%;
   object-fit:fill;
@@ -6746,24 +6746,24 @@ html,body,#visualShell{color-scheme:only light}
   --reel-window:1.32;
   --reel-cell:calc(100% / var(--reel-window));
   position:absolute;
-  z-index:1;
+  z-index:3;
   overflow:hidden;
   pointer-events:none;
   container-type:size;
-  background:linear-gradient(#efe0c0,#e4d2a8 55%,#d4bf90);
-  border-radius:50%;
+  background:linear-gradient(#f3e6c8,#e6d4ac 55%,#d7c194);
+  border-radius:16% / 14%;
 }
 #starter .banditWindowYou{
-  left:17.8%;
-  top:34.2%;
-  width:18.8%;
-  height:17.1%;
+  left:15%;
+  top:27%;
+  width:27.6%;
+  height:32.2%;
 }
 #starter .banditWindowNpc{
-  left:43.8%;
-  top:35.6%;
-  width:19.6%;
-  height:17.8%;
+  left:43.6%;
+  top:27%;
+  width:28%;
+  height:32.2%;
 }
 #starter .banditWindow:after{
   content:"";
@@ -6771,7 +6771,7 @@ html,body,#visualShell{color-scheme:only light}
   inset:0;
   z-index:3;
   pointer-events:none;
-  background:linear-gradient(#0004,transparent 22%,transparent 78%,#0005);
+  background:linear-gradient(#0003,transparent 20%,transparent 80%,#0004);
 }
 #starter .banditReel{
   position:relative;
@@ -6810,12 +6810,12 @@ html,body,#visualShell{color-scheme:only light}
   align-items:center;
   justify-content:center;
   margin:0;
-  padding:4cqh 0 0;
+  padding:0;
   box-sizing:border-box;
-  background:linear-gradient(#f4e6c4,#e2d0a8);
+  background:linear-gradient(#f3e6c8,#e6d4ac);
   font-family:Georgia,"Times New Roman",serif;
   font-size:calc(var(--reel-cell) * .95);
-  font-size:64cqh;
+  font-size:58cqh;
   font-weight:800;
   line-height:1;
   color:#1a0c08;
@@ -6828,10 +6828,10 @@ html,body,#visualShell{color-scheme:only light}
   appearance:none;
   -webkit-appearance:none;
   position:absolute;
-  left:16.5%;
-  top:66%;
-  width:44%;
-  height:13%;
+  left:17.8%;
+  top:67.5%;
+  width:48.8%;
+  height:13.8%;
   z-index:6;
   margin:0;
   padding:0!important;
@@ -6847,10 +6847,10 @@ html,body,#visualShell{color-scheme:only light}
   appearance:none;
   -webkit-appearance:none;
   position:absolute;
-  left:76.5%;
-  top:5.5%;
-  width:22%;
-  height:44%;
+  left:75.5%;
+  top:3.2%;
+  width:23.8%;
+  height:45.5%;
   z-index:6;
   margin:0;
   padding:0!important;
