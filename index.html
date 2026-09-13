@@ -1307,6 +1307,7 @@ function layoutScreenFit(id){
  if(id==="starter"){
   const root=$("starter");
   layoutStageWidth(root,root&&root.querySelector(".starterTable"),"--stage-w",200);
+  sizeBanditWindows();
   relockBanditReels();
   return;
  }
@@ -2560,7 +2561,12 @@ function lockBanditReel(el,n){
   const face=el.querySelector(".banditFace");
   if(face){face.hidden=true;face.textContent=String(n);}
 }
-function relockBanditReels(){
+function sizeBanditWindows(){
+  document.querySelectorAll("#starter .banditWindow").forEach(win=>{
+    const h=win.clientHeight;
+    if(h)win.style.setProperty("--reel-cell",(h/BANDIT_REEL_WINDOW)+"px");
+  });
+}
   ["playerRune","npcRune"].forEach(id=>{
     const el=$(id);
     if(!el||!el.classList.contains("is-locked"))return;
@@ -2577,6 +2583,7 @@ function resetRuneBandit(){
   if(draw){draw.disabled=false;draw.classList.remove("hidden");}
   idleBanditReel($("playerRune"));
   idleBanditReel($("npcRune"));
+  sizeBanditWindows();
 }
 function banditSpinPlan(){
   if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){
@@ -2617,6 +2624,7 @@ $("drawRunes").onclick=async ()=>{
   if($("drawRunes").disabled)return;
   const gen=++runeDrawGen;
   ensureBanditReels();
+  sizeBanditWindows();
   $("runeResult").textContent="";
   $("runeChoice").classList.add("hidden");
   $("startAfterRune").classList.add("hidden");
