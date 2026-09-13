@@ -679,21 +679,33 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="starter" class="hidden">
-<section class="panel">
-<h2>Rune Draw</h2>
-<p class="small">Each player draws one numbered rune. Highest rune takes the first move. A tie redraws automatically.</p>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;margin:16px 0">
-  <div class="npc"><div class="small">YOU</div><div id="playerRune" style="font-size:44px;font-weight:900">?</div></div>
-  <div class="npc"><div class="small" id="runeNpcName">OPPONENT</div><div id="npcRune" style="font-size:44px;font-weight:900">?</div></div>
-</div>
-<h3>Full Match Rules</h3><div id="runeRules" style="margin-bottom:10px"></div>
-<div id="runeResult" style="text-align:center;font-weight:800;margin:10px"></div>
-<button id="drawRunes" style="width:100%">Draw Runes</button>
-<div id="runeChoice" class="hidden" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-<button id="chooseFirst">Go First</button><button id="chooseSecond">Go Second</button>
-</div>
-<button id="startAfterRune" class="hidden" style="width:100%;margin-top:8px">Begin Match</button>
-</section>
+  <div class="starterTable">
+    <div class="starterWell">
+      <h2 class="starterPlaque">Rune Draw</h2>
+      <p class="starterCaption">Each of you draws a numbered rune. Highest chooses who takes the first move. A tie redraws.</p>
+      <div class="starterRunes">
+        <div class="starterRune">
+          <span class="starterRuneWho">You</span>
+          <div id="playerRune" class="starterRuneFace">?</div>
+        </div>
+        <div class="starterRune">
+          <span class="starterRuneWho" id="runeNpcName">Opponent</span>
+          <div id="npcRune" class="starterRuneFace">?</div>
+        </div>
+      </div>
+      <div id="runeResult" class="starterResult"></div>
+      <div id="starterTerms" class="challengeTerms"></div>
+      <div id="starterTermTip" class="challengeTermTip" hidden></div>
+    </div>
+    <div class="starterActions">
+      <button id="drawRunes" class="starterPlaqueBtn" type="button">Draw Runes</button>
+      <div id="runeChoice" class="starterChoice hidden">
+        <button id="chooseFirst" class="starterPlaqueBtn" type="button">Go First</button>
+        <button id="chooseSecond" class="starterPlaqueBtn starterPlaqueBtnAlt" type="button">Go Second</button>
+      </div>
+      <button id="startAfterRune" class="starterPlaqueBtn hidden" type="button">Begin Match</button>
+    </div>
+  </div>
 </div>
 
 <div id="game" class="hidden">
@@ -1286,6 +1298,10 @@ function layoutScreenFit(id){
  if(id==="deckSelect"){
   const root=$("deckSelect");
   return layoutStageWidth(root,root&&root.querySelector(".deckSelectShell"),"--stage-w",220);
+ }
+ if(id==="starter"){
+  const root=$("starter");
+  return layoutStageWidth(root,root&&root.querySelector(".starterTable"),"--stage-w",200);
  }
 }
 function layoutStageWidth(root,stage,varName,minW){
@@ -1956,13 +1972,13 @@ function markSeen(npc,card){
  if(!state.seenByNpc[npc].includes(card))state.seenByNpc[npc].push(card);
 }
 function cardLabel(n){return (C[n]&&C[n].display)||n}
-function fillChallengeTerms(){
-  if(!currentTerms)return;
+function fillChallengeTerms(){paintRuleChips($("terms"),$("challengeTermTip"))}
+function fillStarterTerms(){paintRuleChips($("starterTerms"),$("starterTermTip"))}
+function paintRuleChips(row,tip){
+  if(!currentTerms||!row)return;
   const bits=[currentTerms.rule,currentTerms.wager,currentTerms.tie==="final"?"Final Capture":"Draws allowed","Budget "+currentTerms.budget];
   if(seriesTarget>1)bits.push("Best of "+seriesTarget);
   if(namedWagers)bits.push(cardLabel(namedWagers.p)+" vs "+cardLabel(namedWagers.ai));
-  const row=$("terms");
-  if(!row)return;
   row.innerHTML="";
   bits.forEach(label=>{
     const b=document.createElement("button");
@@ -1970,11 +1986,11 @@ function fillChallengeTerms(){
     b.className="challengeTerm";
     b.textContent=label;
     b.setAttribute("aria-expanded","false");
-    b.setAttribute("aria-controls","challengeTermTip");
-    b.onclick=()=>toggleChallengeTermTip(b,label);
+    if(tip&&tip.id)b.setAttribute("aria-controls",tip.id);
+    b.onclick=()=>toggleChallengeTermTip(b,label,tip);
     row.appendChild(b);
   });
-  clearChallengeTermTip();
+  clearChallengeTermTip(tip);
 }
 function challengeTermHelp(label){
   if(RULE_HELP[label])return RULE_HELP[label];
@@ -1985,28 +2001,30 @@ function challengeTermHelp(label){
   if(/ vs /.test(label))return RULE_HELP["Named Card"];
   return "";
 }
-function clearChallengeTermTip(){
-  const tip=$("challengeTermTip");
+function clearChallengeTermTip(tip){
+  tip=tip||$("challengeTermTip");
   if(!tip)return;
   tip.hidden=true;
   tip.textContent="";
   delete tip.dataset.label;
-  document.querySelectorAll("#challenge .challengeTerm.isOpen").forEach(el=>{
+  const scope=tip.parentElement||document;
+  scope.querySelectorAll(".challengeTerm.isOpen").forEach(el=>{
     el.classList.remove("isOpen");
     el.setAttribute("aria-expanded","false");
   });
 }
-function toggleChallengeTermTip(btn,label){
-  const tip=$("challengeTermTip");
+function toggleChallengeTermTip(btn,label,tip){
+  tip=tip||$("challengeTermTip");
   if(!tip||!btn)return;
+  const screen=tip.closest("#starter")?"starter":"challenge";
   if(tip.dataset.label===label&&!tip.hidden){
-    clearChallengeTermTip();
-    scheduleScreenLayout("challenge");
+    clearChallengeTermTip(tip);
+    scheduleScreenLayout(screen);
     return;
   }
   const help=challengeTermHelp(label);
-  if(!help){clearChallengeTermTip();return;}
-  clearChallengeTermTip();
+  if(!help){clearChallengeTermTip(tip);return;}
+  clearChallengeTermTip(tip);
   tip.hidden=false;
   tip.dataset.label=label;
   const title=document.createElement("b");
@@ -2015,7 +2033,7 @@ function toggleChallengeTermTip(btn,label){
   tip.appendChild(document.createTextNode(" "+help));
   btn.classList.add("isOpen");
   btn.setAttribute("aria-expanded","true");
-  scheduleScreenLayout("challenge");
+  scheduleScreenLayout(screen);
 }
 function renderKnownCollection(npc){
  let seen=state.seenByNpc[npc]||[];
@@ -2468,8 +2486,9 @@ $("beginMatch").onclick=()=>{
  }
  playerHand=[...seriesPlayerDeck];aiHand=[...seriesAiDeck];aiPlayed=[];board=Array(9).fill(null);turn=0;chosen=null;lastCapture=null;pendingLossCard=null;lastComboCount=0;finishScheduled=false;matchAnimating=false;setupAiHandVisibility();
  if(seriesGame===0){
-   $("playerRune").textContent="?";$("npcRune").textContent="?";$("runeNpcName").textContent=currentNpc.toUpperCase();
+   $("playerRune").textContent="?";$("npcRune").textContent="?";$("runeNpcName").textContent=currentNpc;
    $("runeResult").textContent="";$("startAfterRune").classList.add("hidden");$("runeChoice").classList.add("hidden");$("drawRunes").classList.remove("hidden");
+   fillStarterTerms();
    show("starter");
  }else{
    startingPlayer=(seriesGame%2===0)?seriesInitialStarter:(seriesInitialStarter==="p"?"ai":"p");
@@ -2520,7 +2539,6 @@ function resolve(pos,p){
 function score(){let p=playerHand.length,a=aiHand.length;board.forEach(x=>{if(x)x.owner==="p"?p++:a++});return [p,a]}
 function refreshFullRules(){
  if($("preMatchRules"))$("preMatchRules").innerHTML=selectedRulesHTML();
- if($("runeRules"))$("runeRules").innerHTML=selectedRulesHTML();
 }
 function isPlayerTurn(){return (startingPlayer==="p"&&turn%2===0)||(startingPlayer==="ai"&&turn%2===1)}
 function reducedPlaceMotion(){return matchMedia("(prefers-reduced-motion: reduce)").matches}
@@ -6225,7 +6243,8 @@ html,body,#visualShell{color-scheme:only light}
   max-width:28em;
 }
 #challenge .challengeCaption:empty{display:none}
-#challenge .challengeTerms{
+#challenge .challengeTerms,
+#starter .challengeTerms{
   position:relative;
   z-index:1;
   flex:0 0 auto;
@@ -6236,7 +6255,8 @@ html,body,#visualShell{color-scheme:only light}
   margin:10px 0 0;
   width:100%;
 }
-#challenge button.challengeTerm{
+#challenge button.challengeTerm,
+#starter button.challengeTerm{
   appearance:none;
   -webkit-appearance:none;
   padding:5px 10px;
@@ -6251,11 +6271,13 @@ html,body,#visualShell{color-scheme:only light}
   cursor:pointer;
   touch-action:manipulation;
 }
-#challenge button.challengeTerm.isOpen{
+#challenge button.challengeTerm.isOpen,
+#starter button.challengeTerm.isOpen{
   outline:2px solid #c9a15a;
   outline-offset:1px;
 }
-#challenge .challengeTermTip{
+#challenge .challengeTermTip,
+#starter .challengeTermTip{
   position:relative;
   z-index:1;
   flex:0 0 auto;
@@ -6274,13 +6296,15 @@ html,body,#visualShell{color-scheme:only light}
   box-shadow:inset 0 1px 0 rgba(232,194,122,.25);
   text-align:center;
 }
-#challenge .challengeTermTip b{
+#challenge .challengeTermTip b,
+#starter .challengeTermTip b{
   display:block;
   margin-bottom:4px;
   font-size:clamp(12px,3.3vw,14px);
   color:#ead9b0;
 }
-#challenge .challengeTermTip[hidden]{display:none!important}
+#challenge .challengeTermTip[hidden],
+#starter .challengeTermTip[hidden]{display:none!important}
 #challenge .challengeFlavor{
   position:relative;
   z-index:1;
@@ -6409,6 +6433,213 @@ html,body,#visualShell{color-scheme:only light}
 }
 </style>
 <style>
+/* v59 — rune draw on the same club table as challenge/result.
+   Highest rune chooses first or second; the old parchment panel and alert()
+   rule list are gone. */
+#starter{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:pan-y;
+}
+#starter.hidden{display:none!important}
+#starter .starterTable{
+  width:min(100%,440px);
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+  touch-action:pan-y;
+}
+#starter .starterWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:14px 12px 16px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  touch-action:pan-y;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#starter .starterWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#starter .starterPlaque{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:0;
+  width:min(92%,280px);
+  padding:12px 18px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(17px,5.8vw,26px);
+  font-weight:800;
+  letter-spacing:.14em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#starter .starterCaption,
+#starter .starterResult{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:10px 0 0;
+  padding:6px 12px;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,3.4vw,15px);
+  color:#f0e2c4;
+  background:#3d2a18;
+  border:2px solid #24150c;
+  border-radius:4px;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.25);
+  text-align:center;
+  max-width:28em;
+}
+#starter .starterResult:empty{display:none}
+#starter .starterRunes{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  gap:clamp(16px,calc(var(--stage-w,440px) * .08),36px);
+  margin:12px 0 0;
+}
+#starter .starterRune{
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  gap:8px;
+  min-width:0;
+}
+#starter .starterRuneWho{
+  font-family:Georgia,serif;
+  font-size:clamp(11px,calc(var(--stage-w,440px) * .032),14px);
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#ead9b0;
+  text-shadow:0 1px 2px #000a;
+}
+#starter .starterRuneFace{
+  width:min(28vw,calc(var(--stage-w,440px) * .28),120px);
+  aspect-ratio:1;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  box-sizing:border-box;
+  background:
+    radial-gradient(circle at 30% 28%,#f6ecd4,#e4d2b0 55%,#c9b48a);
+  color:#3a2a18;
+  border:3px solid #3d2414;
+  border-radius:10px;
+  box-shadow:inset 0 1px 0 #fff4,#0006 0 8px 14px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(32px,calc(var(--stage-w,440px) * .14),56px);
+  font-weight:800;
+  line-height:1;
+}
+#starter .starterActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+}
+#starter .starterChoice{
+  display:flex;
+  gap:8px;
+  width:100%;
+}
+#starter .starterPlaqueBtn{
+  flex:1 1 0;
+  min-width:0;
+  width:100%;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(15px,4.4vw,18px)!important;
+  font-weight:800!important;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:
+    linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+#starter .starterPlaqueBtnAlt{
+  background:
+    linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+}
+#starter #drawRunes.hidden,
+#starter #runeChoice.hidden,
+#starter #startAfterRune.hidden{
+  display:none!important;
+}
+@media(max-width:620px){
+  #starter .starterWell{border-width:8px;padding:12px 10px 14px}
+}
+</style>
+<style>
 /* v52 — leftover-space fit on every live screen. Chrome stays planted;
    the stage sizes from the visible box. Town pins stay Mark-spots %. */
 #visualShell{
@@ -6429,18 +6660,21 @@ html,body,#visualShell{color-scheme:only light}
 #challenge,
 #npcDossier,
 #result,
-#deckSelect{
+#deckSelect,
+#starter{
   --stage-w:440px;
 }
 #challenge .challengeTable,
 #npcDossier .dossierTable,
-#result .resultTable{
+#result .resultTable,
+#starter .starterTable{
   width:min(100%,var(--stage-w,440px))!important;
   max-width:100%;
   touch-action:pan-y;
 }
 #challenge .challengeWell,
-#result .resultWell{
+#result .resultWell,
+#starter .starterWell{
   overflow-x:hidden!important;
   border-width:clamp(6px,calc(var(--stage-w,440px) * .028),10px)!important;
 }
@@ -6505,7 +6739,6 @@ html,body,#visualShell{color-scheme:only light}
 #deckSelect .card.gilt .w{
   font-size:clamp(7px,calc(var(--stage-w,430px) * .028),12px)!important;
 }
-#starter,
 #termsBuilder,
 #profile,
 #tournament,
@@ -6524,18 +6757,12 @@ html,body,#visualShell{color-scheme:only light}
   flex-direction:column;
   align-items:center;
 }
-#starter.hidden,
 #termsBuilder.hidden,
 #profile.hidden,
 #tournament.hidden,
 #seriesSummary.hidden{
   display:none!important;
 }
-#starter #runeChoice.hidden,
-#starter #startAfterRune.hidden{
-  display:none!important;
-}
-#starter .panel,
 #termsBuilder .panel,
 #profile .panel,
 #tournament .panel,
