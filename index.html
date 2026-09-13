@@ -2540,7 +2540,8 @@ function ensureBanditReels(){
 function idleBanditReel(el){
   if(!el)return;
   el.classList.remove("is-spinning","is-locked");
-  el.style.removeProperty("--reel-y");
+  el.style.removeProperty("--reel-n");
+  delete el.dataset.locked;
   const face=el.querySelector(".banditFace");
   if(face){face.hidden=false;face.textContent="?";}
 }
@@ -2555,14 +2556,8 @@ function lockBanditReel(el,n){
   if(!el)return;
   el.classList.remove("is-spinning");
   el.classList.add("is-locked");
-  const cell=el.querySelector(".banditCell");
-  const win=el.parentElement;
-  if(cell&&win){
-    const cellH=cell.offsetHeight||1;
-    const winH=win.clientHeight||cellH;
-    const index=9+(n-1);
-    el.style.setProperty("--reel-y",((winH/2)-(index*cellH+cellH/2))+"px");
-  }
+  el.style.setProperty("--reel-n",String(n));
+  el.dataset.locked=String(n);
   const face=el.querySelector(".banditFace");
   if(face){face.hidden=true;face.textContent=String(n);}
 }
@@ -6764,8 +6759,9 @@ html,body,#visualShell{color-scheme:only light}
 }
 #starter .banditWindow{
   --reel-cell:clamp(34px,calc(var(--stage-w,440px) * .155),56px);
+  --reel-window:2.12;
   position:relative;
-  height:calc(var(--reel-cell) * 2.12);
+  height:calc(var(--reel-cell) * var(--reel-window));
   min-width:0;
   overflow:hidden;
   background:linear-gradient(#efe0c0,#e4d2a8 55%,#d4bf90);
@@ -6807,7 +6803,7 @@ html,body,#visualShell{color-scheme:only light}
   filter:blur(4px);
 }
 #starter .banditReel.is-locked .banditStrip{
-  transform:translateY(var(--reel-y,0));
+  transform:translateY(calc((var(--reel-window) * .5 - (8 + var(--reel-n,1) + .5)) * var(--reel-cell)));
 }
 #starter .banditFace{
   position:absolute;
