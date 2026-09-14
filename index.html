@@ -1045,7 +1045,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],tutorialDone:false};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -1099,7 +1099,15 @@ function ensureSavedDecks(){
 }
 function ensureTutorial(){
  if(!state)return;
- if(state.tutorialDone===undefined)state.tutorialDone=true;
+ if(state.grandpaTutorial!==true)state.grandpaTutorial=false;
+}
+function wantsHomeTutorial(){
+ if(typeof location!=="undefined"&&/(?:^|[?&])tutorial=1(?:&|$)/.test(location.search))return true;
+ return !state||state.grandpaTutorial!==true;
+}
+function bootTownOrTutorial(){
+ if(wantsHomeTutorial())startGrandpaTutorial();
+ else{renderHome();show("home")}
 }
 function getCopy(owner,design,id=null){ensureCopies();let ids=(state.copyOwners[owner]||[]).filter(x=>state.copies[x]&&state.copies[x].design===design);return state.copies[(id&&ids.includes(id))?id:ids[0]]}
 function moveCopy(cp,from,to,reason){if(!cp)return;cp.signatures.push({owner:from,date:new Date().toISOString().slice(0,10),reason});state.copyOwners[from]=(state.copyOwners[from]||[]).filter(x=>x!==cp.id);(state.copyOwners[to]||(state.copyOwners[to]=[])).push(cp.id);cp.owner=to}
@@ -2677,6 +2685,7 @@ function finishTutorialToTown(){
  if($("comboStatus"))$("comboStatus").classList.remove("hidden");
  setTableSkin("club");
  homeTutorial=null;
+ state.grandpaTutorial=true;
  state.tutorialDone=true;
  if(!state.log)state.log=[];
  state.log.push("Grandfather sent you into town with his cards.");
@@ -3624,14 +3633,13 @@ document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>{
 if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
 if($("tableTalk"))$("tableTalk").onclick=()=>{if(tableTalkQueue&&tableTalkQueue.advance)tableTalkQueue.advance()};
-if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();if(!state.tutorialDone)startGrandpaTutorial();else{renderHome();show("home")}}};
+if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();bootTownOrTutorial()}};
 if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
 if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
 
-$("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();if(!state.tutorialDone)startGrandpaTutorial();else{renderHome();show("home")}}};
+$("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();bootTownOrTutorial()}};
 load();syncDevControls();
-if(!state.tutorialDone)startGrandpaTutorial();
-else{renderHome();show("home")}
+bootTownOrTutorial();
 if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
  resetRuneBandit();
  const name=$("runeNpcName");

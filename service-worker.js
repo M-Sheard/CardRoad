@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v80-home-tutorial';
+const CACHE_NAME = 'card-road-pwa-v81-tutorial-start';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
