@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v77-standee-bevel';
+const CACHE_NAME = 'card-road-pwa-v78-beph-bevel';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
