@@ -499,7 +499,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <div class="small" style="margin:4px 0 10px">Off by default. Their hand stays in the same five slots as card backs. When they play, the chosen card lifts out and flips to show its face.</div>
         <button id="devReset">Reset prototype save</button>
       </div>
-      <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
+      <div class="small" style="margin-top:6px">Jump to a screen without playing: add <code>?screen=result</code> to the URL (also <code>game</code>, <code>starter</code>, <code>challenge</code>, <code>deck</code>, <code>dossier</code>, <code>lose</code>). Same as <code>?banditlock=1</code> for the rune machine. Players never see this unless they type it.</div>
     </details>
   </div>
 </div>
@@ -3182,6 +3182,103 @@ if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("b
 
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();renderHome()}};
 load();renderHome();show("home");syncDevControls();
+function seedPreviewMatch(){
+  ensureCopies();
+  currentNpc="Nessa";
+  currentTerms={rule:"Match",tie:"draw",budget:86,wager:"Claim One"};
+  seriesTarget=1;seriesWins={p:1,ai:0};seriesGame=0;namedWagers=null;
+  seriesPlayerDeck=["C015","C016","C017","C018","C019"];
+  seriesAiDeck=["C001","C010","C011","C012","C067"];
+  selectedDeck=[...seriesPlayerDeck];
+  playerHand=["C015","C016","C017"];
+  aiHand=["C010","C011"];
+  board=[
+    {card:C.C001,owner:"p"},{card:C.C002,owner:"ai"},{card:C.C003,owner:"p"},
+    {card:C.C004,owner:"ai"},null,{card:C.C006,owner:"p"},
+    null,{card:C.C008,owner:"ai"},{card:C.C009,owner:"p"}
+  ];
+  turn=7;chosen=null;lastCapture="p";pendingLossCard=null;lastComboCount=0;
+  finishScheduled=true;matchAnimating=false;deckSelectAnimating=false;
+  seriesAiExposed=["C001","C010","C067","C018","C044"];
+  seriesPlayerExposed=["C015","C016"];
+  startingPlayer="p";seriesInitialStarter="p";seriesWinner=null;
+  setupAiHandVisibility();
+}
+function fillPreviewClaimCards(ids){
+  $("claimPanel").classList.remove("hidden");
+  $("claimCards").innerHTML="";
+  ids.forEach(n=>{
+    const cp=getCopy(currentNpc,n),owned=playerOwnedCount(n);
+    const w=document.createElement("div");w.className="claimPick";
+    const face=document.createElement("button");face.type="button";face.className="claimFace";
+    face.setAttribute("aria-label",owned===0?`Claim ${n}, new card`:`Claim ${n}, owned ${owned}`);
+    face.innerHTML=cardHTML(C[n],"ai");
+    face.onclick=()=>beginPlayerClaim(w,n,cp?cp.id:null);
+    const meta=document.createElement("div");meta.className="claimMeta";
+    meta.innerHTML=owned===0?`<b>NEW</b> · 0`:`Owned: ${owned}`;
+    const inspect=document.createElement("button");inspect.type="button";inspect.className="claimInspect";
+    inspect.textContent="Inspect";
+    inspect.onclick=e=>{e.preventDefault();e.stopPropagation();inspectCopy(cp||{design:n,owner:currentNpc,origin:"Match copy",signatures:[],stamps:[]},"result")};
+    w.appendChild(face);w.appendChild(meta);w.appendChild(inspect);
+    $("claimCards").appendChild(w);
+  });
+  const claimStage=document.querySelector("#result .resultStage");
+  if(claimStage)claimStage.scrollTop=0;
+}
+function openPreviewScreen(raw){
+  const name=String(raw||"").toLowerCase().replace(/[^a-z]/g,"");
+  if(!name||name==="home")return;
+  seedPreviewMatch();
+  if(name==="result"||name==="claim"||name==="win"){
+    resetResultChrome();
+    $("resultTitle").textContent="You win";
+    $("resultScore").textContent="6 — 4";
+    $("resultCaption").textContent="Choose a copy";
+    $("resultText").textContent="Preview only — Nessa’s copies, no save until you claim.";
+    fillPreviewClaimCards(seriesAiExposed);
+    show("result");
+    return;
+  }
+  if(name==="lose"){
+    resetResultChrome();
+    $("resultTitle").textContent="Nessa wins";
+    $("resultScore").textContent="4 — 6";
+    $("resultCaption").textContent="Nessa claims this copy.";
+    $("resultText").textContent="Preview only — flip is staged, copy is not taken.";
+    show("result");
+    playResultFlip(C.C015,"ai");
+    return;
+  }
+  if(name==="game"||name==="match"){
+    show("game");
+    renderGame({deferAi:true,deferFinish:true});
+    return;
+  }
+  if(name==="starter"||name==="rune"||name==="bandit"){
+    resetRuneBandit();
+    $("runeNpcName").textContent=currentNpc;
+    $("runeResult").textContent="";
+    $("startAfterRune").classList.add("hidden");
+    $("runeChoice").classList.add("hidden");
+    fillStarterTerms();
+    show("starter");
+    return;
+  }
+  if(name==="challenge"){
+    openChallenge("Nessa");
+    return;
+  }
+  if(name==="deck"||name==="binder"||name==="cards"){
+    openDeckSelect();
+    return;
+  }
+  if(name==="dossier"){
+    openNpcDossier("Nessa");
+    return;
+  }
+}
+const previewScreen=(/(?:^|[?&])screen=([^&]*)/i.exec(location.search)||[])[1];
+if(previewScreen)openPreviewScreen(decodeURIComponent(previewScreen));
 if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
  resetRuneBandit();
  const name=$("runeNpcName");
