@@ -725,20 +725,24 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
   </div>
 </div>
 
-<div id="game" class="hidden">
+<div id="game" class="hidden" data-table="club">
 <div class="panel">
 <div id="seriesScore" class="small" style="text-align:center;margin-bottom:5px"></div><div class="score"><span id="ps">5</span> — <span id="as">5</span></div>
 <div id="status" style="text-align:center;font-weight:800"></div><div id="comboStatus" class="small" style="text-align:center;min-height:16px"></div>
 <div class="small" id="oppHandLabel">Opponent hand</div><div id="oppHand" class="hand"></div>
 <div id="board" class="board"></div>
-<div class="small">Your hand</div><div id="hand" class="hand"></div>
+<div class="small" id="playerHandLabel">Your hand</div><div id="hand" class="hand"></div>
+<button type="button" id="tableTalk" class="tableTalk hidden" hidden>
+  <b id="tableTalkName">Grandfather</b>
+  <span id="tableTalkText"></span>
+</button>
 </div>
 </div>
 
 <div id="seriesSummary" class="hidden">
 <section class="panel"><h2>Series Summary</h2><div id="seriesSummaryBody"></div><button id="summaryHome">Return to World</button></section>
 </div>
-<div id="result" class="hidden">
+<div id="result" class="hidden" data-table="club">
   <div class="resultTable">
     <div class="resultWell">
       <h2 id="resultTitle" class="resultPlaque"></h2>
@@ -1041,7 +1045,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]]};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],tutorialDone:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -1092,6 +1096,10 @@ function ensureSavedDecks(){
    return true;
   }).slice(0,5);
  });
+}
+function ensureTutorial(){
+ if(!state)return;
+ if(state.tutorialDone===undefined)state.tutorialDone=true;
 }
 function getCopy(owner,design,id=null){ensureCopies();let ids=(state.copyOwners[owner]||[]).filter(x=>state.copies[x]&&state.copies[x].design===design);return state.copies[(id&&ids.includes(id))?id:ids[0]]}
 function moveCopy(cp,from,to,reason){if(!cp)return;cp.signatures.push({owner:from,date:new Date().toISOString().slice(0,10),reason});state.copyOwners[from]=(state.copyOwners[from]||[]).filter(x=>x!==cp.id);(state.copyOwners[to]||(state.copyOwners[to]=[])).push(cp.id);cp.owner=to}
@@ -1285,6 +1293,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  });
  ensureCopies();
  ensureSavedDecks();
+ ensureTutorial();
  ensureVisualState();
  save();
 }
@@ -1371,7 +1380,7 @@ function layoutStageWidth(root,stage,varName,minW){
  matchLayoutLock=false;
 }
 function layoutMatchTable(){
- const game=$("game"),panel=game&&game.querySelector(".panel"),board=$("board"),hand=$("hand"),opp=$("oppHand");
+ const game=$("game"),panel=game&&game.querySelector(".panel"),board=$("board"),hand=$("hand"),opp=$("oppHand"),talk=$("tableTalk");
  if(!game||game.classList.contains("hidden")||!panel||!board||!hand||!opp||matchLayoutLock)return;
  matchLayoutLock=true;
  const gCS=getComputedStyle(game),pCS=getComputedStyle(panel);
@@ -1379,9 +1388,11 @@ function layoutMatchTable(){
  const inner={l:parseFloat(pCS.paddingLeft)||0,r:parseFloat(pCS.paddingRight)||0};
  const maxW=Math.max(132,panel.clientWidth-inner.l-inner.r);
  const view=matchViewBox();
+ const talkOn=talk&&!talk.hidden&&!talk.classList.contains("hidden");
  function overflowAt(w){
   panel.style.setProperty("--board-w",w+"px");
   const g=game.getBoundingClientRect(),b=board.getBoundingClientRect(),h=hand.getBoundingClientRect(),o=opp.getBoundingClientRect();
+  const t=talkOn?talk.getBoundingClientRect():null;
   const brass=(parseFloat(getComputedStyle(board).borderTopWidth)||0)*1.15;
   const clip={
    left:Math.max(view.left,g.left+pad.l),
@@ -1389,10 +1400,10 @@ function layoutMatchTable(){
    right:Math.min(view.right,g.right-pad.r),
    bottom:Math.min(view.bottom,g.bottom-pad.b)
   };
-  const left=Math.min(b.left,o.left,h.left)-brass;
-  const right=Math.max(b.right,o.right,h.right)+brass;
+  const left=Math.min(b.left,o.left,h.left,(t?t.left:b.left))-brass;
+  const right=Math.max(b.right,o.right,h.right,(t?t.right:b.right))+brass;
   const top=Math.min(o.top,b.top);
-  const bottom=Math.max(h.bottom,b.bottom);
+  const bottom=Math.max(h.bottom,b.bottom,t?t.bottom:0);
   return Math.max(0,clip.left-left,right-clip.right,clip.top-top,bottom-clip.bottom);
  }
  let lo=132,hi=maxW,best=132;
@@ -2463,7 +2474,222 @@ function savePresetFromBinder(){
  deckEdit=null;
  openSavedDecks({from,pick});
 }
+let homeTutorial=null,tableTalkQueue=null,giftFlipTimer=null;
+function inHomeTutorial(){return !!(homeTutorial&&homeTutorial.active)}
+function setTableSkin(kind){
+ kind=kind||"club";
+ ["game","result"].forEach(id=>{const el=$(id);if(el)el.dataset.table=kind});
+}
+function hideTableTalk(){
+ const talk=$("tableTalk");
+ if(!talk)return;
+ talk.hidden=true;
+ talk.classList.add("hidden");
+ tableTalkQueue=null;
+ scheduleMatchLayout();
+}
+function showTableTalk(name,text){
+ const talk=$("tableTalk"),who=$("tableTalkName"),body=$("tableTalkText");
+ if(!talk||!who||!body)return;
+ who.textContent=name||"Grandfather";
+ body.textContent=text||"";
+ talk.hidden=false;
+ talk.classList.remove("hidden");
+ scheduleMatchLayout();
+}
+function queueTableTalk(lines,onDone){
+ tableTalkQueue={lines:lines.filter(Boolean),i:0,onDone};
+ const step=()=>{
+  if(!tableTalkQueue)return;
+  if(tableTalkQueue.i>=tableTalkQueue.lines.length){
+   const done=tableTalkQueue.onDone;
+   hideTableTalk();
+   if(done)done();
+   return;
+  }
+  showTableTalk("Grandfather",tableTalkQueue.lines[tableTalkQueue.i++]);
+ };
+ tableTalkQueue.advance=step;
+ step();
+}
+function tutorialTalkLocked(){return inHomeTutorial()&&!!homeTutorial.lock}
+const TUTORIAL_PLAYER=["C008","C015","C022","C023","C031"];
+const TUTORIAL_GRANDPA=["C001","C002","C007","C014","C032"];
+const TUTORIAL_OPEN=[
+ "…and Hale would swear the river tables ran until dawn. Different world now. Everyone's in a hurry.",
+ "We'd already drawn the runes. You sat first. I put mine down beside yours, and look —",
+ "That's a capture. Your seven against my five, on the sides that touch."
+];
+const TUTORIAL_RULES=[
+ "So those are the common rules, more or less.",
+ "You pick five cards. Their totals can't go over the table's limit.",
+ "Draw the runes to see who chooses first or second. Then you try to hold the most cards on the board.",
+ "Capture by placing a higher number next to theirs. Same as you just did."
+];
+const TUTORIAL_PLAY_LINES=[
+ "Can't hardly read the corners like I used to…",
+ "That's the way. Hold the board, not the pretty pictures."
+];
+const TUTORIAL_GIVE=[
+ "I was a fair player when my eyes and my mind were sharp. Now I can hardly see the board in front of me.",
+ "You should take these cards and try a real challenge. Head into town and find young Tomas. Sharp fellow."
+];
+function startGrandpaTutorial(){
+ homeTutorial={active:true,lock:true,phase:"talk",playerMoves:0,gift:0};
+ setTableSkin("home");
+ currentNpc="Grandfather";
+ currentTerms={rule:"Standard",tie:"draw",budget:86,wager:"Claim One"};
+ seriesTarget=1;seriesWins={p:0,ai:0};seriesGame=0;namedWagers=null;window._tournamentMatch=null;
+ seriesPlayerDeck=[...TUTORIAL_PLAYER];
+ seriesAiDeck=[...TUTORIAL_GRANDPA];
+ seriesPlayerCopyDeck=[];seriesAiCopyDeck=[];
+ seriesPlayerExposed=["C008"];seriesAiExposed=["C001"];seriesResults=[];
+ playerHand=["C015","C022","C023","C031"];
+ aiHand=["C002","C007","C014","C032"];
+ aiPlayed=["C001"];
+ board=[
+  null,null,null,
+  {card:C.C001,owner:"p"},{card:C.C008,owner:"p"},null,
+  null,null,null
+ ];
+ turn=2;startingPlayer="ai";seriesInitialStarter="ai";chosen=null;lastCapture="p";pendingLossCard=null;lastComboCount=0;
+ finishScheduled=false;matchAnimating=false;setupAiHandVisibility();
+ if($("seriesScore"))$("seriesScore").classList.add("hidden");
+ if($("comboStatus"))$("comboStatus").classList.add("hidden");
+ if($("playerHandLabel"))$("playerHandLabel").textContent="Your hand";
+ show("game");
+ renderGame({deferAi:true,deferFinish:true});
+ $("status").textContent="";
+ queueTableTalk(TUTORIAL_OPEN,()=>queueTableTalk(TUTORIAL_RULES,tutorialUnlockPlay));
+}
+function tutorialUnlockPlay(){
+ if(!inHomeTutorial())return;
+ homeTutorial.lock=false;
+ homeTutorial.phase="play";
+ hideTableTalk();
+ renderGame();
+}
+function tutorialAfterPlayerMove(){
+ if(!inHomeTutorial()||homeTutorial.phase!=="play")return;
+ homeTutorial.playerMoves=(homeTutorial.playerMoves||0)+1;
+ if(homeTutorial.playerMoves>=2){
+  homeTutorial.lock=true;
+  homeTutorial.phase="give";
+  matchAnimating=false;
+  queueTableTalk(TUTORIAL_GIVE,openTutorialGift);
+  return true;
+ }
+ if(homeTutorial.playerMoves===1){
+  homeTutorial.lock=true;
+  queueTableTalk([TUTORIAL_PLAY_LINES[1]],()=>{
+   if(!inHomeTutorial())return;
+   homeTutorial.lock=false;
+   hideTableTalk();
+   renderGame();
+  });
+  return true;
+ }
+ return false;
+}
+function tutorialAfterGrandpaMove(){
+ if(!inHomeTutorial()||homeTutorial.phase!=="play")return false;
+ if(homeTutorial.playerMoves)return false;
+ homeTutorial.lock=true;
+ queueTableTalk([TUTORIAL_PLAY_LINES[0]],()=>{
+  if(!inHomeTutorial())return;
+  homeTutorial.lock=false;
+  hideTableTalk();
+  renderGame({deferAi:true});
+  $("status").textContent="Choose a card";
+ });
+ return true;
+}
+function tutorialAiMove(){
+ const empty=board.map((x,i)=>x?null:i).filter(i=>i!==null);
+ if(!empty.length||!aiHand.length)return false;
+ let worst=null;
+ aiHand.forEach(n=>{
+  const c=C[n];if(!c)return;
+  empty.forEach(pos=>{
+   const v=moveValue(c,pos);
+   if(!worst||v<worst.v)worst={v,n,c,pos};
+  });
+ });
+ if(!worst){worst={n:aiHand[0],c:C[aiHand[0]],pos:empty[0]}}
+ const fromEl=findOppCardEl(worst.n);
+ const fromRect=elementRect(fromEl);
+ const html=cardHTML(worst.c,"ai");
+ const revealFromBack=oppCardIsBack(fromEl);
+ if(fromEl)fromEl.style.visibility="hidden";
+ const ix=aiHand.indexOf(worst.n);if(ix>=0)aiHand.splice(ix,1);
+ aiPlayed.push(worst.n);
+ const before=boardOwners();
+ board[worst.pos]={card:worst.c,owner:"ai"};resolve(worst.pos,"ai");turn++;
+ runPlaceMotion(fromRect,html,worst.pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
+ return true;
+}
+function openTutorialGift(){
+ if(!inHomeTutorial())return;
+ homeTutorial.phase="gift";
+ homeTutorial.lock=true;
+ hideTableTalk();
+ setTableSkin("home");
+ resetResultChrome();
+ $("resultTitle").textContent="Grandfather's cards";
+ $("resultCaption").textContent="Yours now.";
+ $("resultText").textContent="The ones from the table, then the rest of the tin.";
+ $("resultScore").textContent="";
+ show("result");
+ homeTutorial.gift=0;
+ addResultContinue("Skip",finishTutorialToTown);
+ playTutorialGiftFlip();
+}
+function playTutorialGiftFlip(){
+ if(!inHomeTutorial()||homeTutorial.phase!=="gift")return;
+ if(giftFlipTimer){clearTimeout(giftFlipTimer);giftFlipTimer=null}
+ const ids=starter;
+ if(homeTutorial.gift>=ids.length){
+  $("resultCaption").textContent="The tin is yours.";
+  $("resultActions").innerHTML="";
+  addResultContinue("Into town",finishTutorialToTown);
+  scheduleScreenLayout("result");
+  return;
+ }
+ const n=ids[homeTutorial.gift++];
+ const stage=$("resultCeremony");
+ stage.classList.remove("hidden","isLive");
+ stage.innerHTML=flipCardHTML(cardBackHTML("p"),cardHTML(C[n],"p"));
+ const flipEl=stage.querySelector(".flipCard");
+ const reduce=prefersReducedMotion();
+ const next=()=>{giftFlipTimer=setTimeout(playTutorialGiftFlip,reduce?160:720)};
+ requestAnimationFrame(()=>{
+  stage.classList.add("isLive");
+  if(reduce){if(flipEl)flipEl.classList.add("isFlipped");next();return}
+  giftFlipTimer=setTimeout(()=>{if(flipEl)flipEl.classList.add("isFlipped");next()},280);
+ });
+ scheduleScreenLayout("result");
+}
+function finishTutorialToTown(){
+ if(giftFlipTimer){clearTimeout(giftFlipTimer);giftFlipTimer=null}
+ hideTableTalk();
+ if($("seriesScore"))$("seriesScore").classList.remove("hidden");
+ if($("comboStatus"))$("comboStatus").classList.remove("hidden");
+ setTableSkin("club");
+ homeTutorial=null;
+ state.tutorialDone=true;
+ if(!state.log)state.log=[];
+ state.log.push("Grandfather sent you into town with his cards.");
+ news("Grandfather said to look for Tomas in the Market.");
+ state.visual.location="Market";
+ save();
+ resetResultChrome();
+ renderHome();
+ show("home");
+}
 function beginPreparedMatch(){
+ setTableSkin("club");
+ homeTutorial=null;
+ hideTableTalk();
  if(deckSelectAnimating||selectedDeck.length!==5||budget(selectedDeck)>(currentTerms?.budget||0))return;
  if(seriesGame===0){
    seriesPlayerDeck=[...selectedDeck];seriesAiDeck=aiDeck();
@@ -2842,6 +3068,7 @@ $("runeBandit").addEventListener("click",e=>{
 $("chooseFirst").onclick=()=>{startingPlayer="p";seriesInitialStarter="p";$("runeChoice").classList.add("hidden");$("runeResult").textContent="You choose to go first."; $("startAfterRune").classList.remove("hidden")}
 $("chooseSecond").onclick=()=>{startingPlayer="ai";seriesInitialStarter="ai";$("runeChoice").classList.add("hidden");$("runeResult").textContent=`You choose to let ${currentNpc} go first.`;$("startAfterRune").classList.remove("hidden")}
 $("startAfterRune").onclick=()=>{
+ setTableSkin("club");
  turn=0;show("game");
  if(startingPlayer==="ai"){
    aiOpeningMove();
@@ -2960,6 +3187,21 @@ function afterPlaceMotion(){
   renderGame();
   return;
  }
+ if(inHomeTutorial()){
+  if(homeTutorial.phase==="give"||homeTutorial.phase==="gift"){
+   renderGame({deferAi:true,deferFinish:true});
+   return;
+  }
+  if(!isPlayerTurn()){
+   if(tutorialAfterPlayerMove()){
+    renderGame({deferAi:true,deferFinish:true});
+    return;
+   }
+  }else if(tutorialAfterGrandpaMove()){
+   renderGame({deferAi:true,deferFinish:true});
+   return;
+  }
+ }
  let playerTurn=isPlayerTurn();
  renderGame({deferAi:true});
  if(!playerTurn){
@@ -2991,10 +3233,10 @@ function renderGame(opts){
   if(x&&hold.includes(i))owner=owner==="p"?"ai":"p";
   c.className="cell"+(owner?" cell-"+owner:"");
   if(x)c.innerHTML=cardHTML(x.card,owner);
-  else if(playerTurn&&!matchAnimating)c.onclick=()=>place(i);
+  else if(playerTurn&&!matchAnimating&&!tutorialTalkLocked())c.onclick=()=>place(i);
   $("board").appendChild(c)
  });
- $("hand").innerHTML="";playerHand.forEach(n=>{let d=document.createElement("div");d.innerHTML=cardHTML(C[n],"p",chosen===n);d.onclick=()=>{if(matchAnimating)return;chosen=n;renderGame()};$("hand").appendChild(d)});
+ $("hand").innerHTML="";playerHand.forEach(n=>{let d=document.createElement("div");d.innerHTML=cardHTML(C[n],"p",chosen===n);d.onclick=()=>{if(matchAnimating||tutorialTalkLocked())return;chosen=n;renderGame()};$("hand").appendChild(d)});
  scheduleMatchLayout();
  $("comboStatus").textContent=comboOn()?(lastComboCount?`Combo captured ${lastComboCount} extra card${lastComboCount===1?"":"s"}.`:"Combo rule active."):"";
  if(turn>=9){
@@ -3008,12 +3250,13 @@ function renderGame(opts){
  }
  if(opts.deferAi) return;
  $("status").textContent=playerTurn?(chosen?"Choose a board space":"Choose a card"):`${currentNpc} is thinking…`;
- if(!playerTurn&&turn<9&&!matchAnimating){
+ if(!playerTurn&&turn<9&&!matchAnimating&&!tutorialTalkLocked()){
    let watchTurn=turn;
    setTimeout(()=>{if(turn===watchTurn&&!matchAnimating){console.warn("AI thinking watchdog fired",watchTurn);aiMove()}},450);
  }
 }
 function place(pos){
+ if(tutorialTalkLocked())return;
  if(!chosen||board[pos]||matchAnimating)return;
  let n=chosen;
  let fromEl=findPlayerCardEl(n);
@@ -3072,7 +3315,8 @@ function aiOpeningMove(){
  return true;
 }
 function aiMove(){
- if(matchAnimating)return;
+ if(matchAnimating||tutorialTalkLocked())return;
+ if(inHomeTutorial()){tutorialAiMove();return}
  if(turn>=9){renderGame();return}
  let empty=board.map((x,i)=>x?null:i).filter(i=>i!==null);
  if(!empty.length){renderGame();return}
@@ -3273,6 +3517,15 @@ function nextSeriesGame(){
 }
 
 function finish(){
+ if(inHomeTutorial()){
+  if(homeTutorial.phase!=="give"&&homeTutorial.phase!=="gift"){
+   homeTutorial.lock=true;
+   homeTutorial.phase="give";
+   matchAnimating=false;
+   queueTableTalk(TUTORIAL_GIVE,openTutorialGift);
+  }
+  return;
+ }
  let [p,a]=score(),winner=p>a?"p":a>p?"ai":null;
  if(!winner&&currentTerms.tie==="final")winner=lastCapture;
  resetResultChrome();
@@ -3365,12 +3618,15 @@ document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>{
 });
 if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
-if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();renderHome();}};
+if($("tableTalk"))$("tableTalk").onclick=()=>{if(tableTalkQueue&&tableTalkQueue.advance)tableTalkQueue.advance()};
+if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();if(!state.tutorialDone)startGrandpaTutorial();else{renderHome();show("home")}}};
 if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
 if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
 
-$("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();renderHome()}};
-load();renderHome();show("home");syncDevControls();
+$("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();if(!state.tutorialDone)startGrandpaTutorial();else{renderHome();show("home")}}};
+load();syncDevControls();
+if(!state.tutorialDone)startGrandpaTutorial();
+else{renderHome();show("home")}
 if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
  resetRuneBandit();
  const name=$("runeNpcName");
@@ -5224,7 +5480,7 @@ if ('serviceWorker' in navigator) {
   padding:8px 10px 10px!important;
 }
 #game .score,#game #status,#game #comboStatus,#game #seriesScore,
-#game #oppHandLabel,#game .panel>div.small{flex:0 0 auto}
+#game #oppHandLabel,#game #playerHandLabel,#game .panel>div.small,#game .tableTalk{flex:0 0 auto}
 #game .board,#game .hand{
   width:min(100%,var(--board-w, calc((100dvh - env(safe-area-inset-top) - env(safe-area-inset-bottom) - 8.25rem) / 2.08)));
   max-width:100%;
@@ -5592,6 +5848,69 @@ if ('serviceWorker' in navigator) {
 #game .hand .card.gilt .s,
 #game .hand .card.gilt .w{
   font-size:clamp(7px, calc(var(--board-w) * 0.032), 16px)!important;
+}
+#game .tableTalk{
+  appearance:none;
+  -webkit-appearance:none;
+  display:block;
+  flex:0 0 auto;
+  width:min(100%,var(--board-w,100%));
+  margin:4px auto 0;
+  padding:8px 10px;
+  box-sizing:border-box;
+  text-align:left;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(12px,3.3vw,15px);
+  line-height:1.35;
+  color:#2a1c12;
+  background:#efe3c8;
+  border:2px solid #513b2c;
+  border-radius:6px;
+  box-shadow:0 4px 10px #0006;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+#game .tableTalk b{
+  display:block;
+  margin-bottom:3px;
+  font-size:clamp(11px,3vw,13px);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#5c3a22;
+}
+#game .tableTalk.hidden,
+#game .tableTalk[hidden]{display:none!important}
+#game[data-table="home"]{
+  background:
+    radial-gradient(ellipse at 50% 28%,rgba(92,64,42,.55) 0%,rgba(22,16,12,.92) 72%),
+    linear-gradient(180deg,#2a1c14 0%,#14100c 100%)!important;
+  color:#f4ead3!important;
+}
+#game[data-table="home"] .board{
+  background:#5a4634!important;
+  border-color:#3a2418!important;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 8px 18px #0005,
+    0 10px 22px #0008!important;
+}
+#game[data-table="home"] .board:before{
+  background:
+    linear-gradient(135deg,#c4b08a 0 42%,#6a5230 78%) 0 0/var(--brass-size) var(--brass-size) no-repeat,
+    linear-gradient(225deg,#c4b08a 0 42%,#6a5230 78%) 100% 0/var(--brass-size) var(--brass-size) no-repeat,
+    linear-gradient(45deg,#c4b08a 0 42%,#6a5230 78%) 0 100%/var(--brass-size) var(--brass-size) no-repeat,
+    linear-gradient(-45deg,#c4b08a 0 42%,#6a5230 78%) 100% 100%/var(--brass-size) var(--brass-size) no-repeat;
+  opacity:.55;
+}
+#game[data-table="home"] .cell{background:#cbb792!important;border-color:#7a6248!important}
+#result[data-table="home"]{
+  background:
+    radial-gradient(ellipse at 50% 28%,rgba(92,64,42,.55) 0%,rgba(22,16,12,.92) 72%),
+    linear-gradient(180deg,#2a1c14 0%,#14100c 100%)!important;
+}
+#result[data-table="home"] .resultWell{
+  background:#5a4634!important;
+  border-color:#3a2418!important;
 }
 </style>
 <style>
