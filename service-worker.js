@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v81-tutorial-start';
+const CACHE_NAME = 'card-road-pwa-v82-tutorial-pacing';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -11,7 +11,8 @@ const CORE_ASSETS = [
   './assets/ui/date_time_frame.png',
   './assets/ui/location_title_frame.png',
   './assets/ui/noticeboard_frame.png',
-  './assets/ui/presence_message_frame.png'];
+  './assets/ui/presence_message_frame.png',
+  './assets/ui/match_home_table.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {
