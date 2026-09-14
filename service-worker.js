@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v53-readable-ink';
+const CACHE_NAME = 'card-road-pwa-v79-readable-ink';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -8,23 +8,10 @@ const CORE_ASSETS = [
   './assets/locations/riverside.webp',
   './assets/locations/inn.webp',
   './assets/locations/card_club.webp',
-  './assets/npcs/tomas.webp',
-  './assets/npcs/nessa_standee_final_v14.png'
-,
-  './assets/npcs/bram_standee_v15.png',
-  './assets/npcs/elira_standee_v17.png',
   './assets/ui/date_time_frame.png',
   './assets/ui/location_title_frame.png',
   './assets/ui/noticeboard_frame.png',
-  './assets/ui/presence_message_frame.png',
-  './assets/ui/match_club_table.png',
-  './assets/ui/card_gilt_frame.png',
-  './assets/ui/deck_binder_cover.png',
-  './assets/ui/deck_binder_page.png',
-  './assets/ui/deck_binder_tab.png',
-  './assets/ui/deck_binder_tab_on.png',
-  './assets/ui/deck_binder_well.png',
-  './assets/ui/deck_binder_ring.png'];
+  './assets/ui/presence_message_frame.png'];
 
 self.addEventListener('install', event => {
   event.waitUntil((async () => {

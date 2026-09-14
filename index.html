@@ -422,8 +422,9 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 }
 
 </style>
-<meta name="theme-color" content="#17120f">  <link rel="manifest" href="manifest.webmanifest?v=3">
-  <meta name="theme-color" content="#2f4250">
+  <meta name="theme-color" content="#efe3c8">
+  <link rel="manifest" href="manifest.webmanifest?v=3">
+  <meta name="theme-color" content="#efe3c8">
   <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
@@ -477,6 +478,13 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <div id="noticeOverlay" class="noticeOverlay hidden">
   <button type="button" id="closeNotice" class="noticeDismiss">Close</button>
   <button id="noticeBoard" class="worldObject notice" type="button">Noticeboard</button>
+</div>
+<div id="bephStall" class="bephStall hidden" role="dialog" aria-modal="true" aria-labelledby="bephStallTitle">
+  <div class="bephStallCard">
+    <h2 id="bephStallTitle">Beph</h2>
+    <p>Beph is on a pilgrimage right now... try again later</p>
+    <button type="button" id="closeBephStall">Close</button>
+  </div>
 </div>
 </section>
 
@@ -587,9 +595,10 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <div id="challenge" class="hidden">
   <div class="challengeTable">
     <div class="challengeWell">
-      <h2 id="challengeTitle" class="challengePlaque"></h2>
+      <button type="button" id="challengeTitle" class="challengePlaque"></button>
       <div id="challengeMsg" class="challengeCaption"></div>
       <div id="terms" class="challengeTerms"></div>
+      <div id="challengeTermTip" class="challengeTermTip" hidden></div>
       <div id="seriesSetup" class="challengeFlavor"></div>
       <div class="challengeKnownHead">Known collection</div>
       <p class="challengeKnownHint">Seen copies show their face. The rest stay unknown.</p>
@@ -604,6 +613,19 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <h3>Full Match Rules</h3><div id="preMatchRules" style="margin-bottom:10px"></div>
     <div id="deckInfo" class="small"></div><div id="deckCards" class="cards"></div>
   </section>
+</div>
+
+<div id="npcDossier" class="hidden">
+  <div class="dossierTable">
+    <div class="dossierWell">
+      <h2 id="dossierTitle" class="challengePlaque"></h2>
+      <div class="dossierStage"><img id="dossierCutout" alt=""></div>
+      <p id="dossierBio" class="dossierBio"></p>
+    </div>
+    <div class="challengeActions">
+      <button type="button" id="dossierBack" class="challengePlaqueBtn">Back</button>
+    </div>
+  </div>
 </div>
 
 <div id="deckSelect" class="hidden">
@@ -657,21 +679,38 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="starter" class="hidden">
-<section class="panel">
-<h2>Rune Draw</h2>
-<p class="small">Each player draws one numbered rune. Highest rune takes the first move. A tie redraws automatically.</p>
-<div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;text-align:center;margin:16px 0">
-  <div class="npc"><div class="small">YOU</div><div id="playerRune" style="font-size:44px;font-weight:900">?</div></div>
-  <div class="npc"><div class="small" id="runeNpcName">OPPONENT</div><div id="npcRune" style="font-size:44px;font-weight:900">?</div></div>
-</div>
-<h3>Full Match Rules</h3><div id="runeRules" style="margin-bottom:10px"></div>
-<div id="runeResult" style="text-align:center;font-weight:800;margin:10px"></div>
-<button id="drawRunes" style="width:100%">Draw Runes</button>
-<div id="runeChoice" class="hidden" style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
-<button id="chooseFirst">Go First</button><button id="chooseSecond">Go Second</button>
-</div>
-<button id="startAfterRune" class="hidden" style="width:100%;margin-top:8px">Begin Match</button>
-</section>
+  <div class="starterTable">
+    <div class="starterWell">
+      <h2 class="starterPlaque">Rune Draw</h2>
+      <p class="starterCaption">Each of you draws a numbered rune. Highest chooses who takes the first move. A tie redraws.</p>
+      <div class="starterRunes">
+        <div class="bandit" id="runeBandit">
+          <div class="banditStage">
+            <img class="banditArt" src="assets/ui/rune_bandit_cabinet.png" alt="" draggable="false">
+            <div class="banditWindow banditWindowYou">
+              <div id="playerRune" class="banditReel"></div>
+            </div>
+            <div class="banditWindow banditWindowNpc">
+              <div id="npcRune" class="banditReel"></div>
+            </div>
+            <span class="banditWhoNpc hidden" id="runeNpcName">Opponent</span>
+            <button id="drawRunes" class="banditDraw" type="button">Draw Runes</button>
+            <button id="banditLever" class="banditLever" type="button" tabindex="-1" aria-hidden="true"></button>
+          </div>
+        </div>
+      </div>
+      <div id="runeResult" class="starterResult"></div>
+      <div id="starterTerms" class="challengeTerms"></div>
+      <div id="starterTermTip" class="challengeTermTip" hidden></div>
+    </div>
+    <div class="starterActions">
+      <div id="runeChoice" class="starterChoice hidden">
+        <button id="chooseFirst" class="starterPlaqueBtn" type="button">Go First</button>
+        <button id="chooseSecond" class="starterPlaqueBtn starterPlaqueBtnAlt" type="button">Go Second</button>
+      </div>
+      <button id="startAfterRune" class="starterPlaqueBtn hidden" type="button">Begin Match</button>
+    </div>
+  </div>
 </div>
 
 <div id="game" class="hidden">
@@ -722,8 +761,95 @@ const npcDefs={
  "Visitor B":{visitor:true,skill:.58,risk:.42,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:92},start:["C005", "C012", "C021", "C034", "C044", "C060", "C071", "C088"]},
  "Visitor C":{visitor:true,skill:.68,risk:.60,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:92},start:["C007", "C015", "C027", "C038", "C050", "C062", "C075", "C098"]}
 };
-
-
+const NPC_CUTOUT={
+ Tomas:"./assets/npcs/tomas_standee_bevel_v19.png",
+ Nessa:"./assets/npcs/nessa_standee_bevel_v25.png",
+ Bram:"./assets/npcs/bram_standee_bevel_v25.png",
+ Elira:"./assets/npcs/elira_standee_bevel_v25.png",
+ Beph:"./assets/npcs/beph_standee_bevel_v3.png"
+};
+const NPC_BIO={
+ Tomas:"A hot-blooded Market regular. He plays fast, takes risks, and hates leaving a loss on the table.",
+ Bram:"Measured and respectful. He treats a match as craft as much as contest, and he means the handshake.",
+ Nessa:"Warm company at the Inn and Market. She would rather share a Match and a laugh than grind a rivalry.",
+ Elira:"A reserved Card Club player. He lets the board talk; knowing him well takes time.",
+ Beph:"Keeps a fruit stall in Lythmere Market. She is away on pilgrimage for now.",
+ "Visitor A":"A travelling competitor in town for the Open. They will move on when the event ends.",
+ "Visitor B":"A travelling competitor in town for the Open. They will move on when the event ends.",
+ "Visitor C":"A travelling competitor in town for the Open. They will move on when the event ends."
+};
+const TOWN_STAMP={
+ Tomas:{cls:"tomasCutout",src:NPC_CUTOUT.Tomas+"?v=bevel3"},
+ Nessa:{cls:"nessaCutout",src:NPC_CUTOUT.Nessa+"?v=bevel7"},
+ Bram:{cls:"bramCutout",src:NPC_CUTOUT.Bram+"?v=bevel7"},
+ Elira:{cls:"eliraCutout",src:NPC_CUTOUT.Elira+"?v=bevel7"}
+};
+function closeBephStall(){const el=$("bephStall");if(el)el.classList.add("hidden")}
+function openBephStall(){const el=$("bephStall");if(el)el.classList.remove("hidden")}
+function ensureTownCutout(scene,name,spec){
+ let img=scene.querySelector("."+spec.cls);
+ if(!img){
+  img=document.createElement("img");
+  img.className=spec.cls;
+  img.alt=name;
+  img.setAttribute("role","button");
+  img.setAttribute("tabindex","0");
+  img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="'+name+'"]');if(btn)btn.click();};
+  img.onkeydown=e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();img.click();}};
+  scene.appendChild(img);
+ }
+ return img;
+}
+function syncBephStandee(scene){
+ const onMarket=scene.dataset.location==="Market";
+ let img=scene.querySelector(".bephCutout");
+ if(!onMarket && !img){closeBephStall();return;}
+ if(!img){
+  img=document.createElement("img");
+  img.className="bephCutout";
+  img.alt="Beph";
+  img.setAttribute("role","button");
+  img.setAttribute("tabindex","0");
+  img.setAttribute("aria-label","Beph, stallholder");
+  img.addEventListener("click",openBephStall);
+  img.addEventListener("keydown",e=>{if(e.key==="Enter"||e.key===" "){e.preventDefault();openBephStall()}});
+  scene.appendChild(img);
+ }
+ if(onMarket && img.getAttribute("src")!==NPC_CUTOUT.Beph) img.src=NPC_CUTOUT.Beph;
+ const vis=onMarket?"block":"none";
+ if(img.style.display!==vis) img.style.display=vis;
+ if(!onMarket)closeBephStall();
+}
+function syncTownStandees(){
+ const scene=$("townScene")||document.querySelector(".townScene");
+ if(!scene)return;
+ const present=[...scene.querySelectorAll("#npcHotspots .npcHotspot")].map(b=>b.dataset.npc).filter(Boolean);
+ const crowd=String(present.length);
+ if(scene.dataset.crowd!==crowd) scene.dataset.crowd=crowd;
+ const here=new Set(present);
+ Object.entries(TOWN_STAMP).forEach(([name,spec])=>{
+  const live=here.has(name);
+  let img=scene.querySelector("."+spec.cls);
+  if(!live && !img)return;
+  img=ensureTownCutout(scene,name,spec);
+  if(live && img.getAttribute("src")!==spec.src) img.src=spec.src;
+  const vis=live?"block":"none";
+  if(img.style.display!==vis) img.style.display=vis;
+  if(!live) img.removeAttribute("data-slot");
+ });
+ const slotOrder=({1:[0],2:[0,1],3:[0,1,3],4:[0,1,2,3]})[present.length]||present.map((_,i)=>i);
+ present.forEach((name,i)=>{
+  const spec=TOWN_STAMP[name];
+  if(!spec)return;
+  const img=scene.querySelector("."+spec.cls);
+  if(img) img.dataset.slot=String(slotOrder[i]??i);
+ });
+ scene.querySelectorAll("#npcHotspots .npcHotspot").forEach(old=>{
+  if(old.style.opacity!=="0") old.style.opacity="0";
+  if(old.style.pointerEvents!=="none") old.style.pointerEvents="none";
+ });
+ syncBephStandee(scene);
+}
 
 function isoDate(d){return d.toISOString().slice(0,10)}
 function nthWeekdayOfMonth(year,month,weekday,n){let d=new Date(year,month,1,12);let add=(weekday-d.getDay()+7)%7;d.setDate(1+add+(n-1)*7);return d}
@@ -1137,7 +1263,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
 }
 const $=x=>document.getElementById(x);
 function show(id){
- ["home","challenge","termsBuilder","profile","cardInspector","starter","deckSelect","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
+ ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
  scheduleScreenLayout(id);
 }
 function matchViewBox(){
@@ -1155,16 +1281,21 @@ function scheduleScreenLayout(id){
   const next=matchLayoutId;
   matchLayoutId=null;
   layoutScreenFit(next);
+  if(next==="game")requestAnimationFrame(()=>layoutScreenFit("game"));
  });
 }
 function scheduleMatchLayout(){scheduleScreenLayout("game")}
 function layoutScreenFit(id){
- const vis=["game","challenge","result","deckSelect","starter","termsBuilder","profile","tournament","seriesSummary","cardInspector"].find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
+ const vis=["game","challenge","npcDossier","result","deckSelect","starter","termsBuilder","profile","tournament","seriesSummary","cardInspector"].find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
  id=id||vis;
  if(id==="game")return layoutMatchTable();
  if(id==="challenge"){
   const root=$("challenge");
   return layoutStageWidth(root,root&&root.querySelector(".challengeTable"),"--stage-w",200);
+ }
+ if(id==="npcDossier"){
+  const root=$("npcDossier");
+  return layoutStageWidth(root,root&&root.querySelector(".dossierTable"),"--stage-w",200);
  }
  if(id==="result"){
   const root=$("result");
@@ -1173,6 +1304,13 @@ function layoutScreenFit(id){
  if(id==="deckSelect"){
   const root=$("deckSelect");
   return layoutStageWidth(root,root&&root.querySelector(".deckSelectShell"),"--stage-w",220);
+ }
+ if(id==="starter"){
+  const root=$("starter");
+  layoutStageWidth(root,root&&root.querySelector(".starterTable"),"--stage-w",200);
+  sizeBanditWindows();
+  relockBanditReels();
+  return;
  }
 }
 function layoutStageWidth(root,stage,varName,minW){
@@ -1265,8 +1403,10 @@ const RULE_HELP={
  "Partial Open":"Three opponent cards are revealed at the start. The other two remain hidden until played.",
  "Closed Hand":"Opponent cards show as backs in hand. The chosen card lifts out and flips as they play it.",
  "Draw":"A level final score is recorded as a draw.",
+ "Draws allowed":"A level final score is recorded as a draw.",
  "Final Capture":"If the final score is level, the player who made the final capture wins.",
  "Claim One":"The winner chooses one eligible card from the loser.",
+ "Named Card":"Each player names one copy as the stake. The series winner takes that named copy from the loser.",
  "Rune Draw":"A pre-match rune draw decides who chooses whether to play first or second.",
  "Deck Budget":"The combined score cost of the five selected cards cannot exceed this match's budget.",
  "Best of 1":"A single game decides the match.",
@@ -1678,7 +1818,7 @@ function beginTournamentPlayerMatch(opponent,resultField,round){
  t.rules=t.type==="championship"?championshipTournamentRules(round):warmupTournamentRules(round);
  configureTournamentTerms(t);currentNpc=opponent;window._tournamentMatch={resultField,round,opponent};
  challengeDirection="outgoing";selectedDeck=[];seriesGame=0;seriesWins={p:0,ai:0};seriesWinner=null;namedWagers=null;
- renderKnownCollection(opponent);$("challengeTitle").textContent=`${t.name} — ${round}`;$("challengeMsg").textContent=`Tournament match against ${opponent}.`;
+ renderKnownCollection(opponent);setChallengePlaque(`${t.name} — ${round}`);$("challengeMsg").textContent=`Tournament match against ${opponent}.`;
  $("seriesSetup").textContent=`${round} · tournament rules are fixed.`;$("terms").innerHTML=tournamentRulesSummary(t);
  $("acceptTerms").classList.add("hidden");$("backHome").classList.add("hidden");openDeckSelect();refreshFullRules();
 }
@@ -1739,6 +1879,7 @@ function renderWorldScene(){
  $("eventHotspot").classList.toggle("hidden",!isSaturdayEventNow());
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
+ syncTownStandees();
 }
 function renderJournal(tab){
  if(!$("journalContent"))return;ensureVisualState();if(tab)state.visual.journalTab=tab;let t=state.visual.journalTab||"calendar";document.querySelectorAll(".journalTabs button").forEach(b=>b.classList.toggle("active",b.dataset.jtab===t));let out="";
@@ -1840,12 +1981,68 @@ function markSeen(npc,card){
  if(!state.seenByNpc[npc].includes(card))state.seenByNpc[npc].push(card);
 }
 function cardLabel(n){return (C[n]&&C[n].display)||n}
-function fillChallengeTerms(){
-  if(!currentTerms)return;
+function fillChallengeTerms(){paintRuleChips($("terms"),$("challengeTermTip"))}
+function fillStarterTerms(){paintRuleChips($("starterTerms"),$("starterTermTip"))}
+function paintRuleChips(row,tip){
+  if(!currentTerms||!row)return;
   const bits=[currentTerms.rule,currentTerms.wager,currentTerms.tie==="final"?"Final Capture":"Draws allowed","Budget "+currentTerms.budget];
   if(seriesTarget>1)bits.push("Best of "+seriesTarget);
   if(namedWagers)bits.push(cardLabel(namedWagers.p)+" vs "+cardLabel(namedWagers.ai));
-  $("terms").innerHTML=bits.map(t=>`<span class="challengeTerm">${t}</span>`).join("");
+  row.innerHTML="";
+  bits.forEach(label=>{
+    const b=document.createElement("button");
+    b.type="button";
+    b.className="challengeTerm";
+    b.textContent=label;
+    b.setAttribute("aria-expanded","false");
+    if(tip&&tip.id)b.setAttribute("aria-controls",tip.id);
+    b.onclick=()=>toggleChallengeTermTip(b,label,tip);
+    row.appendChild(b);
+  });
+  clearChallengeTermTip(tip);
+}
+function challengeTermHelp(label){
+  if(RULE_HELP[label])return RULE_HELP[label];
+  if(/^Budget\s+\d+$/.test(label)){
+    const n=label.replace(/\D/g,"");
+    return RULE_HELP["Deck Budget"]+" This match is "+n+".";
+  }
+  if(/ vs /.test(label))return RULE_HELP["Named Card"];
+  return "";
+}
+function clearChallengeTermTip(tip){
+  tip=tip||$("challengeTermTip");
+  if(!tip)return;
+  tip.hidden=true;
+  tip.textContent="";
+  delete tip.dataset.label;
+  const scope=tip.parentElement||document;
+  scope.querySelectorAll(".challengeTerm.isOpen").forEach(el=>{
+    el.classList.remove("isOpen");
+    el.setAttribute("aria-expanded","false");
+  });
+}
+function toggleChallengeTermTip(btn,label,tip){
+  tip=tip||$("challengeTermTip");
+  if(!tip||!btn)return;
+  const screen=tip.closest("#starter")?"starter":"challenge";
+  if(tip.dataset.label===label&&!tip.hidden){
+    clearChallengeTermTip(tip);
+    scheduleScreenLayout(screen);
+    return;
+  }
+  const help=challengeTermHelp(label);
+  if(!help){clearChallengeTermTip(tip);return;}
+  clearChallengeTermTip(tip);
+  tip.hidden=false;
+  tip.dataset.label=label;
+  const title=document.createElement("b");
+  title.textContent=label;
+  tip.appendChild(title);
+  tip.appendChild(document.createTextNode(" "+help));
+  btn.classList.add("isOpen");
+  btn.setAttribute("aria-expanded","true");
+  scheduleScreenLayout(screen);
 }
 function renderKnownCollection(npc){
  let seen=state.seenByNpc[npc]||[];
@@ -2060,18 +2257,42 @@ $("proposeTerms").onclick=()=>{
    namedWagers={p:offer,ai:stake};
  }
  state.incoming=null;save();
- $("challengeTitle").textContent=currentNpc;
+ $("acceptTerms").classList.add("hidden");$("backHome").classList.add("hidden");openDeckSelect();refreshFullRules();
  fillChallengeTerms();
  $("challengeMsg").textContent=`${currentNpc} accepted your terms.`;$("seriesSetup").textContent=`Series: first to ${Math.floor(seriesTarget/2)+1} wins the matchup. Wager settles only after the series.`;
- renderKnownCollection(currentNpc);$("deckPanel").classList.add("hidden");show("challenge");
+ renderKnownCollection(currentNpc);$("deckPanel").classList.add("hidden");setChallengePlaque(currentNpc, currentNpc);show("challenge");
 };
 $("cancelTerms").onclick=()=>{show("home");renderHome()};
 $("acceptIncoming").onclick=()=>{state.seasonStats.incomingAccepted++;buildTerms(state.incoming.npc)};
 $("declineIncoming").onclick=()=>{let n=state.incoming.npc,m=mem(n);m.declines++;state.seasonStats.incomingDeclined++;m.affinity=clampRel(m.affinity-(m.declines>2?2:1));rememberMoment(n,"You declined a challenge.");news(`You declined ${n}'s challenge.`);state.incoming=null;save();renderHome()};
+function setChallengePlaque(label, person){
+ const el=$("challengeTitle");
+ if(!el)return;
+ el.textContent=label;
+ const clickable=!!(person && label===person);
+ el.classList.toggle("isPerson", clickable);
+ el.setAttribute("aria-label", clickable?"About "+person:label);
+}
+function openNpcDossier(n){
+ if(!n)return;
+ const title=$("dossierTitle"),img=$("dossierCutout"),bio=$("dossierBio");
+ if(title)title.textContent=n;
+ if(img){
+  img.src=NPC_CUTOUT[n]||"";
+  img.alt=n;
+  img.style.display=NPC_CUTOUT[n]?"block":"none";
+ }
+ if(bio)bio.textContent=NPC_BIO[n]||`${n} plays the local circuit.`;
+ show("npcDossier");
+}
+$("challengeTitle").onclick=()=>{
+ if($("challengeTitle").classList.contains("isPerson") && currentNpc) openNpcDossier(currentNpc);
+};
+if($("dossierBack"))$("dossierBack").onclick=()=>{show("challenge");scheduleScreenLayout("challenge")};
 function openChallenge(name){
  $("acceptTerms").classList.remove("hidden");$("backHome").classList.remove("hidden");
  currentNpc=name;state.seasonStats.playerChallenges++;challengeDirection="outgoing";seriesTarget=1;seriesWins={p:0,ai:0};seriesGame=0;namedWagers=null;currentTerms={...npcDefs[name].terms};
- $("challengeTitle").textContent=name;
+ setChallengePlaque(name, name);
  fillChallengeTerms();
  $("challengeMsg").textContent=`You challenged ${name}, so ${name} sets the rules.`;$("seriesSetup").textContent="Series: single game. Wager settles after the match.";
  renderKnownCollection(name);
@@ -2274,8 +2495,10 @@ $("beginMatch").onclick=()=>{
  }
  playerHand=[...seriesPlayerDeck];aiHand=[...seriesAiDeck];aiPlayed=[];board=Array(9).fill(null);turn=0;chosen=null;lastCapture=null;pendingLossCard=null;lastComboCount=0;finishScheduled=false;matchAnimating=false;setupAiHandVisibility();
  if(seriesGame===0){
-   $("playerRune").textContent="?";$("npcRune").textContent="?";$("runeNpcName").textContent=currentNpc.toUpperCase();
-   $("runeResult").textContent="";$("startAfterRune").classList.add("hidden");$("runeChoice").classList.add("hidden");$("drawRunes").classList.remove("hidden");
+   resetRuneBandit();
+   $("runeNpcName").textContent=currentNpc;
+   $("runeResult").textContent="";$("startAfterRune").classList.add("hidden");$("runeChoice").classList.add("hidden");
+   fillStarterTerms();
    show("starter");
  }else{
    startingPlayer=(seriesGame%2===0)?seriesInitialStarter:(seriesInitialStarter==="p"?"ai":"p");
@@ -2283,24 +2506,153 @@ $("beginMatch").onclick=()=>{
    if(startingPlayer==="ai")aiOpeningMove();else renderGame();
  }
 }
-$("drawRunes").onclick=()=>{
- let p=1+Math.floor(Math.random()*9), n=1+Math.floor(Math.random()*9);
- $("playerRune").textContent=p;$("npcRune").textContent=n;
- if(p===n){$("runeResult").textContent="The runes match — redraw.";return}
- $("drawRunes").classList.add("hidden");
- if(p>n){
-   $("runeResult").textContent="You drew higher. Choose who takes the first move.";
-   $("runeChoice").classList.remove("hidden");
- }else{
-   // NPC estimates whether its deck is reactive: more low/high directional contrast favours responding.
-   let spread=seriesAiDeck.reduce((s,c)=>s+(Math.max(C[c].n,C[c].e,C[c].s,C[c].w)-Math.min(C[c].n,C[c].e,C[c].s,C[c].w)),0)/5;
-   let reactive=spread>=3.2;
-   let chooseSecond=(npcDefs[currentNpc].skill>.65&&reactive)||(npcDefs[currentNpc].risk<.35&&Math.random()<.65);
-   startingPlayer=chooseSecond?"p":"ai";seriesInitialStarter=startingPlayer;
-   $("runeResult").textContent=`${currentNpc} drew higher and chooses to ${chooseSecond?"go second":"go first"}.`;
-   $("startAfterRune").classList.remove("hidden");
- }
+const BANDIT_REEL_WINDOW=1.32;
+let runeDrawGen=0;
+function ensureBanditReels(){
+  ["playerRune","npcRune"].forEach(id=>{
+    const el=$(id);
+    if(!el||el.dataset.ready)return;
+    const strip=document.createElement("div");
+    strip.className="banditStrip";
+    strip.setAttribute("aria-hidden","true");
+    for(let copy=0;copy<3;copy++){
+      for(let n=1;n<=9;n++){
+        const cell=document.createElement("span");
+        cell.className="banditCell";
+        cell.textContent=String(n);
+        strip.appendChild(cell);
+      }
+    }
+    const face=document.createElement("div");
+    face.className="banditFace";
+    face.textContent="?";
+    el.appendChild(strip);
+    el.appendChild(face);
+    el.dataset.ready="1";
+  });
 }
+function idleBanditReel(el){
+  if(!el)return;
+  el.classList.remove("is-spinning","is-locked");
+  el.style.removeProperty("--reel-n");
+  delete el.dataset.locked;
+  const win=el.parentElement;
+  if(win)win.style.removeProperty("--reel-cell");
+  const face=el.querySelector(".banditFace");
+  if(face){face.hidden=false;face.textContent="?";}
+}
+function spinBanditReel(el){
+  if(!el)return;
+  el.classList.add("is-spinning");
+  el.classList.remove("is-locked");
+  const face=el.querySelector(".banditFace");
+  if(face)face.hidden=true;
+}
+function lockBanditReel(el,n){
+  if(!el)return;
+  el.classList.remove("is-spinning");
+  el.classList.add("is-locked");
+  el.style.setProperty("--reel-n",String(n));
+  el.dataset.locked=String(n);
+  const win=el.parentElement;
+  if(win){
+    const cellH=win.clientHeight/BANDIT_REEL_WINDOW;
+    if(cellH)win.style.setProperty("--reel-cell",cellH+"px");
+  }
+  const face=el.querySelector(".banditFace");
+  if(face){face.hidden=false;face.textContent=String(n);}
+}
+function sizeBanditWindows(){
+  document.querySelectorAll("#starter .banditWindow").forEach(win=>{
+    const h=win.clientHeight;
+    if(h)win.style.setProperty("--reel-cell",(h/BANDIT_REEL_WINDOW)+"px");
+  });
+}
+function relockBanditReels(){
+  ["playerRune","npcRune"].forEach(id=>{
+    const el=$(id);
+    if(!el||!el.classList.contains("is-locked"))return;
+    const n=parseInt(el.dataset.locked,10);
+    if(n>=1&&n<=9)lockBanditReel(el,n);
+  });
+}
+function resetRuneBandit(){
+  runeDrawGen++;
+  ensureBanditReels();
+  const box=$("runeBandit");
+  if(box)box.classList.remove("is-pulling","is-spent","is-live");
+  const draw=$("drawRunes");
+  if(draw){draw.disabled=false;draw.classList.remove("hidden");}
+  idleBanditReel($("playerRune"));
+  idleBanditReel($("npcRune"));
+  sizeBanditWindows();
+}
+function banditSpinPlan(){
+  if(window.matchMedia&&window.matchMedia("(prefers-reduced-motion: reduce)").matches){
+    return{pull:0,first:50,second:90};
+  }
+  const first=720+Math.floor(Math.random()*420);
+  const second=first+520+Math.floor(Math.random()*480);
+  return{pull:220,first,second};
+}
+function waitRune(ms,gen){
+  return new Promise(res=>setTimeout(()=>res(gen===runeDrawGen),ms));
+}
+function applyRuneOutcome(p,n){
+  if(p===n){
+    $("runeResult").textContent="The runes match — redraw.";
+    $("drawRunes").disabled=false;
+    const box=$("runeBandit");
+    if(box)box.classList.remove("is-spent","is-pulling");
+    return;
+  }
+  $("drawRunes").disabled=true;
+  const box=$("runeBandit");
+  if(box){box.classList.add("is-spent");box.classList.remove("is-pulling");}
+  if(p>n){
+    $("runeResult").textContent="You drew higher. Choose who takes the first move.";
+    $("runeChoice").classList.remove("hidden");
+  }else{
+    // NPC estimates whether its deck is reactive: more low/high directional contrast favours responding.
+    let spread=seriesAiDeck.reduce((s,c)=>s+(Math.max(C[c].n,C[c].e,C[c].s,C[c].w)-Math.min(C[c].n,C[c].e,C[c].s,C[c].w)),0)/5;
+    let reactive=spread>=3.2;
+    let chooseSecond=(npcDefs[currentNpc].skill>.65&&reactive)||(npcDefs[currentNpc].risk<.35&&Math.random()<.65);
+    startingPlayer=chooseSecond?"p":"ai";seriesInitialStarter=startingPlayer;
+    $("runeResult").textContent=`${currentNpc} drew higher and chooses to ${chooseSecond?"go second":"go first"}.`;
+    $("startAfterRune").classList.remove("hidden");
+  }
+}
+$("drawRunes").onclick=async ()=>{
+  if($("drawRunes").disabled)return;
+  const gen=++runeDrawGen;
+  ensureBanditReels();
+  sizeBanditWindows();
+  $("runeResult").textContent="";
+  $("runeChoice").classList.add("hidden");
+  $("startAfterRune").classList.add("hidden");
+  $("drawRunes").disabled=true;
+  const box=$("runeBandit");
+  if(box)box.classList.add("is-pulling","is-live");
+  const p=1+Math.floor(Math.random()*9), n=1+Math.floor(Math.random()*9);
+  const plan=banditSpinPlan();
+  const playerFirst=Math.random()<0.5;
+  spinBanditReel($("playerRune"));
+  spinBanditReel($("npcRune"));
+  if(!await waitRune(plan.pull,gen))return;
+  if(box)box.classList.remove("is-pulling");
+  if(!await waitRune(Math.max(0,plan.first-plan.pull),gen))return;
+  lockBanditReel(playerFirst?$("playerRune"):$("npcRune"),playerFirst?p:n);
+  if(!await waitRune(Math.max(0,plan.second-plan.first),gen))return;
+  lockBanditReel(playerFirst?$("npcRune"):$("playerRune"),playerFirst?n:p);
+  if(gen!==runeDrawGen)return;
+  applyRuneOutcome(p,n);
+};
+$("banditLever").onclick=()=>{if(!$("drawRunes").disabled)$("drawRunes").click()};
+$("runeBandit").addEventListener("click",e=>{
+  if(e.target.closest("#drawRunes,#banditLever"))return;
+  if($("drawRunes").disabled)return;
+  $("drawRunes").click();
+});
 $("chooseFirst").onclick=()=>{startingPlayer="p";seriesInitialStarter="p";$("runeChoice").classList.add("hidden");$("runeResult").textContent="You choose to go first."; $("startAfterRune").classList.remove("hidden")}
 $("chooseSecond").onclick=()=>{startingPlayer="ai";seriesInitialStarter="ai";$("runeChoice").classList.add("hidden");$("runeResult").textContent=`You choose to let ${currentNpc} go first.`;$("startAfterRune").classList.remove("hidden")}
 $("startAfterRune").onclick=()=>{
@@ -2326,7 +2678,6 @@ function resolve(pos,p){
 function score(){let p=playerHand.length,a=aiHand.length;board.forEach(x=>{if(x)x.owner==="p"?p++:a++});return [p,a]}
 function refreshFullRules(){
  if($("preMatchRules"))$("preMatchRules").innerHTML=selectedRulesHTML();
- if($("runeRules"))$("runeRules").innerHTML=selectedRulesHTML();
 }
 function isPlayerTurn(){return (startingPlayer==="p"&&turn%2===0)||(startingPlayer==="ai"&&turn%2===1)}
 function reducedPlaceMotion(){return matchMedia("(prefers-reduced-motion: reduce)").matches}
@@ -2682,6 +3033,8 @@ function settleSeries(winner){
         w.appendChild(face);w.appendChild(meta);w.appendChild(inspect);
         $("claimCards").appendChild(w);
       });
+      const claimStage=document.querySelector("#result .resultStage");
+      if(claimStage)claimStage.scrollTop=0;
    }
  }else{
    $("resultTitle").textContent=`${currentNpc} wins`;
@@ -2824,9 +3177,21 @@ document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>render
 if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
 if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();renderHome();}};
+if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
+if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
 
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();renderHome()}};
 load();renderHome();show("home");syncDevControls();
+if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
+ resetRuneBandit();
+ const name=$("runeNpcName");
+ if(name)name.textContent="NESSA";
+ show("starter");
+ ensureBanditReels();
+ sizeBanditWindows();
+ lockBanditReel($("playerRune"),2);
+ lockBanditReel($("npcRune"),6);
+}
 document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
 window.addEventListener("resize",()=>scheduleScreenLayout());
 if(window.visualViewport){
@@ -2838,37 +3203,6 @@ if(window.visualViewport){
 
 </main>
 
-
-
-<script>
-(function(){
- function syncTomasCutout(){
-   const scene=document.querySelector('.townScene');
-   if(!scene) return;
-   let img=scene.querySelector('.tomasCutout');
-   const old=[...scene.querySelectorAll('#npcHotspots .npcHotspot')].find(b=>b.dataset.npc==='Tomas');
-   const isVisible=old && getComputedStyle(old).display!=='none' && old.offsetParent!==null;
-   if(!img){
-     img=document.createElement('img');
-     img.className='tomasCutout';
-     img.src='./assets/npcs/tomas_standee_bevel_v19.png?v=bevel3';
-     img.alt='Tomas';
-     img.setAttribute('role','button');
-     img.setAttribute('tabindex','0');
-     scene.appendChild(img);
-   }
-   img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="Tomas"]');if(btn)btn.click();};
-   img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
-   img.style.display=isVisible?'block':'none';
-   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
- }
- const obs=new MutationObserver(()=>requestAnimationFrame(syncTomasCutout));
- window.addEventListener('load',()=>{
-   syncTomasCutout();
-   obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','data-location']});
- });
-})();
-</script>
 
 
 <script>
@@ -2903,71 +3237,6 @@ if ('serviceWorker' in navigator) {
 }
 </script>
 
-
-<script>
-(function(){
- function syncNessaCutout(){
-   const scene=document.querySelector('.townScene');
-   if(!scene) return;
-   let img=scene.querySelector('.nessaCutout');
-   const old=[...scene.querySelectorAll('#npcHotspots .npcHotspot')].find(b=>b.dataset.npc==='Nessa');
-   const isVisible=old && getComputedStyle(old).display!=='none' && old.offsetParent!==null;
-   if(!img){
-     img=document.createElement('img');
-     img.className='nessaCutout';
-     img.src='./assets/npcs/nessa_standee_bevel_v22.png?v=bevel6';
-     img.alt='Nessa';
-     img.setAttribute('role','button');
-     img.setAttribute('tabindex','0');
-     scene.appendChild(img);
-   }
-   img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="Nessa"]');if(btn)btn.click();};
-   img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
-   img.style.display=isVisible?'block':'none';
-   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
- }
- const obs=new MutationObserver(()=>requestAnimationFrame(syncNessaCutout));
- window.addEventListener('load',()=>{
-   syncNessaCutout();
-   obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','data-location']});
- });
-})();
-</script>
-
-
-
-<script>
-(function(){
- const defs=[
-  {name:'Bram', cls:'bramCutout', src:'./assets/npcs/bram_standee_bevel_v22.png?v=bevel6'},
-  {name:'Elira',cls:'eliraCutout',src:'./assets/npcs/elira_standee_bevel_v22.png?v=bevel6'}
- ];
- function syncApprovedCutouts(){
-  const scene=document.querySelector('.townScene'); if(!scene)return;
-  defs.forEach(d=>{
-   const old=[...scene.querySelectorAll('#npcHotspots .npcHotspot')].find(b=>b.dataset.npc===d.name);
-   const visible=!!(old && getComputedStyle(old).display!=='none' && old.offsetParent!==null);
-   let img=scene.querySelector('.'+d.cls);
-   if(!img){
-    img=document.createElement('img'); img.className=d.cls; img.src=d.src; img.alt=d.name;
-    img.setAttribute('role','button'); img.setAttribute('tabindex','0');
-    scene.appendChild(img);
-   }
-   img.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="'+d.name+'"]');if(btn)btn.click();};
-   img.onkeydown=e=>{if(e.key==='Enter'||e.key===' '){e.preventDefault();img.click();}};
-   img.style.display=visible?'block':'none';
-   if(old){old.style.opacity='0';old.style.pointerEvents='none';}
-  });
- }
- const obs=new MutationObserver(()=>requestAnimationFrame(syncApprovedCutouts));
- window.addEventListener('load',()=>{
-  syncApprovedCutouts();
-  obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:['style','class','data-location']});
- });
-})();
-</script>
-
-</body></html>
 
 <style>.nessaCutout{opacity:1!important;mix-blend-mode:normal!important;}</style>
 
@@ -3612,6 +3881,7 @@ if ('serviceWorker' in navigator) {
   z-index:28!important;
 }
 .npcNameplate{
+  display:none!important;
   position:absolute;
   z-index:23;
   transform:translate(-50%,0);
@@ -4630,66 +4900,6 @@ if ('serviceWorker' in navigator) {
   }
 }
 </style>
-<script>
-(function(){
-  const cutoutByName={Tomas:"tomasCutout",Nessa:"nessaCutout",Bram:"bramCutout",Elira:"eliraCutout"};
-  function syncNpcCrowdSlots(){
-    const scene=document.querySelector(".townScene");
-    if(!scene)return;
-    const present=[...scene.querySelectorAll("#npcHotspots .npcHotspot")].map(b=>b.dataset.npc).filter(Boolean);
-    scene.dataset.crowd=String(present.length);
-    Object.values(cutoutByName).forEach(cls=>{
-      const img=scene.querySelector("."+cls);
-      if(img)img.removeAttribute("data-slot");
-    });
-    const slotOrder=({1:[0],2:[0,1],3:[0,1,3],4:[0,1,2,3]})[present.length]||present.map((_,i)=>i);
-    present.forEach((name,i)=>{
-      const img=scene.querySelector("."+cutoutByName[name]);
-      if(img)img.dataset.slot=String(slotOrder[i]??i);
-    });
-  }
-  const crowdObs=new MutationObserver(()=>requestAnimationFrame(syncNpcCrowdSlots));
-  window.addEventListener("load",()=>{
-    syncNpcCrowdSlots();
-    crowdObs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
-  });
-})();
-</script>
-<script>
-(function(){
-  function syncNpcNameplates(){
-    const scene=document.querySelector(".townScene");
-    if(!scene)return;
-    ["nessaCutout","bramCutout","eliraCutout"].forEach(cls=>{
-      const img=scene.querySelector("."+cls);
-      let plate=scene.querySelector('[data-plate="'+cls+'"]');
-      const visible=!!(img&&img.style.display!=="none"&&img.offsetParent!==null);
-      if(!visible){
-        if(plate)plate.style.display="none";
-        return;
-      }
-      if(!plate){
-        plate=document.createElement("div");
-        plate.className="npcNameplate";
-        plate.dataset.plate=cls;
-        scene.appendChild(plate);
-      }
-      plate.textContent=img.alt||"";
-      plate.style.display="block";
-      const ir=img.getBoundingClientRect();
-      const sr=scene.getBoundingClientRect();
-      plate.style.left=(ir.left-sr.left+ir.width/2)+"px";
-      plate.style.top=(ir.bottom-sr.top-28)+"px";
-    });
-  }
-  const obs=new MutationObserver(()=>requestAnimationFrame(syncNpcNameplates));
-  window.addEventListener("load",()=>{
-    syncNpcNameplates();
-    obs.observe(document.body,{subtree:true,childList:true,attributes:true,attributeFilter:["style","class","data-location"]});
-    window.addEventListener("resize",syncNpcNameplates);
-  });
-})();
-</script>
 <style>
 /* v38 — top chrome is a padded flex row. Date shrinks; Journal stays fully on-screen
    at a fixed inset from the top-right on every phone width. */
@@ -5046,13 +5256,13 @@ if ('serviceWorker' in navigator) {
 #game .cell.cell-p{
   background:#2a4c78!important;
   border-color:#9bb8dc!important;
-  box-shadow:inset 0 0 0 3px #6e97cc!important;
+  box-shadow:inset 0 0 0 var(--cell-ring,3px) #6e97cc!important;
 }
 #game .cell:has(.card.ai),
 #game .cell.cell-ai{
   background:#6a3028!important;
   border-color:#c88676!important;
-  box-shadow:inset 0 0 0 3px #b45c4c!important;
+  box-shadow:inset 0 0 0 var(--cell-ring,3px) #b45c4c!important;
 }
 #cardInspector:not(.hidden){
   position:fixed!important;
@@ -5109,7 +5319,8 @@ if ('serviceWorker' in navigator) {
   --board-border:clamp(6px, calc(var(--board-w) * 0.034), 13px);
   --board-pad:clamp(4px, calc(var(--board-w) * 0.022), 8px);
   --board-gap:clamp(3px, calc(var(--board-w) * 0.014), 5px);
-  --cell-pad:clamp(2px, calc(var(--board-w) * 0.014), 5px);
+  --cell-pad:clamp(3px, calc(var(--board-w) * 0.018), 6px);
+  --cell-ring:var(--cell-pad);
   --hand-pad-y:clamp(3px, calc(var(--board-w) * 0.014), 5px);
   --hand-pad-x:clamp(4px, calc(var(--board-w) * 0.016), 6px);
   --hand-gap:clamp(3px, calc(var(--board-w) * 0.012), 4px);
@@ -5144,16 +5355,20 @@ if ('serviceWorker' in navigator) {
     linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/var(--brass-size) var(--brass-size) no-repeat;
 }
 #game .cell{
+  position:relative;
   min-width:0!important;
   min-height:0!important;
-  padding:var(--cell-pad)!important;
+  padding:0!important;
+  overflow:hidden;
   box-sizing:border-box!important;
 }
 #game .cell .card{
-  width:100%!important;
-  height:100%!important;
-  max-width:100%!important;
-  max-height:100%!important;
+  position:absolute;
+  inset:var(--cell-pad);
+  width:auto!important;
+  height:auto!important;
+  max-width:none!important;
+  max-height:none!important;
   aspect-ratio:auto!important;
   box-sizing:border-box!important;
 }
@@ -5690,7 +5905,8 @@ html,body,#visualShell{color-scheme:only light}
 .townScene.spotOn .tomasCutout,
 .townScene.spotOn .nessaCutout,
 .townScene.spotOn .bramCutout,
-.townScene.spotOn .eliraCutout{
+.townScene.spotOn .eliraCutout,
+.townScene.spotOn .bephCutout{
   visibility:hidden!important;
   pointer-events:none!important
 }
@@ -6158,6 +6374,14 @@ html,body,#visualShell{color-scheme:only light}
   border-radius:5px;
   box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
 }
+#challenge button.challengePlaque{
+  appearance:none;
+  -webkit-appearance:none;
+  cursor:default;
+  color:#1a0c08!important;
+  display:block;
+}
+#challenge button.challengePlaque.isPerson{cursor:pointer}
 #challenge .challengeCaption{
   position:relative;
   z-index:1;
@@ -6175,7 +6399,8 @@ html,body,#visualShell{color-scheme:only light}
   max-width:28em;
 }
 #challenge .challengeCaption:empty{display:none}
-#challenge .challengeTerms{
+#challenge .challengeTerms,
+#starter .challengeTerms{
   position:relative;
   z-index:1;
   flex:0 0 auto;
@@ -6186,7 +6411,10 @@ html,body,#visualShell{color-scheme:only light}
   margin:10px 0 0;
   width:100%;
 }
-#challenge .challengeTerm{
+#challenge button.challengeTerm,
+#starter button.challengeTerm{
+  appearance:none;
+  -webkit-appearance:none;
   padding:5px 10px;
   background:#e8dcc4;
   color:#3a2a18;
@@ -6194,7 +6422,45 @@ html,body,#visualShell{color-scheme:only light}
   font-size:clamp(12px,3.3vw,14px);
   font-weight:700;
   box-shadow:0 2px 5px #0005;
+  border:0;
+  border-radius:0;
+  cursor:pointer;
+  touch-action:manipulation;
 }
+#challenge button.challengeTerm.isOpen,
+#starter button.challengeTerm.isOpen{
+  outline:2px solid #c9a15a;
+  outline-offset:1px;
+}
+#challenge .challengeTermTip,
+#starter .challengeTermTip{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:8px 10px 0;
+  padding:8px 12px;
+  width:calc(100% - 20px);
+  max-width:28em;
+  box-sizing:border-box;
+  font-family:Georgia,serif;
+  font-size:clamp(11px,3.1vw,13px);
+  line-height:1.35;
+  color:#f0e2c4;
+  background:#3d2a18;
+  border:2px solid #24150c;
+  border-radius:4px;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.25);
+  text-align:center;
+}
+#challenge .challengeTermTip b,
+#starter .challengeTermTip b{
+  display:block;
+  margin-bottom:4px;
+  font-size:clamp(12px,3.3vw,14px);
+  color:#ead9b0;
+}
+#challenge .challengeTermTip[hidden],
+#starter .challengeTermTip[hidden]{display:none!important}
 #challenge .challengeFlavor{
   position:relative;
   z-index:1;
@@ -6323,6 +6589,341 @@ html,body,#visualShell{color-scheme:only light}
 }
 </style>
 <style>
+/* v62 — photoreal oak-and-brass bandit on the club table.
+   Click or pull: both reels spin, one locks first, then the other. */
+#starter{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:pan-y;
+}
+#starter.hidden{display:none!important}
+#starter .starterTable{
+  width:min(100%,440px);
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+  touch-action:pan-y;
+}
+#starter .starterWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:14px 12px 16px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  touch-action:pan-y;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#starter .starterWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#starter .starterPlaque{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:0;
+  width:min(92%,280px);
+  padding:12px 18px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(17px,5.8vw,26px);
+  font-weight:800;
+  letter-spacing:.14em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#starter .starterCaption,
+#starter .starterResult{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:10px 0 0;
+  padding:6px 12px;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,3.4vw,15px);
+  color:#f0e2c4;
+  background:#3d2a18;
+  border:2px solid #24150c;
+  border-radius:4px;
+  box-shadow:inset 0 1px 0 rgba(232,194,122,.25);
+  text-align:center;
+  max-width:28em;
+}
+#starter .starterResult:empty{display:none}
+#starter .starterRunes{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  min-height:0;
+  width:100%;
+  display:flex;
+  justify-content:center;
+  align-items:center;
+  margin:10px 0 0;
+  container-type:size;
+}
+#starter .bandit{
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  cursor:pointer;
+  touch-action:manipulation;
+  user-select:none;
+}
+#starter .bandit.is-spent,
+#starter .bandit.is-pulling{cursor:default}
+#starter .banditStage{
+  position:relative;
+  container-type:inline-size;
+  width:min(100%, calc(100cqh * 755 / 846));
+  aspect-ratio:755 / 846;
+  max-height:100%;
+}
+#starter .banditArt{
+  position:absolute;
+  inset:0;
+  z-index:1;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  pointer-events:none;
+  user-select:none;
+}
+#starter .bandit.is-pulling .banditArt{filter:brightness(.93)}
+#starter .banditWhoNpc{display:none!important}
+#starter .banditWindow{
+  --reel-window:1.32;
+  --reel-cell:calc(100% / var(--reel-window));
+  position:absolute;
+  z-index:3;
+  overflow:hidden;
+  pointer-events:none;
+  container-type:size;
+  background:linear-gradient(#f3e6c8,#e6d4ac 55%,#d7c194);
+  border-radius:16% / 14%;
+}
+#starter .banditWindowYou{
+  left:19%;
+  top:31.5%;
+  width:21.2%;
+  height:26.2%;
+}
+#starter .banditWindowNpc{
+  left:47.6%;
+  top:31.5%;
+  width:21.2%;
+  height:26.2%;
+}
+#starter .banditWindow:after{
+  content:"";
+  position:absolute;
+  inset:0;
+  z-index:3;
+  pointer-events:none;
+  background:linear-gradient(#0003,transparent 20%,transparent 80%,#0004);
+}
+#starter .banditReel{
+  position:relative;
+  height:100%;
+  overflow:hidden;
+}
+#starter .banditStrip{
+  display:flex;
+  flex-direction:column;
+  will-change:transform;
+}
+#starter .banditCell{
+  height:var(--reel-cell);
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  flex:0 0 var(--reel-cell);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:calc(var(--reel-cell) * .78);
+  font-weight:800;
+  line-height:1;
+  color:#1a0c08;
+}
+#starter .banditReel.is-spinning .banditStrip{
+  animation:banditSpin .15s linear infinite;
+  filter:blur(3px);
+}
+#starter .banditReel.is-locked .banditStrip{
+  transform:translateY(calc((var(--reel-window) * .5 - (8 + var(--reel-n,1) + .5)) * var(--reel-cell)));
+}
+#starter .banditFace{
+  position:absolute;
+  inset:0;
+  z-index:2;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  margin:0;
+  padding:0;
+  box-sizing:border-box;
+  background:linear-gradient(#f3e6c8,#e6d4ac);
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:calc(var(--reel-cell) * .95);
+  font-size:58cqh;
+  font-weight:800;
+  line-height:1;
+  color:#1a0c08;
+  text-align:center;
+}
+#starter .banditReel.is-spinning .banditFace,
+#starter .banditFace[hidden]{display:none}
+#starter .banditReel.is-locked .banditStrip{visibility:hidden}
+#starter .banditDraw{
+  appearance:none;
+  -webkit-appearance:none;
+  position:absolute;
+  left:17.8%;
+  top:67.5%;
+  width:48.8%;
+  height:13.8%;
+  z-index:6;
+  margin:0;
+  padding:0!important;
+  opacity:0;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+#starter .banditDraw:disabled{cursor:default}
+#starter .banditLever{
+  appearance:none;
+  -webkit-appearance:none;
+  position:absolute;
+  left:75.5%;
+  top:3.2%;
+  width:23.8%;
+  height:45.5%;
+  z-index:6;
+  margin:0;
+  padding:0!important;
+  background:transparent!important;
+  border:0!important;
+  box-shadow:none!important;
+  cursor:pointer;
+  touch-action:manipulation;
+}
+#starter .bandit.is-spent .banditLever{cursor:default}
+@keyframes banditSpin{
+  from{transform:translateY(0)}
+  to{transform:translateY(-33.333%)}
+}
+@media(prefers-reduced-motion:reduce){
+  #starter .banditReel.is-spinning .banditStrip{
+    animation:none;
+    filter:none;
+  }
+  #starter .bandit.is-pulling .banditArt{filter:none}
+}
+#starter .starterActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+}
+#starter .starterChoice{
+  display:flex;
+  gap:8px;
+  width:100%;
+}
+#starter .starterPlaqueBtn{
+  flex:1 1 0;
+  min-width:0;
+  width:100%;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(15px,4.4vw,18px)!important;
+  font-weight:800!important;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:
+    linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+#starter .starterPlaqueBtnAlt{
+  background:
+    linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+}
+#starter #drawRunes.hidden,
+#starter #runeChoice.hidden,
+#starter #startAfterRune.hidden{
+  display:none!important;
+}
+@media(max-width:620px){
+  #starter .starterWell{border-width:8px;padding:12px 10px 14px}
+}
+</style>
+<style>
 /* v52 — leftover-space fit on every live screen. Chrome stays planted;
    the stage sizes from the visible box. Town pins stay Mark-spots %. */
 #visualShell{
@@ -6341,18 +6942,23 @@ html,body,#visualShell{color-scheme:only light}
   position:absolute!important;
 }
 #challenge,
+#npcDossier,
 #result,
-#deckSelect{
+#deckSelect,
+#starter{
   --stage-w:440px;
 }
 #challenge .challengeTable,
-#result .resultTable{
+#npcDossier .dossierTable,
+#result .resultTable,
+#starter .starterTable{
   width:min(100%,var(--stage-w,440px))!important;
   max-width:100%;
   touch-action:pan-y;
 }
 #challenge .challengeWell,
-#result .resultWell{
+#result .resultWell,
+#starter .starterWell{
   overflow-x:hidden!important;
   border-width:clamp(6px,calc(var(--stage-w,440px) * .028),10px)!important;
 }
@@ -6370,12 +6976,40 @@ html,body,#visualShell{color-scheme:only light}
 }
 #result .resultStage{
   min-height:0!important;
+  align-items:flex-start!important;
+  justify-content:flex-start!important;
   overflow-x:hidden;
   overflow-y:auto;
   -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  padding:4px 0 12px;
+  scroll-padding-top:8px;
+}
+#result #claimPanel{
+  width:100%!important;
+  max-width:100%;
+  flex:0 0 auto;
+  align-self:stretch;
+}
+#result .claimCards{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  justify-content:center;
+  justify-items:center;
+  gap:10px 8px;
+  width:100%;
 }
 #result .claimPick{
-  max-width:none;
+  width:100%;
+  max-width:118px;
+  min-width:0;
+}
+#result .claimFace{
+  min-width:0!important;
+  width:100%;
+}
+@media(min-width:420px){
+  #result .claimCards{grid-template-columns:repeat(3,minmax(0,1fr))}
 }
 #result .claimPick .card,
 #result .claimFace .card{
@@ -6417,7 +7051,6 @@ html,body,#visualShell{color-scheme:only light}
 #deckSelect .card.gilt .w{
   font-size:clamp(7px,calc(var(--stage-w,430px) * .028),12px)!important;
 }
-#starter,
 #termsBuilder,
 #profile,
 #tournament,
@@ -6436,18 +7069,12 @@ html,body,#visualShell{color-scheme:only light}
   flex-direction:column;
   align-items:center;
 }
-#starter.hidden,
 #termsBuilder.hidden,
 #profile.hidden,
 #tournament.hidden,
 #seriesSummary.hidden{
   display:none!important;
 }
-#starter #runeChoice.hidden,
-#starter #startAfterRune.hidden{
-  display:none!important;
-}
-#starter .panel,
 #termsBuilder .panel,
 #profile .panel,
 #tournament .panel,
@@ -6807,3 +7434,261 @@ html,body,#visualShell{color-scheme:only light}
   });
 })();
 </script>
+<style>
+/* v55 — Beph stall sprite is packed on the same 1024×1536 canvas as Tomas,
+   so width/scale match the other standees. Floor % is still a first-pass
+   stall pin (Market slot 1 depth, scale .89); re-pin with Mark spots if needed. */
+.townScene .bephCutout{
+  position:absolute;
+  left:66%!important;
+  bottom:6.8%!important;
+  width:min(30vw,220px)!important;
+  max-width:220px!important;
+  height:auto;
+  z-index:21!important;
+  object-fit:contain!important;
+  background:transparent!important;
+  cursor:pointer;
+  pointer-events:auto!important;
+  transform-origin:50% 100%!important;
+  transform:scale(.89)!important;
+  filter:drop-shadow(4px 10px 8px rgba(18,12,8,.42))!important;
+}
+.townScene .bephCutout:active{
+  transform:scale(.87)!important;
+}
+.townScene:not([data-location="Market"]) .bephCutout{
+  display:none!important;
+}
+@media(max-width:620px){
+  .townScene .bephCutout{
+    width:min(42vw,200px)!important;
+    max-width:200px!important;
+  }
+}
+.bephStall{
+  position:absolute;
+  inset:0;
+  z-index:55;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  background:rgba(12,9,7,.72);
+  padding:max(16px, env(safe-area-inset-top) + 10px) max(16px, env(safe-area-inset-right) + 10px) max(16px, env(safe-area-inset-bottom) + 10px) max(16px, env(safe-area-inset-left) + 10px);
+}
+.bephStall.hidden{display:none!important}
+.bephStallCard{
+  width:min(92%, 340px);
+  margin:0;
+  padding:18px 16px 14px;
+  background:#efe3c8;
+  color:#1a120c;
+  border:3px solid #513b2c;
+  box-shadow:inset 0 1px 0 #f6ecd4, 0 10px 22px #0008;
+}
+.bephStallCard h2{
+  margin:0 0 8px;
+  font:800 22px Georgia,serif;
+  letter-spacing:.04em;
+}
+.bephStallCard p{
+  margin:0 0 14px;
+  font:400 15px/1.35 Georgia,serif;
+}
+.bephStallCard button{
+  min-height:44px;
+  padding:8px 16px;
+  background:#e9ddc3;
+  color:#1a120c;
+  border:2px solid #24160f;
+  font:800 12px Georgia,serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+}
+</style>
+<style>
+/* v56 — no dark wash on location paintings at any width. Tall phone crops
+   already show more floor shadow; a 42% vignette made them muddier than desktop.
+   Pins stay on the baked crop (no background-position shift). Narrow/portrait
+   gets a light lift over the painting only, under the standees. */
+.townScene:after{
+  display:none!important;
+  opacity:0!important;
+  background:none!important;
+}
+.townScene[data-location="Market"]{
+  background-image:url("assets/locations/market.webp")!important;
+}
+.townScene[data-location="Riverside"]{
+  background-image:url("assets/locations/riverside.webp")!important;
+}
+.townScene[data-location="Inn"]{
+  background-image:url("assets/locations/inn.webp")!important;
+}
+.townScene[data-location="Card Club"]{
+  background-image:url("assets/locations/card_club.webp")!important;
+}
+
+/* v56 — challenge name opens a leftover-space portrait + short bio. */
+#npcDossier{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  touch-action:pan-y;
+}
+#npcDossier.hidden{display:none!important}
+#npcDossier .dossierTable{
+  width:min(100%,var(--stage-w,440px));
+  max-width:100%;
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+  touch-action:pan-y;
+}
+#npcDossier .dossierWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  padding:14px 12px 16px;
+  overflow:hidden;
+  touch-action:pan-y;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#npcDossier .dossierWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#npcDossier .challengePlaque{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:0;
+  width:min(92%,280px);
+  padding:12px 18px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(17px,5.8vw,26px);
+  font-weight:800;
+  letter-spacing:.14em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#npcDossier .dossierStage{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  width:100%;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+}
+#npcDossier .dossierStage img{
+  max-width:min(78%,280px);
+  max-height:100%;
+  width:auto;
+  height:auto;
+  object-fit:contain;
+  filter:drop-shadow(4px 10px 8px rgba(18,12,8,.42));
+}
+#npcDossier .dossierBio{
+  position:relative;
+  z-index:1;
+  flex:0 1 auto;
+  min-height:0;
+  max-height:28%;
+  margin:10px 8px 0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  touch-action:pan-y;
+  font-family:Georgia,serif;
+  font-size:clamp(13px,3.6vw,16px);
+  line-height:1.4;
+  color:#f0e2c4;
+  text-align:center;
+  text-shadow:0 1px 2px #000a;
+}
+#npcDossier .challengeActions{
+  display:flex;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+}
+#npcDossier .challengePlaqueBtn{
+  flex:1 1 0;
+  min-width:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(15px,4.4vw,18px)!important;
+  font-weight:800!important;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:
+    linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+@media(max-width:620px){
+  #npcDossier .dossierWell{border-width:8px;padding:12px 10px 14px}
+  #npcDossier .dossierStage img{max-width:min(86%,240px)}
+}
+</style>
+
+

@@ -22,8 +22,8 @@ Live match layout is `layoutMatchTable()` / `layoutScreenFit()` in root `index.h
 
 ## Screen types
 
-- **Felt table / cards** (match, challenge, result, binder): leftover-space sizing **is** the point. Same club-table well; cards stay 5:7 and centred in their slots.
-- **Document / list** (rune draw, terms, profile, tournament, series summary, inspector, journal): fill the viewport; pin the header/actions; **vertical scroll** the body. Do not invent a second board scaler unless cards are the main stage.
+- **Felt table / cards** (match, challenge, result, binder, rune draw): leftover-space sizing **is** the point. Same club-table well; cards stay 5:7 and centred in their slots.
+- **Document / list** (terms, profile, tournament, series summary, inspector, journal): fill the viewport; pin the header/actions; **vertical scroll** the body. Do not invent a second board scaler unless cards are the main stage.
 - **Town**: scene is `100dvh` / `100svh` (no 690px+ or 480px phone height). Top bar and location strip stay on-screen (v38 flex row). NPC standees stay **Mark spots** baked `%` of `.townScene` — do not shrink-to-fit live NPCs. Call out that a friend’s tall crop will not match Marc’s monitor pins.
 
 ## New screens — tell Marc first

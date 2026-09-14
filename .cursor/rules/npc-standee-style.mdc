@@ -7,19 +7,33 @@ alwaysApply: true
 
 Canonical construction: `assets/npcs/tomas_standee_bevel_v19.png` (option 3 routed wood-sign).
 
-Every **current and future** generated character uses this exact physical design. Change clothes, face, pose, and name only.
+Every **current and future** generated character uses this exact physical design. Change clothes, face, **pose**, props, and name — not the oak construction.
+
+## Variety (required on every new character)
+
+The bevel is the lock. **The figure is not.** Do not clone the last NPC.
+
+**Do not default to** the Nessa/Beph template: over-the-shoulder look-back, matching brown lace-up boots, matching tooled satchel, same hip charm-belt.
+
+**Must vary from whoever is already in the game:**
+- Stance (front, 3/4, walking, seated, hands busy — not always looking back)
+- Silhouette and costume family (gown vs coat vs work clothes vs Club kit)
+- Footwear and bags (or no bag)
+- Held object (fan of cards, pipe, stall goods, nothing)
+
+Oak board, wood foot, one ALL-CAPS plaque, no HUD nameplate — those stay. Repeating pose + boots + bag is a miss even if the face is new.
 
 **Must match Tomas:**
 - Painted figure on a **chunky routed oak board** that follows the silhouette
 - Visible **wood-grain edge / bevel** (highlight top-left, darker grain bottom-right)
 - **Rectangular stained-wood foot**, not a circular cobblestone pedestal
-- **One wood plaque** on the foot: four small corner rivets, name once in **black serif ALL-CAPS** (TOMAS, NESSA, BRAM, ELIRA)
+- **One wood plaque** on the foot: four small corner rivets, name once in **black serif ALL-CAPS** (TOMAS, NESSA, BRAM, ELIRA, BEPH)
 - Isolated sprite; production shots use **lime green `#00FF00` chroma**, then knock out alpha
 - No blue/gold HUD nameplate, compass badge, extra diorama base, or doubled lettering
 - In-game: hide HTML nameplates; the plaque on the art is the name
 
 **Do not** invent a new outline, cardboard halo, paper-doll tab, or stone plinth unless Marc unlocks this.
 
-**Next session:** make Nessa, Bram, and Elira **background outlines** match Tomas v19 (same routed oak lip/bevel). Placement and Mark spots are done.
+Nessa, Bram, Elira, and Beph live cutouts use the Tomas v19 routed oak lip/foot (`*_standee_bevel_v25.png`, Beph `*_v3.png`). Placement and Mark spots are done.
 
 **In-game placement:** each location has four standing anchors with their own size (foreground larger, back smaller). Do not shrink every standee when more people are present. Place every new screen with the **Mark spots** tool (see `location-anchor-tool.mdc`).
