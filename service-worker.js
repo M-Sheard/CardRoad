@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v78-beph-bevel';
+const CACHE_NAME = 'card-road-pwa-v79-saved-decks';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
