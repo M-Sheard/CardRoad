@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v75-bandit-centre';
+const CACHE_NAME = 'card-road-pwa-v76-claim-fit';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
