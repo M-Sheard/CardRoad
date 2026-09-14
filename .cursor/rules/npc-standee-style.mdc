@@ -34,6 +34,6 @@ Oak board, wood foot, one ALL-CAPS plaque, no HUD nameplate — those stay. Repe
 
 **Do not** invent a new outline, cardboard halo, paper-doll tab, or stone plinth unless Marc unlocks this.
 
-**Next session:** make Nessa, Bram, and Elira **background outlines** match Tomas v19 (same routed oak lip/bevel). Placement and Mark spots are done.
+Nessa, Bram, and Elira live cutouts are `*_standee_bevel_v25.png` — same routed oak lip/foot as Tomas v19. Beph is still the flatter v2 lip. Placement and Mark spots are done.
 
 **In-game placement:** each location has four standing anchors with their own size (foreground larger, back smaller). Do not shrink every standee when more people are present. Place every new screen with the **Mark spots** tool (see `location-anchor-tool.mdc`).
