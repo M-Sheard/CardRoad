@@ -2495,6 +2495,7 @@ function showTableTalk(name,text){
  body.textContent=text||"";
  talk.hidden=false;
  talk.classList.remove("hidden");
+ if($("status"))$("status").textContent="";
  scheduleMatchLayout();
 }
 function queueTableTalk(lines,onDone){
@@ -3248,7 +3249,11 @@ function renderGame(opts){
    }
    return;
  }
- if(opts.deferAi) return;
+ if(opts.deferAi){
+  if(tutorialTalkLocked()&&$("status"))$("status").textContent="";
+  return;
+ }
+ if(tutorialTalkLocked()){$("status").textContent="";return}
  $("status").textContent=playerTurn?(chosen?"Choose a board space":"Choose a card"):`${currentNpc} is thinking…`;
  if(!playerTurn&&turn<9&&!matchAnimating&&!tutorialTalkLocked()){
    let watchTurn=turn;
@@ -5564,6 +5569,13 @@ if ('serviceWorker' in navigator) {
 #game #oppHandLabel,#game .panel>div.small{
   color:#e8d7b6!important;
   text-shadow:0 1px 2px #000a;
+}
+#game #oppHandLabel,
+#game #playerHandLabel{
+  width:min(100%,var(--board-w,100%));
+  margin-left:auto;
+  margin-right:auto;
+  text-align:center;
 }
 #game .board{
   position:relative;
