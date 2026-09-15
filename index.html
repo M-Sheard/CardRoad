@@ -588,7 +588,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="tournament" class="hidden">
-  <div class="tournamentTable">
+  <div class="tournamentTable leftoverTable">
     <div class="tournamentWell">
       <h2 id="tournamentTitle" class="challengePlaque">Tournament</h2>
       <div id="tournamentInfo" class="tournamentMeta"></div>
@@ -601,7 +601,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="newsGazette" class="hidden">
-  <div class="gazetteTable">
+  <div class="gazetteTable leftoverTable">
     <div class="gazetteWell">
       <h2 class="challengePlaque">Card News</h2>
       <div class="gazetteStage" id="gazetteStage">
@@ -621,7 +621,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="challenge" class="hidden">
-  <div class="challengeTable">
+  <div class="challengeTable leftoverTable">
     <div class="challengeWell">
       <button type="button" id="challengeTitle" class="challengePlaque"></button>
       <div id="challengeMsg" class="challengeCaption"></div>
@@ -644,7 +644,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="npcDossier" class="hidden">
-  <div class="dossierTable">
+  <div class="dossierTable leftoverTable">
     <div class="dossierWell">
       <h2 id="dossierTitle" class="challengePlaque"></h2>
       <div class="dossierStage"><img id="dossierCutout" alt=""></div>
@@ -720,7 +720,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="starter" class="hidden">
-  <div class="starterTable">
+  <div class="starterTable leftoverTable">
     <div class="starterWell">
       <h2 class="starterPlaque">Rune Draw</h2>
       <p class="starterCaption">Each of you draws a numbered rune. Highest chooses who takes the first move. A tie redraws.</p>
@@ -772,7 +772,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <section class="panel"><h2>Series Summary</h2><div id="seriesSummaryBody"></div><button id="summaryHome">Return to World</button></section>
 </div>
 <div id="result" class="hidden" data-table="club">
-  <div class="resultTable">
+  <div class="resultTable leftoverTable">
     <div class="resultWell">
       <h2 id="resultTitle" class="resultPlaque"></h2>
       <div id="resultScore" class="resultScore"></div>
@@ -1139,42 +1139,72 @@ function fresh(){
 }
 
 function newCopy(design,owner,origin){return {id:"CP-"+Math.random().toString(36).slice(2,10).toUpperCase(),design,owner,origin,signatures:[],stamps:[],inspected:false}}
+function ownerCardList(owner){
+ if(!state)return [];
+ if(owner==="You")return Array.isArray(state.player)?state.player:[];
+ if(!state.npcs)state.npcs={};
+ if(!Array.isArray(state.npcs[owner]))state.npcs[owner]=[...(npcDefs[owner]?.start||[])];
+ return state.npcs[owner];
+}
+function ensureCopyMaps(){
+ if(!state)return;
+ if(!state.copies)state.copies={};
+ if(!state.copyOwners)state.copyOwners={You:[]};
+ if(!state.npcs)state.npcs={};
+ if(!state.inspectedCopies)state.inspectedCopies={};
+ Object.keys(npcDefs).forEach(n=>{if(!state.copyOwners[n])state.copyOwners[n]=[]});
+}
+function ensureCopyShape(cp){
+ if(!cp)return;
+ if(!Array.isArray(cp.signatures))cp.signatures=[];
+ if(!Array.isArray(cp.stamps))cp.stamps=[];
+}
+function ensureWorldDefaults(){
+ if(!state)return;
+ if(!state.exchangePool)state.exchangePool=[];
+ if(!state.economyStats)state.economyStats={commonIssued:0,exchangeTrades:0,npcAcquisitions:0};
+ if(!state.testSettings)state.testSettings={handVisibility:"closed",seeOpponentCards:false};
+ if(state.testSettings.seeOpponentCards===undefined){
+  state.testSettings.seeOpponentCards=false;
+  if(!state.testSettings.handVisibility||state.testSettings.handVisibility==="open")state.testSettings.handVisibility="closed";
+ }
+ if(state.testSettings.comboCapture===undefined)state.testSettings.comboCapture=false;
+ if(state.testSettings.reverseCapture===undefined)state.testSettings.reverseCapture=false;
+ if(!state.season)state.season={day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]};
+ if(!state.season.tournamentHistory)state.season.tournamentHistory=[];
+ if(state.activeTournament===undefined)state.activeTournament=null;
+ if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null};
+ if(!state.seasonStats)state.seasonStats={playerChallenges:0,incomingAccepted:0,incomingDeclined:0};
+}
+function ensureOwnerCopies(owner){
+ try{
+  if(!state||owner==null)return;
+  ensureCopyMaps();
+  if(!state.copyOwners[owner])state.copyOwners[owner]=[];
+  const cards=ownerCardList(owner);
+  if(!Array.isArray(cards))return;
+  let have={};
+  state.copyOwners[owner].forEach(id=>{let c=state.copies[id];if(c)have[c.design]=(have[c.design]||0)+1});
+  let need={};
+  cards.forEach(c=>{if(c)need[c]=(need[c]||0)+1});
+  Object.entries(need).forEach(([design,num])=>{
+   for(let i=have[design]||0;i<num;i++){
+    let cp=newCopy(design,owner,owner==="You"?"Starter collection":"Local circulation");
+    state.copies[cp.id]=cp;
+    state.copyOwners[owner].push(cp.id);
+   }
+  });
+ }catch(err){console.warn(err)}
+}
 function ensureCopies(){
  try{
   if(!state)return;
-  if(!state.copies)state.copies={};if(!state.copyOwners)state.copyOwners={You:[]};Object.keys(npcDefs).forEach(n=>{if(!state.copyOwners[n])state.copyOwners[n]=[]});
-  if(!state.npcs)state.npcs={};
-  Object.keys(state.npcs).forEach(n=>{
-   if(!Array.isArray(state.npcs[n]))state.npcs[n]=[...(npcDefs[n]?.start||[])];
-  });
-  let holders={You:Array.isArray(state.player)?state.player:[],...state.npcs};
-  Object.entries(holders).forEach(([owner,cards])=>{
-   if(!Array.isArray(cards))return;
-   if(!state.copyOwners[owner])state.copyOwners[owner]=[];
-   let have={};(state.copyOwners[owner]||[]).forEach(id=>{let c=state.copies[id];if(c)have[c.design]=(have[c.design]||0)+1});
-   let need={};cards.forEach(c=>{if(c)need[c]=(need[c]||0)+1});
-   Object.entries(need).forEach(([design,num])=>{for(let i=have[design]||0;i<num;i++){let cp=newCopy(design,owner,owner==="You"?"Starter collection":"Local circulation");state.copies[cp.id]=cp;state.copyOwners[owner].push(cp.id)}});
-  });
-  if(!state.inspectedCopies)state.inspectedCopies={};
-  Object.values(state.copies).forEach(cp=>{
-   if(!cp)return;
-   if(!Array.isArray(cp.signatures))cp.signatures=[];
-   if(!Array.isArray(cp.stamps))cp.stamps=[];
-  });
-  if(!state.exchangePool)state.exchangePool=[];
-  if(!state.economyStats)state.economyStats={commonIssued:0,exchangeTrades:0,npcAcquisitions:0};
-  if(!state.testSettings)state.testSettings={handVisibility:"closed",seeOpponentCards:false};
-  if(state.testSettings.seeOpponentCards===undefined){
-   state.testSettings.seeOpponentCards=false;
-   if(!state.testSettings.handVisibility||state.testSettings.handVisibility==="open")state.testSettings.handVisibility="closed";
-  }
-  if(state.testSettings.comboCapture===undefined)state.testSettings.comboCapture=false;
-  if(state.testSettings.reverseCapture===undefined)state.testSettings.reverseCapture=false;
-  if(!state.season)state.season={day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]};
-  if(!state.season.tournamentHistory)state.season.tournamentHistory=[];
-  if(state.activeTournament===undefined)state.activeTournament=null;
-  if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null};
-  if(!state.seasonStats)state.seasonStats={playerChallenges:0,incomingAccepted:0,incomingDeclined:0};
+  ensureCopyMaps();
+  Object.keys(state.npcs||{}).forEach(n=>ownerCardList(n));
+  ensureOwnerCopies("You");
+  Object.keys(state.npcs||{}).forEach(n=>ensureOwnerCopies(n));
+  Object.values(state.copies).forEach(ensureCopyShape);
+  ensureWorldDefaults();
  }catch(err){console.warn(err)}
 }
 function ensureSavedDecks(){
@@ -1351,7 +1381,6 @@ function openNewsGazette(){
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  gazetteIndex=0;gazetteFlipping=false;
  show("newsGazette");
- requestAnimationFrame(()=>{paginateGazette();requestAnimationFrame(paginateGazette)});
 }
 function closeNewsGazette(){show("home");renderHome();}
 function onGazettePointerDown(e){gazetteSwipeX=e.clientX}
@@ -1385,12 +1414,12 @@ function bootTownOrTutorial(){
  if(wantsHomeTutorial())startGrandpaTutorial();
  else{renderHome();show("home")}
 }
-function getCopy(owner,design,id=null){ensureCopies();let ids=(state.copyOwners[owner]||[]).filter(x=>state.copies[x]&&state.copies[x].design===design);return state.copies[(id&&ids.includes(id))?id:ids[0]]}
+function getCopy(owner,design,id=null){ensureOwnerCopies(owner);let ids=(state.copyOwners[owner]||[]).filter(x=>state.copies[x]&&state.copies[x].design===design);return state.copies[(id&&ids.includes(id))?id:ids[0]]}
 function moveCopy(cp,from,to,reason){if(!cp)return;cp.signatures.push({owner:from,date:new Date().toISOString().slice(0,10),reason});state.copyOwners[from]=(state.copyOwners[from]||[]).filter(x=>x!==cp.id);(state.copyOwners[to]||(state.copyOwners[to]=[])).push(cp.id);cp.owner=to}
 
 function physicalCopiesForDeck(owner,designDeck){
  if(!state)return[];
- ensureCopies();
+ ensureOwnerCopies(owner);
  let available=[...(state.copyOwners[owner]||[])],chosen=[];
  (Array.isArray(designDeck)?designDeck:[]).forEach(design=>{
    let ix=available.findIndex(id=>state.copies[id]?.design===design);
@@ -1417,10 +1446,9 @@ function backHTML(cp){
  return `<h3>Card Back</h3><b>Previous Owners</b>${sig}<hr><b>Competition Record</b>${st}<hr><span class="small">Origin: ${cp.origin||"Unknown"}</span>`;
 }
 function inspectCopy(cp,ret){
- ensureCopies();
  if(!cp||!cp.design)return;
- if(!Array.isArray(cp.signatures))cp.signatures=[];
- if(!Array.isArray(cp.stamps))cp.stamps=[];
+ if(cp.owner)ensureOwnerCopies(cp.owner);
+ ensureCopyShape(cp);
  let card=C[cp.design];
  if(!card)return;
  if(cp.id&&state.copies[cp.id]){
@@ -1448,8 +1476,8 @@ function allCopiesOf(design){
 }
 function worldHeldCount(design){
  let n=0;
- if(state.player) n+=state.player.filter(c=>c===design).length;
- Object.values(state.npcs||{}).forEach(arr=>n+=arr.filter(c=>c===design).length);
+ if(Array.isArray(state.player)) n+=state.player.filter(c=>c===design).length;
+ Object.values(state.npcs||{}).forEach(arr=>{if(Array.isArray(arr))n+=arr.filter(c=>c===design).length});
  (state.exchangePool||[]).forEach(id=>{let cp=state.copies[id];if(cp&&cp.design===design)n++});
  return n;
 }
@@ -1570,7 +1598,8 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  hydrateTournamentVisitors();
  if(!state.history){state.history={};[...new Set([...state.player,...Object.values(state.npcs).flat()])].forEach(c=>state.history[c]=["History tracking began in prototype v0.3."])}
  if(state.worldStep==null)state.worldStep=0;
- if(!state.news)state.news=["Card News began tracking local activity."];
+ if(!Array.isArray(state.news))state.news=["Card News began tracking local activity."];
+ else if(state.news.length>48)state.news=state.news.slice(-48);
  if(!state.gazette)state.gazette=[];
  ensureGazette();
  if(!state.memory)state.memory={};
@@ -1586,9 +1615,12 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  ensureSavedDecks();
  ensureTutorial();
  ensureVisualState();
- save();
 }
 const $=x=>document.getElementById(x);
+const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","seriesSummary","cardInspector"];
+function leftoverScreenId(){
+ return LEFTOVER_SCREENS.find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
+}
 function show(id){
  if(id!=="newsGazette")gazetteFitGen++;
  ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","savedDecks","game","seriesSummary","result","tournament","newsGazette"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
@@ -1599,8 +1631,9 @@ function matchViewBox(){
  if(vv)return{left:vv.offsetLeft,top:vv.offsetTop,right:vv.offsetLeft+vv.width,bottom:vv.offsetTop+vv.height};
  return{left:0,top:0,right:innerWidth,bottom:innerHeight};
 }
-let matchLayoutQueued=false,matchLayoutLock=false,matchLayoutW=0,matchLayoutId=null;
+let matchLayoutQueued=false,matchLayoutLock=false,matchLayoutW=0,matchLayoutId=null,viewportLayoutTimer=0;
 function scheduleScreenLayout(id){
+ if(id==="home"){matchLayoutId=null;return}
  matchLayoutId=id||matchLayoutId;
  if(matchLayoutQueued)return;
  matchLayoutQueued=true;
@@ -1608,11 +1641,20 @@ function scheduleScreenLayout(id){
   matchLayoutQueued=false;
   const next=matchLayoutId;
   matchLayoutId=null;
+  if(!next && !leftoverScreenId())return;
   layoutScreenFit(next);
   if(next==="game")requestAnimationFrame(()=>layoutScreenFit("game"));
  });
 }
 function scheduleMatchLayout(){scheduleScreenLayout("game")}
+function onViewportLayout(){
+ if(viewportLayoutTimer)clearTimeout(viewportLayoutTimer);
+ viewportLayoutTimer=setTimeout(()=>{
+  viewportLayoutTimer=0;
+  if(!leftoverScreenId())return;
+  scheduleScreenLayout();
+ },100);
+}
 function withMatchLayoutLock(fn){
  if(matchLayoutLock)return;
  matchLayoutLock=true;
@@ -1622,30 +1664,30 @@ function withMatchLayoutLock(fn){
 }
 function layoutScreenFit(id){
  try{
- const vis=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","termsBuilder","profile","tournament","newsGazette","seriesSummary","cardInspector"].find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
- id=id||vis;
+ id=id||leftoverScreenId();
+ if(!id||id==="home")return;
  if(id==="game")return layoutMatchTable();
  if(id==="challenge"){
   const root=$("challenge");
-  return layoutStageWidth(root,root&&root.querySelector(".challengeTable"),"--stage-w",200);
+  return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
  }
  if(id==="npcDossier"){
   const root=$("npcDossier");
-  return layoutStageWidth(root,root&&root.querySelector(".dossierTable"),"--stage-w",200);
+  return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
  }
  if(id==="tournament"){
   const root=$("tournament");
-  return layoutStageWidth(root,root&&root.querySelector(".tournamentTable"),"--stage-w",200);
+  return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
  }
  if(id==="newsGazette"){
   const root=$("newsGazette");
-  layoutStageWidth(root,root&&root.querySelector(".gazetteTable"),"--stage-w",200);
+  layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
   paginateGazette();
   return;
  }
  if(id==="result"){
   const root=$("result");
-  return layoutStageWidth(root,root&&root.querySelector(".resultTable"),"--stage-w",200);
+  return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
  }
  if(id==="deckSelect"){
   const root=$("deckSelect");
@@ -1657,7 +1699,7 @@ function layoutScreenFit(id){
  }
  if(id==="starter"){
   const root=$("starter");
-  layoutStageWidth(root,root&&root.querySelector(".starterTable"),"--stage-w",200);
+  layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
   sizeBanditWindows();
   relockBanditReels();
   return;
@@ -1881,7 +1923,7 @@ const SEASON_EVENTS={9:"Local Warm-Up Cup",21:"Local Championship"};
 function seasonRec(n){return state.season.records[n]||(state.season.records[n]={w:0,l:0})}
 
 function seasonDeck(owner){
- ensureCopies();
+ ensureOwnerCopies(owner);
  let ids=[...(state.copyOwners[owner]||[])].filter(id=>state.copies[id]&&C[state.copies[id].design]);
  if(ids.length<5)return ids;
  // Choose a strong legal-ish five-copy tournament deck, but not perfectly deterministic.
@@ -2532,7 +2574,7 @@ function renderJournal(tab){
  }else{
    let hist=[...(state.visual.history||[]),...(state.season.history||[])];out=hist.slice(-24).reverse().map(x=>`<div class="journalEntry">${x}</div>`).join("")||`<div class="journalEmpty">Your journal is still nearly clean.</div>`;
  }
- $("journalContent").innerHTML=out;save();
+ $("journalContent").innerHTML=out;
 }
 
 function renderHome(){
@@ -2574,7 +2616,7 @@ function npcClaim(npc,eligible){
 }
 function transfer(card,from,to,reason){
  let fp=from==="You"?state.player:state.npcs[from],tp=to==="You"?state.player:state.npcs[to];
- let i=fp.indexOf(card);if(i<0)return;ensureCopies();let cp=getCopy(from,card);fp.splice(i,1);tp.push(card);moveCopy(cp,from,to,reason);hist(card,reason);
+ let i=fp.indexOf(card);if(i<0)return;let cp=getCopy(from,card);fp.splice(i,1);tp.push(card);moveCopy(cp,from,to,reason);hist(card,reason);
 }
 function worldMatch(a,b){
  if(state.npcs[a].length<5||state.npcs[b].length<5)return false;
@@ -2706,7 +2748,14 @@ function renderKnownCollection(npc){
  scheduleScreenLayout("challenge");
 }
 
-function news(text,paper){if(text){if(!state.news)state.news=[];state.news.push(text)}if(paper)gazette(paper.h,paper.p)}
+function news(text,paper){
+ if(text){
+  if(!state.news)state.news=[];
+  state.news.push(text);
+  if(state.news.length>48)state.news=state.news.slice(-48);
+ }
+ if(paper)gazette(paper.h,paper.p);
+}
 function mem(n){
  if(!state.memory[n])state.memory[n]={playerWins:0,npcWins:0,draws:0,declines:0,cardsWon:[],cardsLost:[],affinity:0,rivalry:0,respect:0,meetings:0,lastReaction:"",moments:[]};
  let m=state.memory[n];
@@ -4162,7 +4211,7 @@ function aiOpeningMove(){
  if(!seriesAiExposed.includes(n))seriesAiExposed.push(n);
  markSeen(currentNpc,n);
  let before=boardOwners();
- board[pos]={card:C[n],owner:"ai"};resolve(pos,"ai");turn++;save();
+ board[pos]={card:C[n],owner:"ai"};resolve(pos,"ai");turn++;
  runPlaceMotion(fromRect,html,pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
  return true;
 }
@@ -4201,7 +4250,7 @@ function aiMove(){
  aiPlayed.push(best.n);if(!seriesAiExposed.includes(best.n))seriesAiExposed.push(best.n);
  markSeen(currentNpc,best.n);
  let before=boardOwners();
- board[best.pos]={card:best.c,owner:"ai"};resolve(best.pos,"ai");turn++;save();
+ board[best.pos]={card:best.c,owner:"ai"};resolve(best.pos,"ai");turn++;
  runPlaceMotion(fromRect,html,best.pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
 }
 let resultFlipTimer=null;
@@ -4516,10 +4565,10 @@ if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
  lockBanditReel($("npcRune"),6);
 }
 document.addEventListener("click",()=>setTimeout(refreshFullRules,0));
-window.addEventListener("resize",()=>scheduleScreenLayout());
+window.addEventListener("resize",onViewportLayout);
 if(window.visualViewport){
- visualViewport.addEventListener("resize",()=>scheduleScreenLayout());
- visualViewport.addEventListener("scroll",()=>scheduleScreenLayout());
+ visualViewport.addEventListener("resize",onViewportLayout);
+ visualViewport.addEventListener("scroll",onViewportLayout);
 }
 </script>
 
@@ -8449,12 +8498,7 @@ html,body,#visualShell{color-scheme:only light}
 #newsGazette{
   --stage-w:440px;
 }
-#challenge .challengeTable,
-#npcDossier .dossierTable,
-#result .resultTable,
-#starter .starterTable,
-#tournament .tournamentTable,
-#newsGazette .gazetteTable{
+.leftoverTable{
   width:min(100%,var(--stage-w,440px))!important;
   max-width:100%;
   touch-action:pan-y;
