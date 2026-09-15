@@ -1209,9 +1209,9 @@ function gazettePageInner(stories,index,total){
 }
 function paginateGazette(){
  const stage=$("gazetteStage"),front=$("gazetteFront");
- if(!stage||!front||$("newsGazette").classList.contains("hidden"))return;
+ if(!stage||!front||!$("newsGazette")||$("newsGazette").classList.contains("hidden"))return;
  const w=stage.clientWidth,h=stage.clientHeight;
- if(w<80||h<80)return;
+ if(w<80||h<80){requestAnimationFrame(paginateGazette);return}
  const probe=document.createElement("article");
  probe.className="gazetteSheet gazetteProbe";
  probe.style.width=w+"px";
@@ -1243,8 +1243,7 @@ function paintGazettePage(i){
  front.classList.remove("is-turn-next","is-turn-prev");
  front.innerHTML=gazettePageInner(gazettePages[gazetteIndex]||[],gazetteIndex,total);
  if(under){
-  const peek=gazetteIndex<total-1?gazetteIndex+1:Math.max(0,gazetteIndex-1);
-  under.innerHTML=gazettePageInner(gazettePages[peek]||[],peek,total);
+  under.innerHTML="";
   under.classList.toggle("is-hidden",total<2);
  }
  if(folio)folio.textContent=`${gazetteIndex+1} of ${total}`;
@@ -9433,7 +9432,11 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   overflow:hidden;
   box-sizing:border-box;
   color:#1a120c;
-  background:#f4ead3 url("assets/ui/deck_binder_page.png") center / cover no-repeat;
+  background-color:#f3e6c8;
+  background-image:url("assets/ui/deck_binder_page.png");
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
   border:1px solid #c9a45a;
   border-radius:3px;
   box-shadow:0 8px 18px #0005;
