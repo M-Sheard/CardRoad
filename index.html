@@ -1976,20 +1976,34 @@ function startOpenReports(t,lines,nextStatus){
  t.reportIndex=0;
  t.afterReports=nextStatus;
  if(!t.reports.length){
-  t.status=nextStatus;
-  if(nextStatus==="complete")scheduleActivityTime("tournament");
+  finishOpenReports(t);
   return;
  }
  t.status="report";
 }
+function finishOpenReports(t){
+ const next=t.afterReports;
+ t.reports=[];t.reportIndex=0;t.afterReports=null;
+ if(next==="spectateSemi"){
+  const s1=simulatedTournamentMatch(t.qf1Winner,t.qf2Winner,t.name,"Semifinal",{});
+  const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});
+  t.sf1Winner=s1.winner;t.sf2Winner=s2.winner;
+  startOpenReports(t,[reportOpenSeries(s1,"semifinal"),reportOpenSeries(s2,"semifinal")],"spectateFinal");
+  return;
+ }
+ if(next==="spectateFinal"){
+  const lines=[];
+  completeSaturdayNpcFinal(t,t.sf1Winner,t.sf2Winner,lines);
+  startOpenReports(t,lines,"complete");
+  return;
+ }
+ t.status=next||"complete";
+ if(t.status==="complete")scheduleActivityTime("tournament");
+}
 function advanceOpenReport(){
  const t=state.activeTournament;if(!t||t.status!=="report")return;
  t.reportIndex=(t.reportIndex||0)+1;
- if(t.reportIndex>=(t.reports||[]).length){
-  t.status=t.afterReports||"complete";
-  t.reports=[];t.reportIndex=0;t.afterReports=null;
-  if(t.status==="complete")scheduleActivityTime("tournament");
- }
+ if(t.reportIndex>=(t.reports||[]).length)finishOpenReports(t);
  save();renderTournament();
 }
 function reportOpenSeries(r,roundName){
@@ -2024,13 +2038,7 @@ function finalizeSaturdayOpenPlayerResult(playerWon){
    startOpenReports(t,reports,"awaitingPlayerSemi");
   }else{
    t.playerAlive=false;
-   const s1=simulatedTournamentMatch(m.opponent,t.qf2Winner,t.name,"Semifinal",{});
-   const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});
-   t.sf1Winner=s1.winner;t.sf2Winner=s2.winner;
-   reports.push(reportOpenSeries(s1,"semifinal"));
-   reports.push(reportOpenSeries(s2,"semifinal"));
-   completeSaturdayNpcFinal(t,t.sf1Winner,t.sf2Winner,reports);
-   startOpenReports(t,reports,"complete");
+   startOpenReports(t,reports,"spectateSemi");
   }
  }else if(m.round==="Semifinal"){
   if(playerWon){
@@ -2041,8 +2049,7 @@ function finalizeSaturdayOpenPlayerResult(playerWon){
   }else{
    t.playerAlive=false;t.sf1Winner=m.opponent;
    if(!t.sf2Winner){const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});t.sf2Winner=s2.winner;reports.push(reportOpenSeries(s2,"semifinal"))}
-   completeSaturdayNpcFinal(t,t.sf1Winner,t.sf2Winner,reports);
-   startOpenReports(t,reports,"complete");
+   startOpenReports(t,reports,"spectateFinal");
   }
  }else{
   t.finalWinner=playerWon?"You":m.opponent;t.status="complete";t.round="Complete";
@@ -2064,7 +2071,7 @@ function renderSaturdayOpen(){
  hydrateTournamentVisitors();
  const root=$("tournament");if(root)root.dataset.open="1";
  if($("tournamentTitle"))$("tournamentTitle").textContent="Saturday Open";
- if($("tournamentInfo"))$("tournamentInfo").innerHTML=`<b>${formattedWorldDate(t.date)}</b> · Lythmere Card Club<br>8 players · Quarters &amp; Semis Best of 3 · Final Best of 5 · Claim One`;
+ if($("tournamentInfo"))$("tournamentInfo").innerHTML=`<b>${formattedWorldDate(t.date)}</b> · Card Club<br>8 players · Bo3 rounds · Bo5 final`;
  const intro=$("tournamentIntro"),rules=$("tournamentRules"),bracket=$("tournamentBracket"),actions=$("tournamentActions");
  if(intro)intro.innerHTML="";
  if(rules)rules.innerHTML="";
