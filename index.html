@@ -502,6 +502,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <div class="small" style="margin:4px 0 10px">Off by default. Their hand stays in the same five slots as card backs. When they play, the chosen card lifts out and flips to show its face.</div>
         <button id="devReset">Reset prototype save</button>
         <button id="devSaturdayOpen" type="button" style="margin-top:8px">Jump to Saturday Open</button>
+        <button id="devNewsGazette" type="button" style="margin-top:8px">Preview Card News</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -596,6 +597,26 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <div id="tournamentBracket" class="tournamentBracket"></div>
     </div>
     <div id="tournamentActions" class="challengeActions"></div>
+  </div>
+</div>
+
+<div id="newsGazette" class="hidden">
+  <div class="gazetteTable">
+    <div class="gazetteWell">
+      <h2 class="challengePlaque">Card News</h2>
+      <div class="gazetteStage" id="gazetteStage">
+        <article class="gazetteSheet gazetteUnder" id="gazetteUnder" aria-hidden="true"></article>
+        <article class="gazetteSheet gazetteFront" id="gazetteFront"></article>
+      </div>
+      <div class="gazetteTurn">
+        <button type="button" id="gazettePrev">Back</button>
+        <span id="gazetteFolio">1 of 1</span>
+        <button type="button" id="gazetteNext">Turn page</button>
+      </div>
+    </div>
+    <div class="gazetteActions">
+      <button type="button" id="newsGazetteClose" class="challengePlaqueBtn challengePlaqueBtnAlt">Close</button>
+    </div>
   </div>
 </div>
 
@@ -1158,6 +1179,108 @@ function wantsHomeTutorial(){
 function wantsSaturdayPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])saturday=1(?:&|$)/.test(location.search);
 }
+function newsMockKind(){
+ return typeof location!=="undefined"&&/(?:^|[?&])newsMock=1(?:&|$)/.test(location.search);
+}
+let gazettePages=[],gazetteIndex=0,gazetteFlipping=false,gazetteSwipeX=null;
+function gazetteStories(){
+ return [
+  {h:"Bram takes the Open",p:"Bram beat Elira 3–2 in the final. His winning five take a Saturday Open stamp. Travelling players leave Lythmere by morning."},
+  {h:"A Red Fox changes hands",p:"Elira claimed a Red Fox from Tomas at the Club. The copy is already the talk of the taproom."},
+  {h:"Visitors for Saturday",p:"Three travelling competitors arrived for the Open. They do not stay. The Club will be local again by Sunday."},
+  {h:"Quiet after the banners",p:"Bunting came down overnight. Bram was first through the door and took the window table without a word."},
+  {h:"Nessa wants another game",p:"Nessa has been asking after a friendly match at the Inn. She says the Open left her hungry, not tired."},
+  {h:"Tomas means to win it back",p:"Tomas has been seen walking the Market with a thinner binder. He wants the Fox, and he is not shy about saying so."},
+  {h:"Stamps on the winning five",p:"Only the champion’s final five take a Saturday Open stamp. Claim One was settled at each table before the next round was called."},
+  {h:"The local circuit continues",p:"The Championship is still months off. Until then the Club plays on ordinary evenings, and the noticeboard already lists the next Open."}
+ ];
+}
+function gazetteDateLine(){
+ try{return visualDateLabel()}catch(e){return "Lythmere"}
+}
+function gazettePageInner(stories,index,total){
+ const head=index===0
+  ? `<div class="gazetteKicker">Lythmere</div><h3 class="gazetteTitle">Card News</h3><div class="gazetteDate">${gazetteDateLine()}</div>`
+  : `<div class="gazetteRun">Lythmere Card News · ${index+1}</div>`;
+ const body=stories.length
+  ? stories.map(s=>`<section class="gazetteStory"><h4>${s.h}</h4><p>${s.p}</p></section>`).join("")
+  : `<div class="gazetteEmpty">No noteworthy Card News this week.</div>`;
+ return `${head}<div class="gazetteBody">${body}</div>`;
+}
+function paginateGazette(){
+ const stage=$("gazetteStage"),front=$("gazetteFront");
+ if(!stage||!front||$("newsGazette").classList.contains("hidden"))return;
+ const w=stage.clientWidth,h=stage.clientHeight;
+ if(w<80||h<80)return;
+ const probe=document.createElement("article");
+ probe.className="gazetteSheet gazetteProbe";
+ probe.style.width=w+"px";
+ stage.appendChild(probe);
+ const all=gazetteStories();
+ const pages=[];
+ let current=[];
+ const fits=(arr,i)=>{
+  probe.innerHTML=gazettePageInner(arr,i,99);
+  return probe.offsetHeight<=h+1;
+ };
+ all.forEach(story=>{
+  const next=current.concat(story);
+  if(current.length && !fits(next,pages.length)){pages.push(current);current=[story]}
+  else current=next;
+ });
+ if(current.length)pages.push(current);
+ if(!pages.length)pages.push([]);
+ probe.remove();
+ gazettePages=pages;
+ if(gazetteIndex>pages.length-1)gazetteIndex=pages.length-1;
+ paintGazettePage(gazetteIndex);
+}
+function paintGazettePage(i){
+ const front=$("gazetteFront"),under=$("gazetteUnder"),folio=$("gazetteFolio"),prev=$("gazettePrev"),next=$("gazetteNext");
+ if(!front)return;
+ gazetteIndex=Math.max(0,Math.min(i,gazettePages.length-1));
+ const total=gazettePages.length||1;
+ front.classList.remove("is-turn-next","is-turn-prev");
+ front.innerHTML=gazettePageInner(gazettePages[gazetteIndex]||[],gazetteIndex,total);
+ if(under){
+  const peek=gazetteIndex<total-1?gazetteIndex+1:Math.max(0,gazetteIndex-1);
+  under.innerHTML=gazettePageInner(gazettePages[peek]||[],peek,total);
+  under.classList.toggle("is-hidden",total<2);
+ }
+ if(folio)folio.textContent=`${gazetteIndex+1} of ${total}`;
+ if(prev)prev.disabled=gazetteIndex<=0;
+ if(next)next.disabled=gazetteIndex>=total-1;
+}
+function turnGazette(dir){
+ if(gazetteFlipping)return;
+ const next=gazetteIndex+dir;
+ if(next<0||next>=gazettePages.length)return;
+ const front=$("gazetteFront");
+ const motion=!(window.matchMedia&&matchMedia("(prefers-reduced-motion: reduce)").matches);
+ if(front&&motion){
+  gazetteFlipping=true;
+  front.classList.add(dir>0?"is-turn-next":"is-turn-prev");
+  setTimeout(()=>{gazetteIndex=next;paintGazettePage(gazetteIndex);gazetteFlipping=false},280);
+ }else{gazetteIndex=next;paintGazettePage(gazetteIndex)}
+}
+function openNewsGazette(){
+ closeNoticeView();
+ if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
+ gazetteIndex=0;gazetteFlipping=false;
+ show("newsGazette");
+ requestAnimationFrame(()=>{paginateGazette();requestAnimationFrame(paginateGazette)});
+}
+function closeNewsGazette(){show("home");renderHome();}
+function onGazettePointerDown(e){gazetteSwipeX=e.clientX}
+function onGazettePointerUp(e){
+ if(gazetteSwipeX==null)return;
+ const dx=e.clientX-gazetteSwipeX;gazetteSwipeX=null;
+ if(Math.abs(dx)>40){turnGazette(dx<0?1:-1);return}
+ const stage=$("gazetteStage");if(!stage)return;
+ const r=stage.getBoundingClientRect();
+ if(e.clientX>r.left+r.width*.62)turnGazette(1);
+ else if(e.clientX<r.left+r.width*.38)turnGazette(-1);
+}
 function nextSaturdayIso(from){
  let d=from?new Date(from+"T12:00:00"):visualDateObj();
  if(Number.isNaN(d.getTime()))d=new Date("2026-03-07T12:00:00");
@@ -1174,6 +1297,7 @@ function jumpVisualToSaturdayOpen(){
  syncCalendarState();
 }
 function bootTownOrTutorial(){
+ if(newsMockKind()){renderHome();openNewsGazette();return}
  if(wantsSaturdayPreview()){jumpVisualToSaturdayOpen();save();renderHome();show("home");return}
  if(wantsHomeTutorial())startGrandpaTutorial();
  else{renderHome();show("home")}
@@ -1377,7 +1501,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
 }
 const $=x=>document.getElementById(x);
 function show(id){
- ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","savedDecks","game","seriesSummary","result","tournament"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
+ ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","savedDecks","game","seriesSummary","result","tournament","newsGazette"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
  scheduleScreenLayout(id);
 }
 function matchViewBox(){
@@ -1400,7 +1524,7 @@ function scheduleScreenLayout(id){
 }
 function scheduleMatchLayout(){scheduleScreenLayout("game")}
 function layoutScreenFit(id){
- const vis=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","termsBuilder","profile","tournament","seriesSummary","cardInspector"].find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
+ const vis=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","termsBuilder","profile","tournament","newsGazette","seriesSummary","cardInspector"].find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
  id=id||vis;
  if(id==="game")return layoutMatchTable();
  if(id==="challenge"){
@@ -1414,6 +1538,12 @@ function layoutScreenFit(id){
  if(id==="tournament"){
   const root=$("tournament");
   return layoutStageWidth(root,root&&root.querySelector(".tournamentTable"),"--stage-w",200);
+ }
+ if(id==="newsGazette"){
+  const root=$("newsGazette");
+  layoutStageWidth(root,root&&root.querySelector(".gazetteTable"),"--stage-w",200);
+  paginateGazette();
+  return;
  }
  if(id==="result"){
   const root=$("result");
@@ -4074,6 +4204,7 @@ if($("noticeOverlay"))$("noticeOverlay").onclick=e=>{if(e.target===$("noticeOver
 document.querySelectorAll("#locationStrip button").forEach(b=>b.onclick=()=>{closeNoticeView();state.visual.location=b.dataset.loc;save();renderWorldScene()});
 document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>{
  if(b.dataset.jtab==="decks"){openSavedDecks({from:"journal"});return}
+ if(b.dataset.jtab==="news"){openNewsGazette();return}
  renderJournal(b.dataset.jtab);
 });
 if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
@@ -4081,6 +4212,14 @@ if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
 if($("tableTalk"))$("tableTalk").onclick=()=>{if(tableTalkQueue&&tableTalkQueue.advance)tableTalkQueue.advance()};
 if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();bootTownOrTutorial()}};
 if($("devSaturdayOpen"))$("devSaturdayOpen").onclick=()=>{jumpVisualToSaturdayOpen();save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
+if($("devNewsGazette"))$("devNewsGazette").onclick=()=>openNewsGazette();
+if($("newsGazetteClose"))$("newsGazetteClose").onclick=closeNewsGazette;
+if($("gazettePrev"))$("gazettePrev").onclick=()=>turnGazette(-1);
+if($("gazetteNext"))$("gazetteNext").onclick=()=>turnGazette(1);
+if($("gazetteStage")){
+ $("gazetteStage").addEventListener("pointerdown",onGazettePointerDown);
+ $("gazetteStage").addEventListener("pointerup",onGazettePointerUp);
+}
 if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
 if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
 
@@ -7974,14 +8113,16 @@ html,body,#visualShell{color-scheme:only light}
 #deckSelect,
 #savedDecks,
 #starter,
-#tournament{
+#tournament,
+#newsGazette{
   --stage-w:440px;
 }
 #challenge .challengeTable,
 #npcDossier .dossierTable,
 #result .resultTable,
 #starter .starterTable,
-#tournament .tournamentTable{
+#tournament .tournamentTable,
+#newsGazette .gazetteTable{
   width:min(100%,var(--stage-w,440px))!important;
   max-width:100%;
   touch-action:pan-y;
@@ -9180,6 +9321,290 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
 }
 @media(min-width:520px){
   #tournament .openBracket{grid-template-columns:1.2fr .9fr .7fr;align-items:start}
+}
+
+#newsGazette{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#1a120c!important;
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  touch-action:pan-y;
+}
+#newsGazette.hidden{display:none!important}
+#newsGazette .gazetteTable{
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#newsGazette .gazetteWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  padding:14px 12px 12px;
+  overflow:hidden;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#newsGazette .gazetteWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:0;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#newsGazette .challengePlaque{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  align-self:center;
+  margin:0 0 8px;
+  width:min(92%,280px);
+  padding:12px 14px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(16px,5.2vw,24px);
+  font-weight:800;
+  letter-spacing:.1em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#newsGazette .gazetteStage{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  perspective:900px;
+}
+#newsGazette .gazetteSheet{
+  position:absolute;
+  inset:0;
+  display:flex;
+  flex-direction:column;
+  padding:10px 12px 12px;
+  overflow:hidden;
+  box-sizing:border-box;
+  color:#1a120c;
+  background:#f4ead3 url("assets/ui/deck_binder_page.png") center / cover no-repeat;
+  border:1px solid #c9a45a;
+  border-radius:3px;
+  box-shadow:0 8px 18px #0005;
+}
+#newsGazette .gazetteUnder{
+  transform:translate(5px,6px) rotate(.35deg);
+  z-index:0;
+  opacity:.92;
+  pointer-events:none;
+}
+#newsGazette .gazetteUnder.is-hidden{display:none}
+#newsGazette .gazetteFront{
+  z-index:2;
+  transform-origin:left center;
+  transition:transform .28s ease,opacity .28s ease;
+}
+#newsGazette .gazetteFront.is-turn-next{
+  transform:rotateY(-78deg);
+  opacity:.15;
+}
+#newsGazette .gazetteFront.is-turn-prev{
+  transform:translateX(18%) rotate(3deg);
+  opacity:.15;
+}
+#newsGazette .gazetteProbe{
+  position:absolute!important;
+  inset:auto!important;
+  left:0;
+  top:0;
+  visibility:hidden;
+  pointer-events:none;
+  height:auto!important;
+  min-height:0!important;
+  overflow:visible!important;
+  z-index:-1;
+}
+#newsGazette .gazetteProbe .gazetteBody{
+  flex:0 0 auto;
+  overflow:visible;
+}
+#newsGazette .gazetteKicker,
+#newsGazette .gazetteRun{
+  flex:0 0 auto;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-weight:800;
+  letter-spacing:.14em;
+  text-transform:uppercase;
+  font-size:11px;
+  color:#5a3a22;
+}
+#newsGazette .gazetteTitle{
+  flex:0 0 auto;
+  margin:2px 0 4px;
+  text-align:center;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(22px,7vw,32px);
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  line-height:1.05;
+  border-bottom:2px solid #1a120c;
+  padding-bottom:6px;
+}
+#newsGazette .gazetteDate{
+  flex:0 0 auto;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:clamp(11px,3.2vw,13px);
+  margin:6px 0 8px;
+  letter-spacing:.04em;
+}
+#newsGazette .gazetteRun{
+  border-bottom:1px solid #1a120c;
+  padding-bottom:6px;
+  margin-bottom:8px;
+}
+#newsGazette .gazetteBody{
+  flex:1 1 auto;
+  min-height:0;
+  overflow:hidden;
+}
+#newsGazette .gazetteStory{
+  padding:8px 0;
+  border-bottom:1px dashed #a58e6a;
+}
+#newsGazette .gazetteStory:last-child{border-bottom:0}
+#newsGazette .gazetteStory h4{
+  margin:0 0 4px;
+  font-family:Georgia,serif;
+  font-size:clamp(14px,3.8vw,17px);
+  letter-spacing:.03em;
+  text-transform:uppercase;
+}
+#newsGazette .gazetteStory p{
+  margin:0;
+  font-family:Georgia,serif;
+  font-size:clamp(13px,3.5vw,15px);
+  line-height:1.35;
+}
+#newsGazette .gazetteEmpty{
+  padding:24px 8px;
+  text-align:center;
+  font-style:italic;
+  font-family:Georgia,serif;
+}
+#newsGazette .gazetteTurn{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  display:flex;
+  align-items:center;
+  justify-content:space-between;
+  gap:8px;
+  margin-top:8px;
+  min-width:0;
+}
+#newsGazette .gazetteTurn button{
+  flex:0 1 auto;
+  min-width:0;
+  min-height:36px;
+  padding:6px 10px;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,3.3vw,14px);
+  font-weight:800;
+  letter-spacing:.04em;
+  color:#f4ead3!important;
+  background:transparent!important;
+  border:1px solid rgba(231,196,123,.45)!important;
+  border-radius:4px;
+}
+#newsGazette .gazetteTurn button:disabled{opacity:.35}
+#newsGazette #gazetteFolio{
+  flex:1 1 auto;
+  min-width:0;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:12px;
+  letter-spacing:.08em;
+  color:#e7c47b;
+}
+#newsGazette .gazetteActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+  padding-bottom:4px;
+}
+#newsGazette .gazetteActions button{
+  display:block;
+  width:100%;
+  margin:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(14px,4vw,17px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+@media(max-width:620px){
+  #newsGazette .gazetteWell{border-width:8px;padding:12px 10px 12px}
+}
+@media(prefers-reduced-motion:reduce){
+  #newsGazette .gazetteFront{transition:none}
 }
 </style>
 
