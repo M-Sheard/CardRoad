@@ -461,8 +461,11 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div class="sceneRiver"></div><div class="sceneBridge"></div>
     <div class="sceneGround"></div>
     <div class="sceneLabel"><span id="locationTitle">Lythmere Market</span><small id="locationSubtitle">A riverside market where local players drift in and out through the day.</small></div>
+    <div id="saturdayDress" class="saturdayDress" hidden aria-hidden="true">
+      <div class="satBunting" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
+    </div>
     <div id="npcHotspots"></div>
-    <button id="eventHotspot" class="worldObject eventHotspot hidden">Tournament Today</button>
+    <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide" id="locationStrip" aria-label="Lythmere locations">
     <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
@@ -498,6 +501,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <label class="devToggle"><input type="checkbox" id="devSeeOpponentCards"> <span>See opponent cards</span></label>
         <div class="small" style="margin:4px 0 10px">Off by default. Their hand stays in the same five slots as card backs. When they play, the chosen card lifts out and flips to show its face.</div>
         <button id="devReset">Reset prototype save</button>
+        <button id="devSaturdayOpen" type="button" style="margin-top:8px">Jump to Saturday Open</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -583,13 +587,16 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="tournament" class="hidden">
-<section class="panel">
-<h2 id="tournamentTitle">Tournament</h2>
-<div id="tournamentInfo" class="small"></div>
-<div id="tournamentRules" style="margin-top:8px"></div>
-<div id="tournamentBracket" style="margin-top:10px"></div>
-<div id="tournamentActions" style="margin-top:10px"></div>
-</section>
+  <div class="tournamentTable">
+    <div class="tournamentWell">
+      <h2 id="tournamentTitle" class="challengePlaque">Tournament</h2>
+      <div id="tournamentInfo" class="tournamentMeta"></div>
+      <div id="tournamentIntro" class="tournamentIntro"></div>
+      <div id="tournamentRules" class="tournamentRules"></div>
+      <div id="tournamentBracket" class="tournamentBracket"></div>
+    </div>
+    <div id="tournamentActions" class="challengeActions"></div>
+  </div>
 </div>
 
 <div id="challenge" class="hidden">
@@ -795,6 +802,17 @@ const NPC_BIO={
  "Visitor B":"A travelling competitor in town for the Open. They will move on when the event ends.",
  "Visitor C":"A travelling competitor in town for the Open. They will move on when the event ends."
 };
+const TRAVELLERS=[
+ {name:"Merrin",skill:.50,risk:.52,start:["C008","C018","C029","C040","C051","C061","C074","C090"],bio:"Took the Northvale coach this morning. Tight closed-hand player; gone by Sunday."},
+ {name:"Willa",skill:.58,risk:.34,start:["C005","C012","C021","C034","C044","C060","C071","C088"],bio:"A mill-town regular. She is here for the Open, not for gossip."},
+ {name:"Fen",skill:.68,risk:.60,start:["C007","C015","C027","C038","C050","C062","C075","C098"],bio:"Plays the river-road tables with a heavier binder than most locals."},
+ {name:"Sibley",skill:.54,risk:.45,start:["C010","C019","C030","C042","C053","C063","C077","C091"],bio:"Came up from the coast. Quiet at the table, quick with a claim."},
+ {name:"Quill",skill:.63,risk:.57,start:["C009","C020","C033","C045","C055","C066","C080","C094"],bio:"A travelling binder-seller who plays the Saturday he is in town."},
+ {name:"Ione",skill:.72,risk:.28,start:["C013","C022","C036","C047","C057","C068","C082","C096"],bio:"Measured, almost fussy. She treats a local Open as useful practice."},
+ {name:"Harlan",skill:.47,risk:.70,start:["C004","C016","C025","C037","C048","C059","C073","C089"],bio:"Loud coat, louder luck. He will not still be in Lythmere on Monday."},
+ {name:"Lissa",skill:.61,risk:.40,start:["C002","C017","C028","C039","C049","C064","C079","C093"],bio:"Follows the Saturday circuit with a neat, well-travelled tin."},
+ {name:"Padraic",skill:.66,risk:.50,start:["C006","C014","C031","C041","C054","C070","C084","C097"],bio:"A hill-road player. He talks little and watches the other tables."}
+];
 const TOWN_STAMP={
  Tomas:{cls:"tomasCutout",src:NPC_CUTOUT.Tomas+"?v=bevel3"},
  Nessa:{cls:"nessaCutout",src:NPC_CUTOUT.Nessa+"?v=bevel7"},
@@ -1010,9 +1028,40 @@ function onWorldRecord(){
 }
 function readNoticeboard(){openNoticeView();}
 function isSaturdayEventNow(){return state.visual.phase==="Afternoon"&&eventsOnDate(state.visual.date).some(e=>e.tier==="Local"&&e.place==="Lythmere Card Club")}
+function shuffledList(arr){return [...arr].sort(()=>Math.random()-.5)}
+function ensureTraveller(v){
+ if(!v||!v.name)return;
+ npcDefs[v.name]={visitor:true,skill:v.skill,risk:v.risk,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:92},start:[...(v.start||[])]};
+ NPC_BIO[v.name]=v.bio||`${v.name} is in town for the Open.`;
+ if(!state.npcs)state.npcs={};
+ if(!Array.isArray(state.npcs[v.name])||state.npcs[v.name].length<5)state.npcs[v.name]=[...(v.start||[])];
+ if(!state.seenByNpc)state.seenByNpc={};
+ if(!state.seenByNpc[v.name])state.seenByNpc[v.name]=(v.start||[]).slice(0,2);
+ if(!state.memory)state.memory={};
+ if(!state.memory[v.name])state.memory[v.name]={playerWins:0,npcWins:0,draws:0,declines:0,cardsWon:[],cardsLost:[],affinity:0,rivalry:0,respect:0,meetings:0,lastReaction:"",moments:[]};
+}
+function hydrateTournamentVisitors(){
+ const t=state&&state.activeTournament;
+ if(!t||!Array.isArray(t.visitors))return;
+ t.visitors.forEach(ensureTraveller);
+}
+function pickSaturdayTravellers(){
+ const used=new Set(localNpcNames());
+ const pool=shuffledList(TRAVELLERS.filter(v=>v&&v.name&&!used.has(v.name)));
+ return pool.slice(0,3).map(v=>({name:v.name,skill:v.skill,risk:v.risk,start:[...v.start],bio:v.bio}));
+}
+function competitorBio(n){
+ if(n==="You")return "Lythmere's newest road player. Grandfather's gift is on the table tonight.";
+ return NPC_BIO[n]||`${n} is in town for the Open.`;
+}
+function competitorTag(n){
+ if(n==="You")return "You";
+ if(npcDefs[n]?.visitor)return "Travelling player";
+ return "Lythmere";
+}
 function openSaturdayTournament(){
  let ev=eventsOnDate(state.visual.date).find(e=>e.tier==="Local")||{name:"Lythmere Saturday Open"};
- if(!state.activeTournament||state.activeTournament.status==="complete"){createWarmupTournament();state.activeTournament.name=ev.name;state.activeTournament.date=state.visual.date;}
+ if(!state.activeTournament||state.activeTournament.status==="complete")createSaturdayOpen(ev);
  show("tournament");renderTournament();
 }
 function backgroundV6Day(){
@@ -1106,7 +1155,26 @@ function wantsHomeTutorial(){
  if(typeof location!=="undefined"&&/(?:^|[?&])tutorial=1(?:&|$)/.test(location.search))return true;
  return !state||state.grandpaTutorial!==true;
 }
+function wantsSaturdayPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])saturday=1(?:&|$)/.test(location.search);
+}
+function nextSaturdayIso(from){
+ let d=from?new Date(from+"T12:00:00"):visualDateObj();
+ if(Number.isNaN(d.getTime()))d=new Date("2026-03-07T12:00:00");
+ while(d.getDay()!==6)d.setDate(d.getDate()+1);
+ return d.toISOString().slice(0,10);
+}
+function jumpVisualToSaturdayOpen(){
+ ensureVisualState();
+ state.grandpaTutorial=true;
+ state.tutorialDone=true;
+ state.visual.date=nextSaturdayIso(state.visual.date);
+ state.visual.phase="Afternoon";
+ state.visual.location="Card Club";
+ syncCalendarState();
+}
 function bootTownOrTutorial(){
+ if(wantsSaturdayPreview()){jumpVisualToSaturdayOpen();save();renderHome();show("home");return}
  if(wantsHomeTutorial())startGrandpaTutorial();
  else{renderHome();show("home")}
 }
@@ -1288,6 +1356,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  Object.entries(npcDefs).forEach(([n,d])=>{
    if(!Array.isArray(state.npcs[n]))state.npcs[n]=[...d.start];
  });
+ hydrateTournamentVisitors();
  if(!state.history){state.history={};[...new Set([...state.player,...Object.values(state.npcs).flat()])].forEach(c=>state.history[c]=["History tracking began in prototype v0.3."])}
  if(state.worldStep==null)state.worldStep=0;
  if(!state.news)state.news=["Card News began tracking local activity."];
@@ -1341,6 +1410,10 @@ function layoutScreenFit(id){
  if(id==="npcDossier"){
   const root=$("npcDossier");
   return layoutStageWidth(root,root&&root.querySelector(".dossierTable"),"--stage-w",200);
+ }
+ if(id==="tournament"){
+  const root=$("tournament");
+  return layoutStageWidth(root,root&&root.querySelector(".tournamentTable"),"--stage-w",200);
  }
  if(id==="result"){
   const root=$("result");
@@ -1717,6 +1790,8 @@ function createLocalChampionship(){
 }
 function renderChampionshipTournament(){
  let t=state.activeTournament;
+ const root=$("tournament");if(root)root.removeAttribute("data-open");
+ if($("tournamentIntro"))$("tournamentIntro").innerHTML="";
  $("tournamentTitle").textContent=`${t.name} — Year ${state.season.year}`;
  $("tournamentInfo").innerHTML=`<b>${formattedWorldDate()}</b> · ${t.status==="complete"?"Complete":t.round}<br>8 players · Quarterfinals & Semifinals Best of 3 · Final Best of 5 · No draws`;
  $("tournamentRules").innerHTML="<h3>Full Match Rules</h3>"+tournamentRulesSummary(t);
@@ -1833,6 +1908,205 @@ function tournamentRulesSummary(t){
  let tie=r.tie==="final"?"Final Capture":"Draw";
  return [ruleButton(cap),ruleButton(hand),ruleButton(tie),ruleButton("Rune Draw","winner chooses first/second"),ruleButton(r.wager),ruleButton("Deck Budget",String(r.budget)),ruleButton(r.series===5?"Best of 5":"Best of 3")].join("");
 }
+function saturdayOpenRules(round="Quarterfinal"){
+ return championshipTournamentRules(round);
+}
+function createSaturdayOpen(ev){
+ hydrateTournamentVisitors();
+ const visitors=pickSaturdayTravellers();
+ visitors.forEach(ensureTraveller);
+ ensureCopies();
+ const locals=["Tomas","Nessa","Bram","Elira"];
+ const others=shuffledList([...locals,...visitors.map(v=>v.name)]);
+ const opp=others.shift();
+ state.activeTournament={
+  type:"saturdayOpen",
+  name:(ev&&ev.name)||"Lythmere Saturday Open",
+  date:state.visual?.date||nextSaturdayIso(),
+  status:"intro",
+  introIndex:0,
+  round:"Quarterfinal",
+  rules:saturdayOpenRules("Quarterfinal"),
+  visitors,
+  qf1:["You",opp],
+  qf2:[others[0],others[1]],
+  qf3:[others[2],others[3]],
+  qf4:[others[4],others[5]],
+  qf1Winner:null,qf2Winner:null,qf3Winner:null,qf4Winner:null,
+  sf1Winner:null,sf2Winner:null,finalWinner:null,
+  playerAlive:true,reports:[],reportIndex:0,afterReports:null,log:[]
+ };
+ save();
+}
+function openPersonBlurb(n){
+ return `<div class="openBlurb"><div class="openBlurbHead"><b>${n}</b><span class="openTag">${competitorTag(n)}</span></div><p>${competitorBio(n)}</p></div>`;
+}
+function openIntroHTML(pair,index,total){
+ if(!pair)return "";
+ return `<div class="openIntro"><div class="openKicker">Quarterfinal · Table ${index+1} of ${total}</div><h3>${pair[0]} vs ${pair[1]}</h3>${openPersonBlurb(pair[0])}${openPersonBlurb(pair[1])}</div>`;
+}
+function openPairLine(pair,winner){
+ if(!pair)return "Pending";
+ const line=`${pair[0]} vs ${pair[1]}`;
+ return winner?`${line} → <b>${winner}</b>`:line;
+}
+function openBracketHTML(t){
+ const qf=[["qf1",t.qf1,t.qf1Winner],["qf2",t.qf2,t.qf2Winner],["qf3",t.qf3,t.qf3Winner],["qf4",t.qf4,t.qf4Winner]];
+ const sf1=t.qf1Winner&&t.qf2Winner?[t.qf1Winner,t.qf2Winner]:null;
+ const sf2=t.qf3Winner&&t.qf4Winner?[t.qf3Winner,t.qf4Winner]:null;
+ const fin=t.sf1Winner&&t.sf2Winner?[t.sf1Winner,t.sf2Winner]:null;
+ return `<div class="openBracket">
+   <div class="openCol"><h3>Quarterfinals</h3>${qf.map(([,pair,w])=>`<div>${openPairLine(pair,w)}</div>`).join("")}</div>
+   <div class="openCol"><h3>Semifinals</h3><div>${openPairLine(sf1,t.sf1Winner)}</div><div>${openPairLine(sf2,t.sf2Winner)}</div></div>
+   <div class="openCol"><h3>Final</h3><div>${openPairLine(fin,t.finalWinner)}</div></div>
+ </div>`;
+}
+function addTournamentAction(label,onClick,alt){
+ const a=$("tournamentActions");if(!a)return;
+ const b=document.createElement("button");
+ b.type="button";
+ b.textContent=label;
+ if(alt)b.classList.add("challengePlaqueBtnAlt");
+ b.classList.add("challengePlaqueBtn");
+ b.onclick=onClick;
+ a.appendChild(b);
+}
+function startOpenReports(t,lines,nextStatus){
+ t.reports=(lines||[]).filter(Boolean);
+ t.reportIndex=0;
+ t.afterReports=nextStatus;
+ if(!t.reports.length){
+  t.status=nextStatus;
+  if(nextStatus==="complete")scheduleActivityTime("tournament");
+  return;
+ }
+ t.status="report";
+}
+function advanceOpenReport(){
+ const t=state.activeTournament;if(!t||t.status!=="report")return;
+ t.reportIndex=(t.reportIndex||0)+1;
+ if(t.reportIndex>=(t.reports||[]).length){
+  t.status=t.afterReports||"complete";
+  t.reports=[];t.reportIndex=0;t.afterReports=null;
+  if(t.status==="complete")scheduleActivityTime("tournament");
+ }
+ save();renderTournament();
+}
+function reportOpenSeries(r,roundName){
+ if(!r)return "";
+ return `${r.winner} takes the ${roundName} ${r.score} against ${r.loser}.`;
+}
+function completeSaturdayNpcFinal(t,a,b,reports){
+ const fr=simulatedTournamentMatch(a,b,t.name,"Final",{});
+ t.finalWinner=fr.winner;
+ t.round="Complete";
+ t.playerAlive=false;
+ stampTournamentWinner(fr.winner,t.name,fr.winnerDeck);
+ news(`${fr.winner} wins the ${t.name}.`);
+ reports.push(reportOpenSeries(fr,"final"));
+ reports.push(fr.winner==="You"?`You are the Saturday Open champion.`:`${fr.winner} takes the Saturday Open. Travelling players will be gone by morning.`);
+}
+function finalizeSaturdayOpenPlayerResult(playerWon){
+ const t=state.activeTournament,m=window._tournamentMatch;if(!t||!m)return;
+ hydrateTournamentVisitors();
+ t[m.resultField]=playerWon?"You":m.opponent;
+ if(playerWon)seasonRec("You").w++;else seasonRec(m.opponent).w++;
+ if(playerWon)seasonRec(m.opponent).l++;else seasonRec("You").l++;
+ const playerFinalCopies=[...seriesPlayerCopyDeck],npcFinalCopies=[...seriesAiCopyDeck];
+ const reports=[];
+ if(m.round==="Quarterfinal"){
+  if(!t.qf2Winner){const r=simulatedTournamentMatch(t.qf2[0],t.qf2[1],t.name,"Quarterfinal",{});t.qf2Winner=r.winner;reports.push(reportOpenSeries(r,"quarterfinal"))}
+  if(!t.qf3Winner){const r=simulatedTournamentMatch(t.qf3[0],t.qf3[1],t.name,"Quarterfinal",{});t.qf3Winner=r.winner;reports.push(reportOpenSeries(r,"quarterfinal"))}
+  if(!t.qf4Winner){const r=simulatedTournamentMatch(t.qf4[0],t.qf4[1],t.name,"Quarterfinal",{});t.qf4Winner=r.winner;reports.push(reportOpenSeries(r,"quarterfinal"))}
+  if(playerWon){
+   t.round="Semifinal";
+   reports.push(`Your semifinal is against ${t.qf2Winner}.`);
+   startOpenReports(t,reports,"awaitingPlayerSemi");
+  }else{
+   t.playerAlive=false;
+   const s1=simulatedTournamentMatch(m.opponent,t.qf2Winner,t.name,"Semifinal",{});
+   const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});
+   t.sf1Winner=s1.winner;t.sf2Winner=s2.winner;
+   reports.push(reportOpenSeries(s1,"semifinal"));
+   reports.push(reportOpenSeries(s2,"semifinal"));
+   completeSaturdayNpcFinal(t,t.sf1Winner,t.sf2Winner,reports);
+   startOpenReports(t,reports,"complete");
+  }
+ }else if(m.round==="Semifinal"){
+  if(playerWon){
+   if(!t.sf2Winner){const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});t.sf2Winner=s2.winner;reports.push(reportOpenSeries(s2,"semifinal"))}
+   t.round="Final";
+   reports.push(`The final is against ${t.sf2Winner}.`);
+   startOpenReports(t,reports,"awaitingPlayerFinal");
+  }else{
+   t.playerAlive=false;t.sf1Winner=m.opponent;
+   if(!t.sf2Winner){const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});t.sf2Winner=s2.winner;reports.push(reportOpenSeries(s2,"semifinal"))}
+   completeSaturdayNpcFinal(t,t.sf1Winner,t.sf2Winner,reports);
+   startOpenReports(t,reports,"complete");
+  }
+ }else{
+  t.finalWinner=playerWon?"You":m.opponent;t.status="complete";t.round="Complete";
+  if(playerWon){
+   stampTournamentWinner("You",t.name,playerFinalCopies);
+   news(`You win the ${t.name}.`);
+   reports.push(`You take the Saturday Open.`);
+  }else{
+   stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
+   news(`${m.opponent} wins the ${t.name}.`);
+   reports.push(`${m.opponent} takes the Saturday Open.`);
+  }
+  startOpenReports(t,reports,"complete");
+ }
+ window._tournamentMatch=null;save();
+}
+function renderSaturdayOpen(){
+ const t=state.activeTournament;
+ hydrateTournamentVisitors();
+ const root=$("tournament");if(root)root.dataset.open="1";
+ if($("tournamentTitle"))$("tournamentTitle").textContent="Saturday Open";
+ if($("tournamentInfo"))$("tournamentInfo").innerHTML=`<b>${formattedWorldDate(t.date)}</b> · Lythmere Card Club<br>8 players · Quarters &amp; Semis Best of 3 · Final Best of 5 · Claim One`;
+ const intro=$("tournamentIntro"),rules=$("tournamentRules"),bracket=$("tournamentBracket"),actions=$("tournamentActions");
+ if(intro)intro.innerHTML="";
+ if(rules)rules.innerHTML="";
+ if(bracket)bracket.innerHTML="";
+ if(actions)actions.innerHTML="";
+ if(t.status==="intro"){
+  const pairs=[t.qf1,t.qf2,t.qf3,t.qf4];
+  const i=t.introIndex||0;
+  if(intro)intro.innerHTML=openIntroHTML(pairs[i],i,pairs.length);
+  addTournamentAction("Next table",()=>{t.introIndex=i+1;if(t.introIndex>=pairs.length)t.status="bracket";save();renderTournament()});
+  addTournamentAction("See the draw",()=>{t.status="bracket";t.introIndex=pairs.length;save();renderTournament()},true);
+  addTournamentAction("Back to the Club",()=>{show("home");renderHome()},true);
+  scheduleScreenLayout("tournament");
+  return;
+ }
+ if(t.status==="report"){
+  const line=(t.reports||[])[t.reportIndex]||"";
+  const last=t.reportIndex>=(t.reports||[]).length-1;
+  if(intro)intro.innerHTML=`<div class="openIntro"><div class="openKicker">From the other tables</div><p class="openReport">${line}</p></div>`;
+  if(bracket)bracket.innerHTML=openBracketHTML(t);
+  const label=last?(t.afterReports==="complete"?"See the champion":t.afterReports==="awaitingPlayerSemi"?"Your semifinal":t.afterReports==="awaitingPlayerFinal"?"The final":"Continue"):"Continue";
+  addTournamentAction(label,advanceOpenReport);
+  scheduleScreenLayout("tournament");
+  return;
+ }
+ if(rules)rules.innerHTML="<h3>Match rules</h3>"+tournamentRulesSummary({...t,rules:saturdayOpenRules(t.round||"Quarterfinal")});
+ if(bracket)bracket.innerHTML=openBracketHTML(t);
+ if(t.status==="bracket"){
+  addTournamentAction("Take your seat",()=>{t.status="awaitingPlayerQuarter";t.round="Quarterfinal";save();beginTournamentPlayerMatch(t.qf1[1],"qf1Winner","Quarterfinal")});
+  addTournamentAction("Back to the Club",()=>{show("home");renderHome()},true);
+ }else if(t.status==="awaitingPlayerQuarter"){
+  addTournamentAction(`Play quarterfinal vs ${t.qf1[1]}`,()=>beginTournamentPlayerMatch(t.qf1[1],"qf1Winner","Quarterfinal"));
+ }else if(t.status==="awaitingPlayerSemi"){
+  addTournamentAction(`Play semifinal vs ${t.qf2Winner}`,()=>beginTournamentPlayerMatch(t.qf2Winner,"sf1Winner","Semifinal"));
+ }else if(t.status==="awaitingPlayerFinal"){
+  addTournamentAction(`Play final vs ${t.sf2Winner}`,()=>beginTournamentPlayerMatch(t.sf2Winner,"finalWinner","Final"));
+ }else if(t.status==="complete"){
+  if(intro)intro.innerHTML=`<div class="openIntro"><div class="openKicker">Champion</div><h3>${t.finalWinner||"Unrecorded"}</h3><p class="openReport">${t.finalWinner==="You"?"The Club will remember this Saturday.":`${t.finalWinner} takes the Open. The travelling players move on.`}</p></div>`;
+  addTournamentAction("Return to the Club",()=>{consumePendingActivityTime();show("home");renderHome()});
+ }
+ scheduleScreenLayout("tournament");
+}
 function createWarmupTournament(){
  state.activeTournament={name:"Local Warm-Up Cup",date:state.visual?.date||"2026-03-07",status:"ready",round:"Semifinal",rules:warmupTournamentRules("Semifinal"),
  semifinal1:["You","Tomas"],semifinal2:["Bram","Nessa"],semifinal1Winner:null,semifinal2Winner:null,finalWinner:null,playerAlive:true,log:[]};
@@ -1841,6 +2115,9 @@ function createWarmupTournament(){
 function renderTournament(){
  let t=state.activeTournament;if(!t){show("home");renderHome();return}
  if(t.type==="championship")return renderChampionshipTournament();
+ if(t.type==="saturdayOpen")return renderSaturdayOpen();
+ const root=$("tournament");if(root)root.removeAttribute("data-open");
+ if($("tournamentIntro"))$("tournamentIntro").innerHTML="";
  $("tournamentTitle").textContent=t.name;
  $("tournamentInfo").innerHTML=`<b>${t.date?formattedWorldDate(t.date):formattedWorldDate()}</b> · ${t.status==="complete"?"Complete":t.round}<br>No draws · Semifinals Best of 3 · Final Best of 5`;
  $("tournamentRules").innerHTML="<h3>Full Match Rules</h3>"+tournamentRulesSummary(t);
@@ -1866,16 +2143,25 @@ function configureTournamentTerms(t){
 }
 function beginTournamentPlayerMatch(opponent,resultField,round){
  let t=state.activeTournament;
- t.rules=t.type==="championship"?championshipTournamentRules(round):warmupTournamentRules(round);
+ hydrateTournamentVisitors();
+ t.rules=(t.type==="championship"||t.type==="saturdayOpen")?championshipTournamentRules(round):warmupTournamentRules(round);
  configureTournamentTerms(t);currentNpc=opponent;window._tournamentMatch={resultField,round,opponent};
  challengeDirection="outgoing";selectedDeck=[];seriesGame=0;seriesWins={p:0,ai:0};seriesWinner=null;namedWagers=null;
- renderKnownCollection(opponent);setChallengePlaque(`${t.name} — ${round}`);$("challengeMsg").textContent=`Tournament match against ${opponent}.`;
+ renderKnownCollection(opponent);setChallengePlaque(`${t.type==="saturdayOpen"?"Saturday Open":t.name} — ${round}`);$("challengeMsg").textContent=`${round} against ${opponent}.`;
  $("seriesSetup").textContent=`${round} · tournament rules are fixed.`;$("terms").innerHTML=tournamentRulesSummary(t);
- $("acceptTerms").classList.add("hidden");$("backHome").classList.add("hidden");openMatchDeckChoice();refreshFullRules();
+ const sit=t.type==="saturdayOpen";
+ if($("acceptTerms")){
+  $("acceptTerms").textContent=sit?"Choose cards":"Accept";
+  $("acceptTerms").classList.toggle("hidden",!sit);
+ }
+ if($("backHome"))$("backHome").classList.toggle("hidden",!sit);
+ if(sit){show("challenge");scheduleScreenLayout("challenge");refreshFullRules();return}
+ openMatchDeckChoice();refreshFullRules();
 }
 function finalizeTournamentPlayerResult(playerWon){
  let t=state.activeTournament,m=window._tournamentMatch;if(!t||!m)return;
  if(t.type==="championship")return finalizeChampionshipPlayerResult(playerWon);
+ if(t.type==="saturdayOpen")return finalizeSaturdayOpenPlayerResult(playerWon);
  t[m.resultField]=playerWon?"You":m.opponent;
  let playerFinalCopies=[...seriesPlayerCopyDeck];
  let npcFinalCopies=[...seriesAiCopyDeck];
@@ -1913,6 +2199,15 @@ function renderSeason(){syncCalendarState();return;}
 
 function renderWorldScene(){
  ensureVisualState();syncCalendarState();let loc=V6_LOCATIONS[state.visual.location]||V6_LOCATIONS.Market;$("townScene").dataset.location=state.visual.location;
+ const saturdayOpen=isSaturdayEventNow();
+ document.body.dataset.saturdayOpen=saturdayOpen?"1":"";
+ const dressClub=saturdayOpen&&state.visual.location==="Card Club";
+ $("townScene").dataset.saturday=dressClub?"open":"";
+ const dress=$("saturdayDress");
+ if(dress){dress.hidden=!dressClub;dress.setAttribute("aria-hidden",dressClub?"false":"true")}
+ if(dressClub){
+  loc={title:loc.title,subtitle:"Banners up. Travelling players at the far tables. Saturday Open this afternoon."};
+ }
  $("visualDate").textContent=plaqueDateLabel();$("visualPhase").textContent=state.visual.phase+" · Year "+state.season.year;$("locationTitle").textContent=loc.title;$("locationSubtitle").textContent=loc.subtitle;
  document.querySelectorAll("#locationStrip button").forEach(b=>{
    let on=b.dataset.loc===state.visual.location;
@@ -1927,7 +2222,8 @@ function renderWorldScene(){
  if(info)fillNoticeBoard(info);
  if($("noticeOverlay")&&!info)$("noticeOverlay").classList.add("hidden");
  updateWorldRecordButton();
- $("eventHotspot").classList.toggle("hidden",!isSaturdayEventNow());
+ $("eventHotspot").classList.toggle("hidden",!saturdayOpen);
+ if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
  syncTownStandees();
@@ -2343,6 +2639,7 @@ $("challengeTitle").onclick=()=>{
 if($("dossierBack"))$("dossierBack").onclick=()=>{show("challenge");scheduleScreenLayout("challenge")};
 function openChallenge(name){
  $("acceptTerms").classList.remove("hidden");$("backHome").classList.remove("hidden");
+ if($("acceptTerms"))$("acceptTerms").textContent="Accept";
  currentNpc=name;state.seasonStats.playerChallenges++;challengeDirection="outgoing";seriesTarget=1;seriesWins={p:0,ai:0};seriesGame=0;namedWagers=null;currentTerms={...npcDefs[name].terms};
  setChallengePlaque(name, name);
  fillChallengeTerms();
@@ -2351,7 +2648,10 @@ function openChallenge(name){
  $("deckPanel").classList.add("hidden");show("challenge");
 }
 $("acceptTerms").onclick=()=>{selectedDeck=[];openMatchDeckChoice()};
-$("backHome").onclick=()=>{show("home");renderHome()};
+$("backHome").onclick=()=>{
+ if(window._tournamentMatch&&state.activeTournament?.type==="saturdayOpen"){show("tournament");renderTournament();return}
+ show("home");renderHome();
+};
 function budget(arr){return arr.reduce((a,n)=>a+(C[n]?C[n].budget:0),0)}
 function savedDeckStatus(cards,cap){
  const list=Array.isArray(cards)?cards.filter(n=>C[n]):[];
@@ -3315,7 +3615,12 @@ function renderGame(opts){
  opts=opts||{};
  refreshFullRules();renderOpponentHand();
  let [p,a]=score();$("ps").textContent=p;$("as").textContent=a;
- $("seriesScore").textContent=seriesTarget>1?`Series: You ${seriesWins.p} — ${seriesWins.ai} ${currentNpc} · Game ${seriesGame+1}`:"";
+ let seriesLabel="";
+ if(seriesTarget>1){
+  seriesLabel=`Series: You ${seriesWins.p} — ${seriesWins.ai} ${currentNpc} · Game ${seriesGame+1}`;
+  if(window._tournamentMatch?.round)seriesLabel=`${window._tournamentMatch.round} · You ${seriesWins.p} — ${seriesWins.ai} ${currentNpc} · Game ${seriesGame+1}`;
+ }
+ $("seriesScore").textContent=seriesLabel;
  $("board").innerHTML="";
  let playerTurn=isPlayerTurn();
  let hold=opts.holdCaptures||[];
@@ -3719,6 +4024,7 @@ if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
 if($("tableTalk"))$("tableTalk").onclick=()=>{if(tableTalkQueue&&tableTalkQueue.advance)tableTalkQueue.advance()};
 if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();bootTownOrTutorial()}};
+if($("devSaturdayOpen"))$("devSaturdayOpen").onclick=()=>{jumpVisualToSaturdayOpen();save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
 if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
 if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
 
@@ -7611,13 +7917,15 @@ html,body,#visualShell{color-scheme:only light}
 #result,
 #deckSelect,
 #savedDecks,
-#starter{
+#starter,
+#tournament{
   --stage-w:440px;
 }
 #challenge .challengeTable,
 #npcDossier .dossierTable,
 #result .resultTable,
-#starter .starterTable{
+#starter .starterTable,
+#tournament .tournamentTable{
   width:min(100%,var(--stage-w,440px))!important;
   max-width:100%;
   touch-action:pan-y;
@@ -8485,5 +8793,285 @@ html,body,#visualShell{color-scheme:only light}
   #npcDossier .dossierStage img{max-width:min(86%,240px)}
 }
 </style>
+<style>
+/* v84 — Saturday Open: Club dressing + club-table tournament lobby. */
+.saturdayDress{
+  position:absolute;
+  inset:0;
+  pointer-events:none;
+  z-index:21;
+  background:linear-gradient(to bottom,rgba(232,196,110,.2),transparent 28%);
+}
+.saturdayDress[hidden]{display:none!important}
+.satBunting{
+  position:absolute;
+  top:max(6px,env(safe-area-inset-top));
+  left:46%;
+  right:max(8px,env(safe-area-inset-right) + 6px);
+  height:26px;
+  display:flex;
+  justify-content:flex-end;
+  align-items:flex-start;
+  gap:2px;
+  overflow:hidden;
+}
+.satBunting span{
+  flex:0 0 14px;
+  width:14px;
+  height:22px;
+  background:#8b2a2a;
+  clip-path:polygon(0 0,100% 0,50% 100%);
+  box-shadow:0 2px 4px #0006;
+}
+.satBunting span:nth-child(3n+2){background:#d4b06a}
+.satBunting span:nth-child(3n){background:#1e4d3c}
+body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
+  box-shadow:inset 0 0 0 1px #e7c47b,0 0 0 1px #c9a45a;
+}
+.townScene[data-saturday="open"] #eventHotspot.eventHotspot{
+  top:max(72px,env(safe-area-inset-top) + 58px)!important;
+  right:max(10px,env(safe-area-inset-right) + 8px)!important;
+  left:auto!important;
+  transform:rotate(-2deg)!important;
+  min-width:0!important;
+  max-width:min(42vw,180px)!important;
+  padding:10px 12px 12px!important;
+  background:#6b3a1e!important;
+  color:#f6e2a8!important;
+  border:3px solid #e7c47b!important;
+  box-shadow:0 0 0 2px #3d2414,0 8px 16px #000a,inset 0 1px 0 #f4d78a!important;
+  font:800 12px/1.15 Georgia,serif!important;
+  letter-spacing:.06em!important;
+  text-transform:uppercase!important;
+}
+@media(max-width:360px){
+  .satBunting{height:20px}
+  .satBunting span{flex-basis:11px;width:11px;height:18px}
+  .townScene[data-saturday="open"] #eventHotspot.eventHotspot{
+    top:max(68px,env(safe-area-inset-top) + 52px)!important;
+    max-width:min(40vw,150px)!important;
+    font-size:11px!important;
+    padding:8px 9px 10px!important;
+  }
+}
+
+#tournament{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#f4ead3!important;
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  touch-action:pan-y;
+}
+#tournament.hidden{display:none!important}
+#tournament .tournamentTable{
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+  touch-action:pan-y;
+}
+#tournament .tournamentWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  padding:14px 12px 16px;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#tournament .tournamentWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:0;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#tournament .challengePlaque,
+#tournament #tournamentTitle{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  align-self:center;
+  margin:0 0 8px;
+  width:min(92%,280px);
+  padding:12px 14px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(16px,5.2vw,24px);
+  font-weight:800;
+  letter-spacing:.1em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#tournament .tournamentMeta,
+#tournament .tournamentRules,
+#tournament .tournamentBracket,
+#tournament .tournamentIntro{
+  position:relative;
+  z-index:1;
+  color:#f0e2c4;
+  text-shadow:0 1px 2px #000a;
+  font-family:Georgia,serif;
+}
+#tournament .tournamentMeta{
+  flex:0 0 auto;
+  margin:0 0 8px;
+  text-align:center;
+  font-size:clamp(11px,3.2vw,14px);
+  line-height:1.4;
+  color:#e7d4a8;
+}
+#tournament .tournamentIntro{flex:0 1 auto;min-height:0}
+#tournament .openIntro h3{
+  margin:.2em 0 .5em;
+  text-align:center;
+  font-size:clamp(18px,5vw,24px);
+  letter-spacing:.04em;
+  color:#f6e2a8;
+}
+#tournament .openKicker{
+  text-align:center;
+  font-size:11px;
+  font-weight:800;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#e7c47b;
+}
+#tournament .openBlurb{
+  margin:8px 0;
+  padding:8px 10px;
+  background:rgba(18,12,8,.28);
+  border:1px solid rgba(231,196,123,.35);
+  border-radius:6px;
+}
+#tournament .openBlurbHead{
+  display:flex;
+  align-items:baseline;
+  justify-content:space-between;
+  gap:8px;
+  margin-bottom:4px;
+}
+#tournament .openBlurb p,
+#tournament .openReport{
+  margin:0;
+  font-size:clamp(13px,3.6vw,16px);
+  line-height:1.4;
+}
+#tournament .openTag{
+  flex:0 0 auto;
+  font-size:10px;
+  font-weight:800;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#e7c47b;
+}
+#tournament .tournamentRules h3,
+#tournament .openBracket h3{
+  margin:.6em 0 .3em;
+  font-size:12px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#e7c47b;
+}
+#tournament .openBracket{
+  display:grid;
+  grid-template-columns:1fr;
+  gap:8px;
+  font-size:clamp(13px,3.5vw,16px);
+  line-height:1.45;
+}
+#tournament .openCol>div{margin:2px 0}
+#tournament .challengeActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+  padding-bottom:4px;
+}
+#tournament #tournamentActions{
+  position:static;
+  background:transparent;
+  padding:0;
+  width:min(100%,320px);
+}
+#tournament #tournamentActions button{
+  display:block;
+  width:100%;
+  margin:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(14px,4vw,17px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+#tournament #tournamentActions button.challengePlaqueBtnAlt{
+  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+}
+@media(max-width:620px){
+  #tournament .tournamentWell{border-width:8px;padding:12px 10px 14px}
+}
+@media(min-width:520px){
+  #tournament .openBracket{grid-template-columns:1.2fr .9fr .7fr;align-items:start}
+}
+</style>
+
 
 

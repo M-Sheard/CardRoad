@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v83-gift-skip';
+const CACHE_NAME = 'card-road-pwa-v84-saturday-open';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
