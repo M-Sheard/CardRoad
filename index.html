@@ -666,6 +666,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       </div>
       <button type="button" id="beginMatch" disabled>Finished</button>
     </div>
+    <div id="deckSelectSlots" class="deckSelectSlots" hidden></div>
     <div class="deckBinderStage">
       <div class="deckBinder">
         <div class="binderSpine" aria-hidden="true"></div>
@@ -982,12 +983,21 @@ const V6_ROUTINES={
  Elira:{Monday:{Afternoon:"Card Club"},Tuesday:{Morning:"Riverside"},Wednesday:{Evening:"Card Club"},Thursday:{Morning:"Riverside",Afternoon:"Card Club"},Friday:{Evening:"Card Club"},Saturday:{Afternoon:"Card Club"},Sunday:{Morning:"Riverside"}}
 };
 function ensureVisualState(){
- if(!state.visual)state.visual={date:"2026-03-02",phase:"Morning",location:"Market",journalTab:"calendar",noticeRead:false,discoveredEvents:[],history:["Grandfather entrusted his card collection to you."],weekOne:true};
+ const defaults={date:"2026-03-02",phase:"Morning",location:"Market",journalTab:"calendar",noticeRead:false,discoveredEvents:[],history:["Grandfather entrusted his card collection to you."],weekOne:true};
+ if(!state.visual||typeof state.visual!=="object")state.visual={...defaults};
+ if(!state.visual.date)state.visual.date=defaults.date;
+ if(!state.visual.phase)state.visual.phase=defaults.phase;
+ if(!state.visual.location)state.visual.location=defaults.location;
+ if(!state.visual.journalTab)state.visual.journalTab=defaults.journalTab;
  if(!state.visual.discoveredEvents)state.visual.discoveredEvents=[];
  if(!state.visual.history)state.visual.history=[];
  if(state.visual.pendingTimeCost===undefined)state.visual.pendingTimeCost=null;
 }
-function visualDateObj(){ensureVisualState();return new Date(state.visual.date+"T12:00:00")}
+function visualDateObj(){
+ ensureVisualState();
+ const d=new Date(state.visual.date+"T12:00:00");
+ return Number.isNaN(d.getTime())?new Date("2026-03-02T12:00:00"):d;
+}
 function visualWeekday(){return visualDateObj().toLocaleDateString("en-GB",{weekday:"long"})}
 function visualDateLabel(){let d=visualDateObj();return d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+" · Year "+state.season.year}
 function npcLocationNow(n){ensureVisualState();let r=V6_ROUTINES[n]?.[visualWeekday()]||{};let scheduled=r[state.visual.phase];
@@ -2925,9 +2935,10 @@ function openSavedDecks(opts){
 }
 function openMatchDeckChoice(){
  ensureSavedDecks();
- const cap=currentTerms?.budget||0;
- if(state.savedDecks.some(d=>savedDeckStatus(d,cap).playable))openSavedDecks({from:"match",pick:true});
- else{selectedDeck=[];deckEdit=null;window._savedDecksFrom=null;openDeckSelect()}
+ selectedDeck=[];
+ deckEdit=null;
+ window._savedDecksFrom=null;
+ openDeckSelect();
 }
 function renderSavedDecks(){
  ensureSavedDecks();
@@ -3308,28 +3319,41 @@ function playTutorialGiftFlip(){
  scheduleScreenLayout("result");
 }
 function finishTutorialToTown(){
- if(giftFlipTimer){clearTimeout(giftFlipTimer);giftFlipTimer=null}
- homeTutorial=null;
- hideTableTalk({release:true});
- if($("seriesScore"))$("seriesScore").classList.remove("hidden");
- if($("comboStatus"))$("comboStatus").classList.remove("hidden");
- setTableSkin("club");
- state.grandpaTutorial=true;
- state.tutorialDone=true;
- if(!state.log)state.log=[];
- state.log.push("Grandfather sent you into town with his cards.");
- news("Grandfather said to look for Tomas in the Market.");
- state.visual.location="Market";
- save();
- resetResultChrome();
- renderHome();
+ try{
+  if(giftFlipTimer){clearTimeout(giftFlipTimer);giftFlipTimer=null}
+  homeTutorial=null;
+  hideTableTalk({release:true});
+  if($("seriesScore"))$("seriesScore").classList.remove("hidden");
+  if($("comboStatus"))$("comboStatus").classList.remove("hidden");
+  setTableSkin("club");
+  if(state){
+    state.grandpaTutorial=true;
+    state.tutorialDone=true;
+    if(!state.log)state.log=[];
+    state.log.push("Grandfather sent you into town with his cards.");
+    news("Grandfather said to look for Tomas in the Market.");
+    ensureVisualState();
+    state.visual.location="Market";
+    save();
+  }
+  resetResultChrome();
+  renderHome();
+ }catch(err){console.warn(err)}
  show("home");
+}
+function matchDeckReady(){
+ if(deckEdit&&deckEdit.mode==="preset")return false;
+ const cap=currentTerms?.budget||0;
+ return selectedDeck.length===5&&budget(selectedDeck)<=cap;
 }
 function beginPreparedMatch(){
  setTableSkin("club");
  homeTutorial=null;
  hideTableTalk();
- if(deckSelectAnimating||selectedDeck.length!==5||budget(selectedDeck)>(currentTerms?.budget||0))return;
+ if(!matchDeckReady())return;
+ deckSelectAnimating=false;
+ $("deckSelect")?.classList.remove("deckBusy");
+ document.querySelectorAll(".placeGhost.cardLift").forEach(g=>g.remove());
  if(seriesGame===0){
    seriesPlayerDeck=[...selectedDeck];seriesAiDeck=aiDeck();
    seriesPlayerCopyDeck=physicalCopiesForDeck("You",seriesPlayerDeck);
@@ -3387,7 +3411,9 @@ function renderBinderTabs(){
 }
 function openDeckSelect(){
  deckSelectAnimating=false;
+ $("deckSelect")?.classList.remove("deckBusy");
  deckSelectPage=firstOwnedDeckPage();
+ if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  if($("beginMatch"))$("beginMatch").textContent=deckEdit&&deckEdit.mode==="preset"?"Save":"Finished";
  if($("deckSelectTitle")){
    if(deckEdit&&deckEdit.mode==="preset")$("deckSelectTitle").textContent="Deck "+(deckEdit.slot+1);
@@ -3397,6 +3423,58 @@ function openDeckSelect(){
  }
  show("deckSelect");
  renderDeckSelect();
+}
+function sameSavedList(a,b){
+ if(!Array.isArray(a)||!Array.isArray(b)||a.length!==b.length)return false;
+ const left=[...a].sort(),right=[...b].sort();
+ return left.every((n,i)=>n===right[i]);
+}
+function renderMatchDeckSlots(){
+ const row=$("deckSelectSlots");
+ if(!row)return;
+ const match=!(deckEdit&&deckEdit.mode==="preset");
+ row.hidden=!match;
+ if(!match){row.innerHTML="";return}
+ ensureSavedDecks();
+ row.innerHTML="";
+ state.savedDecks.forEach((cards,slot)=>{
+  const st=savedDeckStatus(cards,0);
+  const chip=document.createElement("button");
+  chip.type="button";
+  chip.className="deckSlotChip";
+  const filled=st.list.length>0;
+  const loaded=filled&&sameSavedList(st.list,selectedDeck);
+  if(filled)chip.classList.add("filled");
+  if(loaded)chip.classList.add("loaded");
+  if(!filled)chip.classList.add("empty");
+  chip.textContent=String(slot+1);
+  chip.setAttribute("aria-label",filled?(loaded?"Deck "+(slot+1)+" loaded":"Load deck "+(slot+1)):"Save to empty deck "+(slot+1));
+  chip.onclick=()=>tapMatchDeckSlot(slot);
+  row.appendChild(chip);
+ });
+}
+function tapMatchDeckSlot(slot){
+ deckSelectAnimating=false;
+ $("deckSelect")?.classList.remove("deckBusy");
+ document.querySelectorAll(".placeGhost.cardLift").forEach(g=>g.remove());
+ ensureSavedDecks();
+ const st=savedDeckStatus(state.savedDecks[slot],0);
+ if(st.list.length){
+  if(st.missing.length)return;
+  selectedDeck=[...st.list];
+  deckSelectPage=firstOwnedDeckPage();
+  renderDeckSelect();
+  return;
+ }
+ if(selectedDeck.length!==5)return;
+ const seen={};
+ state.savedDecks[slot]=selectedDeck.filter(n=>{
+  if(!C[n]||seen[n])return false;
+  seen[n]=1;
+  return true;
+ }).slice(0,5);
+ save();
+ renderMatchDeckSlots();
 }
 function renderDeckSelect(opts){
  opts=opts||{};
@@ -3453,9 +3531,10 @@ function renderDeckSelect(opts){
    hand.appendChild(slot);
  }
  if($("beginMatch")){
-  if(deckEdit&&deckEdit.mode==="preset")$("beginMatch").disabled=deckSelectAnimating;
-  else $("beginMatch").disabled=deckSelectAnimating||selectedDeck.length!==5||used>cap;
+  if(deckEdit&&deckEdit.mode==="preset")$("beginMatch").disabled=false;
+  else $("beginMatch").disabled=!matchDeckReady();
  }
+ renderMatchDeckSlots();
  if(seriesGame>0&&selectedDeck.length===5&&used<=cap){
    seriesPlayerDeck=[...selectedDeck];
    seriesPlayerCopyDeck=physicalCopiesForDeck("You",seriesPlayerDeck);
@@ -3476,7 +3555,7 @@ function pickDeckCard(n,fromEl){
  liftFlyCard(fromRect,elementRect(dest),html).then(()=>{
    deckSelectAnimating=false;
    $("deckSelect")?.classList.remove("deckBusy");
-   renderDeckSelect();
+   if($("deckSelect")&&!$("deckSelect").classList.contains("hidden"))renderDeckSelect();
  });
 }
 function returnDeckCard(slot,fromEl){
@@ -3494,32 +3573,37 @@ function returnDeckCard(slot,fromEl){
  liftFlyCard(fromRect,elementRect(dest),html).then(()=>{
    deckSelectAnimating=false;
    $("deckSelect")?.classList.remove("deckBusy");
-   renderDeckSelect();
+   if($("deckSelect")&&!$("deckSelect").classList.contains("hidden"))renderDeckSelect();
  });
 }
 function liftFlyCard(fromRect,toRect,html){
  return new Promise(done=>{
-  let reduce=reducedPlaceMotion();
-  if(reduce||!fromRect||!toRect||!toRect.width){done();return}
-  let ghost=document.createElement("div");
-  ghost.className="placeGhost cardLift";
-  ghost.innerHTML=html;
-  ghost.style.left=fromRect.left+"px";
-  ghost.style.top=fromRect.top+"px";
-  ghost.style.width=fromRect.width+"px";
-  ghost.style.height=fromRect.height+"px";
-  document.body.appendChild(ghost);
-  requestAnimationFrame(()=>requestAnimationFrame(()=>ghost.classList.add("cardLift-up")));
-  setTimeout(()=>{
-   ghost.classList.add("cardLift-fly");
-   ghost.style.transition="left .28s cubic-bezier(.2,.7,.2,1),top .28s cubic-bezier(.2,.7,.2,1),width .28s ease,height .28s ease,transform .28s ease";
-   ghost.style.left=toRect.left+"px";
-   ghost.style.top=toRect.top+"px";
-   ghost.style.width=toRect.width+"px";
-   ghost.style.height=toRect.height+"px";
-   ghost.style.transform="none";
-  },220);
-  setTimeout(()=>{ghost.remove();done()},520);
+  let finished=false;
+  const finish=()=>{if(finished)return;finished=true;done()};
+  try{
+   let reduce=reducedPlaceMotion();
+   if(reduce||!fromRect||!toRect||!toRect.width){finish();return}
+   let ghost=document.createElement("div");
+   ghost.className="placeGhost cardLift";
+   ghost.innerHTML=html;
+   ghost.style.left=fromRect.left+"px";
+   ghost.style.top=fromRect.top+"px";
+   ghost.style.width=fromRect.width+"px";
+   ghost.style.height=fromRect.height+"px";
+   document.body.appendChild(ghost);
+   requestAnimationFrame(()=>requestAnimationFrame(()=>ghost.classList.add("cardLift-up")));
+   setTimeout(()=>{
+    ghost.classList.add("cardLift-fly");
+    ghost.style.transition="left .28s cubic-bezier(.2,.7,.2,1),top .28s cubic-bezier(.2,.7,.2,1),width .28s ease,height .28s ease,transform .28s ease";
+    ghost.style.left=toRect.left+"px";
+    ghost.style.top=toRect.top+"px";
+    ghost.style.width=toRect.width+"px";
+    ghost.style.height=toRect.height+"px";
+    ghost.style.transform="none";
+   },220);
+   setTimeout(()=>{ghost.remove();finish()},520);
+   setTimeout(finish,800);
+  }catch(err){finish()}
  });
 }
 function renderDeck(){renderDeckSelect()}
@@ -4028,7 +4112,12 @@ function addResultContinue(label,handler){
   b.type="button";
   b.className="resultPlaqueBtn";
   b.textContent=label;
-  b.onclick=()=>{b.remove();handler();};
+  b.onclick=()=>{
+    if(b.dataset.busy)return;
+    b.dataset.busy="1";
+    try{handler()}
+    catch(err){delete b.dataset.busy;console.warn(err)}
+  };
   $("resultActions").appendChild(b);
 }
 function playResultFlip(card,owner){
@@ -6631,6 +6720,11 @@ if ('serviceWorker' in navigator) {
   max-width:58px;
 }
 #result.isGiftComplete .resultCeremony{display:none!important}
+#result.isGiftComplete .resultActions{
+  position:relative;
+  z-index:5;
+  flex:0 0 auto;
+}
 </style>
 <style>
 /* v44 — opponent card backs (default) and lift-then-flip when they play. */
@@ -6712,6 +6806,7 @@ if ('serviceWorker' in navigator) {
   --binder-ring-h:80px;
   --binder-spine:40px;
   position:relative;
+  z-index:8;
   max-width:none!important;
   margin:0!important;
   height:100dvh!important;
@@ -6773,6 +6868,9 @@ if ('serviceWorker' in navigator) {
   color:#fff!important;
   border:2px solid #e7c47b!important;
   box-shadow:0 6px 14px #0008;
+  position:relative;
+  z-index:4;
+  pointer-events:auto;
 }
 #deckSelect #beginMatch{
   position:static!important;
@@ -6781,12 +6879,45 @@ if ('serviceWorker' in navigator) {
   margin:0!important;
   min-height:44px!important;
   font-size:14px!important;
+  pointer-events:auto!important;
 }
 #deckSelect #beginMatch:disabled{
   background:#9a938b!important;
   color:#3b3835!important;
   border-color:#706a64!important;
   box-shadow:none;
+  pointer-events:none;
+}
+#deckSelect .deckSelectSlots{
+  display:flex;
+  gap:6px;
+  flex:0 0 auto;
+  margin:0 0 8px;
+  min-width:0;
+}
+#deckSelect .deckSelectSlots[hidden]{display:none!important}
+#deckSelect .deckSlotChip{
+  flex:1 1 0;
+  min-width:0;
+  min-height:34px;
+  padding:4px 0;
+  font:800 13px/1 Georgia,"Times New Roman",serif;
+  color:#f7efdc!important;
+  background:#342319!important;
+  border:2px solid #8a6a3a!important;
+  box-shadow:0 4px 10px #0006;
+  border-radius:6px;
+}
+#deckSelect .deckSlotChip.filled{
+  border-color:#e7c47b!important;
+}
+#deckSelect .deckSlotChip.loaded{
+  background:#5a3d22!important;
+  box-shadow:inset 0 0 0 1px #f0d48a,0 4px 10px #0006;
+}
+#deckSelect .deckSlotChip.empty{
+  opacity:.72;
+  border-style:dashed!important;
 }
 #deckSelect .deckBinderStage{
   flex:1 1 auto;
@@ -7071,6 +7202,8 @@ if ('serviceWorker' in navigator) {
 }
 @media(max-height:700px){
   #deckSelect .deckSelectBar{margin:0 0 6px}
+  #deckSelect .deckSelectSlots{margin:0 0 6px;gap:4px}
+  #deckSelect .deckSlotChip{min-height:30px}
   #deckSelect .deckBinderStage{gap:6px}
   #deckSelect .binderPage{padding:36px 6px 6px}
   #deckSelect .deckSelectFelt{border-width:6px;padding:5px 8px}
@@ -8268,6 +8401,7 @@ html,body,#visualShell{color-scheme:only light}
   width:min(100%,var(--stage-w,430px))!important;
 }
 #deckSelect{
+  z-index:8;
   --binder-tab:clamp(22px,calc(var(--stage-w,430px) * .065),28px);
   --binder-inset:clamp(6px,calc(var(--stage-w,430px) * .024),10px);
   --binder-ring:clamp(22px,calc(var(--stage-w,430px) * .08),34px);
