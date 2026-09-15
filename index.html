@@ -664,7 +664,6 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <b id="deckSelectTitle">Your cards</b>
         <span id="deckSelectInfo" class="small">0/5</span>
       </div>
-      <button type="button" id="beginMatch" disabled>Finished</button>
     </div>
     <div id="deckSelectSlots" class="deckSelectSlots" hidden></div>
     <div class="deckBinderStage">
@@ -683,6 +682,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         </div>
       </div>
     </div>
+    <button type="button" id="beginMatch" disabled>Finished</button>
   </div>
 </div>
 
@@ -3326,6 +3326,8 @@ function finishTutorialToTown(){
   if($("seriesScore"))$("seriesScore").classList.remove("hidden");
   if($("comboStatus"))$("comboStatus").classList.remove("hidden");
   setTableSkin("club");
+  currentNpc=null;
+  currentTerms=null;
   if(state){
     state.grandpaTutorial=true;
     state.tutorialDone=true;
@@ -3346,32 +3348,54 @@ function matchDeckReady(){
  const cap=currentTerms?.budget||0;
  return selectedDeck.length===5&&budget(selectedDeck)<=cap;
 }
-function beginPreparedMatch(){
- setTableSkin("club");
- homeTutorial=null;
- hideTableTalk();
- if(!matchDeckReady())return;
- deckSelectAnimating=false;
- $("deckSelect")?.classList.remove("deckBusy");
- document.querySelectorAll(".placeGhost.cardLift").forEach(g=>g.remove());
- if(seriesGame===0){
-   seriesPlayerDeck=[...selectedDeck];seriesAiDeck=aiDeck();
-   seriesPlayerCopyDeck=physicalCopiesForDeck("You",seriesPlayerDeck);
-   seriesAiCopyDeck=physicalCopiesForDeck(currentNpc,seriesAiDeck);
-   seriesWins={p:0,ai:0};seriesWinner=null;pendingSeriesClaim=null;
-   seriesPlayerExposed=[];seriesAiExposed=[];seriesResults=[];
+function ensureMatchOpponent(){
+ if(currentNpc&&Array.isArray(state?.npcs?.[currentNpc])&&state.npcs[currentNpc].length>=5)return;
+ if(currentNpc&&npcDefs[currentNpc]){
+  if(!state.npcs)state.npcs={};
+  if(!Array.isArray(state.npcs[currentNpc]))state.npcs[currentNpc]=[...npcDefs[currentNpc].start];
+  return;
  }
- playerHand=[...seriesPlayerDeck];aiHand=[...seriesAiDeck];aiPlayed=[];board=Array(9).fill(null);turn=0;chosen=null;lastCapture=null;pendingLossCard=null;lastComboCount=0;finishScheduled=false;matchAnimating=false;setupAiHandVisibility();
- if(seriesGame===0){
-   resetRuneBandit();
-   $("runeNpcName").textContent=currentNpc;
-   $("runeResult").textContent="";$("startAfterRune").classList.add("hidden");$("runeChoice").classList.add("hidden");
-   fillStarterTerms();
-   show("starter");
- }else{
-   startingPlayer=(seriesGame%2===0)?seriesInitialStarter:(seriesInitialStarter==="p"?"ai":"p");
-   show("game");
-   if(startingPlayer==="ai")aiOpeningMove();else renderGame();
+ currentNpc="Tomas";
+ if(!state.npcs)state.npcs={};
+ if(!Array.isArray(state.npcs.Tomas))state.npcs.Tomas=[...npcDefs.Tomas.start];
+ if(!currentTerms)currentTerms={...npcDefs.Tomas.terms};
+}
+function beginPreparedMatch(){
+ try{
+  setTableSkin("club");
+  homeTutorial=null;
+  hideTableTalk();
+  if(!matchDeckReady())return;
+  deckSelectAnimating=false;
+  $("deckSelect")?.classList.remove("deckBusy");
+  document.querySelectorAll(".placeGhost.cardLift").forEach(g=>g.remove());
+  ensureMatchOpponent();
+  if(!currentTerms)currentTerms={...(npcDefs[currentNpc]?.terms||npcDefs.Tomas.terms)};
+  if(seriesGame===0){
+    seriesPlayerDeck=[...selectedDeck];seriesAiDeck=aiDeck();
+    seriesPlayerCopyDeck=physicalCopiesForDeck("You",seriesPlayerDeck);
+    seriesAiCopyDeck=physicalCopiesForDeck(currentNpc,seriesAiDeck);
+    seriesWins={p:0,ai:0};seriesWinner=null;pendingSeriesClaim=null;
+    seriesPlayerExposed=[];seriesAiExposed=[];seriesResults=[];
+  }
+  playerHand=[...seriesPlayerDeck];aiHand=[...seriesAiDeck];aiPlayed=[];board=Array(9).fill(null);turn=0;chosen=null;lastCapture=null;pendingLossCard=null;lastComboCount=0;finishScheduled=false;matchAnimating=false;setupAiHandVisibility();
+  if(seriesGame===0){
+    show("starter");
+    resetRuneBandit();
+    if($("runeNpcName"))$("runeNpcName").textContent=currentNpc||"";
+    if($("runeResult"))$("runeResult").textContent="";
+    $("startAfterRune")?.classList.add("hidden");
+    $("runeChoice")?.classList.add("hidden");
+    fillStarterTerms();
+    scheduleScreenLayout("starter");
+  }else{
+    startingPlayer=(seriesGame%2===0)?seriesInitialStarter:(seriesInitialStarter==="p"?"ai":"p");
+    show("game");
+    if(startingPlayer==="ai")aiOpeningMove();else renderGame();
+  }
+ }catch(err){
+  console.warn(err);
+  if(matchDeckReady())show("starter");
  }
 }
 function deckCardStates(){
@@ -3608,14 +3632,17 @@ function liftFlyCard(fromRect,toRect,html){
 }
 function renderDeck(){renderDeckSelect()}
 function aiDeck(){
- let pool=[...state.npcs[currentNpc]],best=null;
+ const cap=currentTerms?.budget||86;
+ let pool=Array.isArray(state?.npcs?.[currentNpc])?[...state.npcs[currentNpc]]:[];
+ if(pool.length<5)pool=[...(npcDefs[currentNpc]?.start||npcDefs.Tomas.start)];
+ let best=null;
  for(let k=0;k<700;k++){
    let d=[...pool].sort(()=>Math.random()-.5).slice(0,5);if(d.length<5)continue;
-   let bd=budget(d);if(bd<=currentTerms.budget&&(!best||bd>best.bd))best={d,bd}
+   let bd=budget(d);if(bd<=cap&&(!best||bd>best.bd))best={d,bd}
  }
  if(best)return best.d;
- let fallback=[...pool].sort((a,b)=>C[a].budget-C[b].budget).slice(0,5);
- console.warn("AI deck budget fallback",currentNpc,budget(fallback),currentTerms.budget);
+ let fallback=[...pool].sort((a,b)=>(C[a]?.budget||0)-(C[b]?.budget||0)).slice(0,5);
+ console.warn("AI deck budget fallback",currentNpc,budget(fallback),cap);
  return fallback;
 }
 if($("deckSelectBack"))$("deckSelectBack").onclick=()=>{
@@ -3631,10 +3658,13 @@ if($("deckSelectBack"))$("deckSelectBack").onclick=()=>{
  if(seriesGame>0){show("result");return}
  show("challenge");
 };
-$("beginMatch").onclick=()=>{
+function onBeginMatch(e){
+ if(e){e.preventDefault();e.stopPropagation()}
+ if($("beginMatch")?.disabled)return;
  if(deckEdit&&deckEdit.mode==="preset"){savePresetFromBinder();return}
  beginPreparedMatch();
-};
+}
+$("beginMatch").onclick=onBeginMatch;
 if($("savedDecksBack"))$("savedDecksBack").onclick=closeSavedDecks;
 if($("savedDecksBinder"))$("savedDecksBinder").onclick=()=>{
  selectedDeck=[];
@@ -6873,13 +6903,21 @@ if ('serviceWorker' in navigator) {
   pointer-events:auto;
 }
 #deckSelect #beginMatch{
-  position:static!important;
-  display:inline-block!important;
-  width:auto!important;
-  margin:0!important;
-  min-height:44px!important;
-  font-size:14px!important;
+  position:relative!important;
+  z-index:6;
+  display:block!important;
+  width:100%!important;
+  flex:0 0 auto;
+  margin:8px 0 0!important;
+  min-height:54px!important;
+  padding:12px 16px!important;
+  font-size:17px!important;
+  font-weight:800;
+  letter-spacing:.06em;
+  text-transform:uppercase;
   pointer-events:auto!important;
+  touch-action:manipulation;
+  -webkit-tap-highlight-color:transparent;
 }
 #deckSelect #beginMatch:disabled{
   background:#9a938b!important;
@@ -7188,8 +7226,8 @@ if ('serviceWorker' in navigator) {
 .placeGhost.cardLift-fly{transform:none}
 @media(max-width:620px){
   #deckSelect{--binder-tab:26px;--binder-inset:8px;--binder-ring:28px;--binder-ring-h:70px;--binder-spine:34px}
-  #deckSelect .deckSelectBar button,
-  #deckSelect #beginMatch{min-height:42px!important;padding:7px 10px;font-size:13px!important}
+  #deckSelect .deckSelectBar button{min-height:42px;padding:7px 10px;font-size:13px}
+  #deckSelect #beginMatch{min-height:52px!important;padding:11px 14px!important;font-size:16px!important}
   #deckSelect .binderPage{padding:40px 6px 8px}
   #deckSelect .deckSelectFelt{border-width:7px;padding:7px 10px}
   #deckSelect .binderTabs{padding:0 6px 2px}
@@ -8399,6 +8437,10 @@ html,body,#visualShell{color-scheme:only light}
 }
 #deckSelect .deckSelectShell{
   width:min(100%,var(--stage-w,430px))!important;
+}
+#deckSelect #beginMatch{
+  width:100%!important;
+  flex:0 0 auto;
 }
 #deckSelect{
   z-index:8;
