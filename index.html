@@ -1116,7 +1116,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -1183,17 +1183,73 @@ function newsMockKind(){
  return typeof location!=="undefined"&&/(?:^|[?&])newsMock=1(?:&|$)/.test(location.search);
 }
 let gazettePages=[],gazetteIndex=0,gazetteFlipping=false,gazetteSwipeX=null;
+function gazetteEventName(title){
+ if(/Open/i.test(title||""))return "Open";
+ if(/Champion/i.test(title||""))return "Championship";
+ if(/Warm/i.test(title||""))return "Warm-Up";
+ return title||"contest";
+}
+function gazette(h,p){
+ if(!h||!p)return;
+ if(!state.gazette)state.gazette=[];
+ if(state.gazette.slice(-4).some(x=>x.h===h))return;
+ state.gazette.push({h,p,date:state.visual?.date||""});
+ if(state.gazette.length>36)state.gazette=state.gazette.slice(-36);
+}
+function paperClaim(winner,loser,card,score){
+ const name=cardLabel(card);
+ const h=winner==="You"?`You take ${name}`:`${winner} takes ${name}`;
+ const p=score
+  ? `${winner==="You"?"You":winner} defeated ${loser==="You"?"you":loser} ${score} and claimed ${name}.`
+  : `${winner==="You"?"You":winner} claimed ${name} from ${loser==="You"?"you":loser}.`;
+ return {h,p};
+}
+function paperWin(winner,title,score,round){
+ const event=gazetteEventName(title);
+ const h=winner==="You"?`You take the ${event}`:`${winner} takes the ${event}`;
+ const who=winner==="You"?"You":winner;
+ const verb=winner==="You"?"win":"wins";
+ const bit=score?` ${score}`:"";
+ const stage=/Final/i.test(round||"Final")?" in the final":round?` in the ${round.toLowerCase()}`:"";
+ return {h,p:`${who} ${verb} the ${title}${bit}${stage}.`};
+}
+function newsLineToGazette(text){
+ if(!text||typeof text!=="string")return null;
+ if(/common-card supply|exchange pool|local exchange|journal calendar|relationship with|declined |challenged you|Grandfather said|Card News began|local card scene is quiet| added to your journal|drew /.test(text))return null;
+ let m=text.match(/^(.+): (.+) defeated (.+) (\d+-\d+) in the (.+)\.$/);
+ if(m){
+  if(String(m[5]).toLowerCase()!=="final")return null;
+  return paperWin(m[2],m[1],m[4],"Final");
+ }
+ m=text.match(/^You are the Year (\d+) Local Champion\.$/);
+ if(m)return {h:"You are Local Champion",p:`You are the Year ${m[1]} Local Champion.`};
+ m=text.match(/^(.+) is the Year (\d+) Local Champion\.$/);
+ if(m)return {h:`${m[1]} is Local Champion`,p:`${m[1]} is the Year ${m[2]} Local Champion.`};
+ m=text.match(/^You win the (.+)\.$/);
+ if(m)return paperWin("You",m[1]);
+ m=text.match(/^(.+) wins the (.+)\.$/);
+ if(m)return paperWin(m[1],m[2]);
+ m=text.match(/^You defeated (.+) (\d+-\d+) and won (.+)\.$/);
+ if(m)return paperClaim("You",m[1],m[3],m[2]);
+ m=text.match(/^(.+) defeated you (\d+-\d+) and claimed (.+)\.$/);
+ if(m)return paperClaim(m[1],"You",m[3],m[2]);
+ m=text.match(/^You defeated (.+) and claimed (.+)\.$/);
+ if(m)return paperClaim("You",m[1],m[2]);
+ m=text.match(/^(.+) defeated (.+) and claimed (.+)\.$/);
+ if(m)return paperClaim(m[1],m[2],m[3]);
+ if(/quarterfinals are underway/i.test(text))return {h:"Championship quarterfinals",p:text};
+ return null;
+}
+function ensureGazette(){
+ if(!state.gazette)state.gazette=[];
+ if(state.gazetteReady)return;
+ state.gazetteReady=true;
+ (state.news||[]).forEach(t=>{const s=newsLineToGazette(t);if(s)gazette(s.h,s.p)});
+}
 function gazetteStories(){
- return [
-  {h:"Bram takes the Open",p:"Bram beat Elira 3–2 in the final. His winning five take a Saturday Open stamp. Travelling players leave Lythmere by morning."},
-  {h:"A Red Fox changes hands",p:"Elira claimed a Red Fox from Tomas at the Club. The copy is already the talk of the taproom."},
-  {h:"Visitors for Saturday",p:"Three travelling competitors arrived for the Open. They do not stay. The Club will be local again by Sunday."},
-  {h:"Quiet after the banners",p:"Bunting came down overnight. Bram was first through the door and took the window table without a word."},
-  {h:"Nessa wants another game",p:"Nessa has been asking after a friendly match at the Inn. She says the Open left her hungry, not tired."},
-  {h:"Tomas means to win it back",p:"Tomas has been seen walking the Market with a thinner binder. He wants the Fox, and he is not shy about saying so."},
-  {h:"Stamps on the winning five",p:"Only the champion’s final five take a Saturday Open stamp. Claim One was settled at each table before the next round was called."},
-  {h:"The local circuit continues",p:"The Championship is still months off. Until then the Club plays on ordinary evenings, and the noticeboard already lists the next Open."}
- ];
+ ensureGazette();
+ const rows=[...(state.gazette||[])].slice(-18).reverse();
+ return rows;
 }
 function gazetteDateLine(){
  try{return visualDateLabel()}catch(e){return "Lythmere"}
@@ -1483,6 +1539,8 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  if(!state.history){state.history={};[...new Set([...state.player,...Object.values(state.npcs).flat()])].forEach(c=>state.history[c]=["History tracking began in prototype v0.3."])}
  if(state.worldStep==null)state.worldStep=0;
  if(!state.news)state.news=["Card News began tracking local activity."];
+ if(!state.gazette)state.gazette=[];
+ ensureGazette();
  if(!state.memory)state.memory={};
  Object.keys(npcDefs).forEach(n=>{
    if(!state.memory[n])state.memory[n]={playerWins:0,npcWins:0,draws:0,declines:0,cardsWon:[],cardsLost:[],affinity:0,rivalry:0,respect:0,meetings:0,lastReaction:"",moments:[]};
@@ -1862,7 +1920,8 @@ function simulatedTournamentSeries(a,b,tournament,round,progress){
  tournamentRecord(b,tournament,`${round} series ${wins[b]}-${wins[a]}`,seasonDeck(b));
 
  state.season.history.push(`${tournament}: ${winner} defeated ${loser} ${wins[winner]}-${wins[loser]} (${round}).`);
- news(`${tournament}: ${winner} defeated ${loser} ${wins[winner]}-${wins[loser]} in the ${round}.`);
+ news(`${tournament}: ${winner} defeated ${loser} ${wins[winner]}-${wins[loser]} in the ${round}.`,
+  round==="Final"?paperWin(winner,tournament,`${wins[winner]}-${wins[loser]}`,"Final"):null);
 
  // One tournament card transfer after the series, from a card in the loser's decisive-game deck.
  if(a!=="You"&&b!=="You"&&state.npcs[loser].length>5){
@@ -1876,6 +1935,7 @@ function simulatedTournamentSeries(a,b,tournament,round,progress){
        moveCopy(state.copies[chosen],loser,winner,`${loser} lost ${design} to ${winner} at ${tournament} (${round}).`);
        hist(design,`${loser} lost ${design} to ${winner} at ${tournament} (${round}).`);
        markSeen(winner,design);
+       gazette(`${cardLabel(design)} changes hands`,`${loser} lost ${cardLabel(design)} to ${winner} at ${tournament}.`);
      }
    }
  }
@@ -1898,7 +1958,7 @@ function runSeasonEvent(day){
  if(day===21){
    state.season.champion=champ;
    state.season.history.push(`${champ} became Local Champion, Year ${state.season.year}.`);
-   news(`${champ} is the Year ${state.season.year} Local Champion.`);
+   news(`${champ} is the Year ${state.season.year} Local Champion.`,{h:`${champ} is Local Champion`,p:`${champ} is the Year ${state.season.year} Local Champion.`});
  }else{
    state.season.history.push(`${champ} won the ${title}.`);news(`${champ} wins the ${title}.`);
  }
@@ -1970,7 +2030,7 @@ function beginLocalChampionship(){
  let q4=simulatedTournamentMatch("Elira","Visitor C",t.name,"Quarterfinal",progress);
  t.qf2Winner=q2.winner;t.qf3Winner=q3.winner;t.qf4Winner=q4.winner;
  t.status="awaitingPlayerQuarter";t.round="Quarterfinal";
- news(`The Local Championship quarterfinals are underway.`);
+ news(`The Local Championship quarterfinals are underway.`,{h:"Championship quarterfinals",p:"The Local Championship quarterfinals are underway."});
  save();renderTournament();
 }
 function completeChampionshipNpcFinal(a,b){
@@ -1980,7 +2040,7 @@ function completeChampionshipNpcFinal(a,b){
  stampTournamentWinner(fr.winner,t.name,fr.winnerDeck);
  state.season.champion=fr.winner;
  state.season.history.push(`${fr.winner} became Local Champion, Year ${state.season.year}.`);
- news(`${fr.winner} is the Year ${state.season.year} Local Champion.`);
+ news(`${fr.winner} is the Year ${state.season.year} Local Champion.`,{h:`${fr.winner} is Local Champion`,p:`${fr.winner} is the Year ${state.season.year} Local Champion.`});
  t.playerAlive=false;t.status="complete";t.round="Complete";
  save();
  return fr.winner;
@@ -2016,12 +2076,12 @@ function finalizeChampionshipPlayerResult(playerWon){
      stampTournamentWinner("You",t.name,playerFinalCopies);
      state.season.champion="You";
      state.season.history.push(`You became Local Champion, Year ${state.season.year}.`);
-     news(`You are the Year ${state.season.year} Local Champion.`);
+     news(`You are the Year ${state.season.year} Local Champion.`,{h:"You are Local Champion",p:`You are the Year ${state.season.year} Local Champion.`});
    }else{
      stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
      state.season.champion=m.opponent;
      state.season.history.push(`${m.opponent} became Local Champion, Year ${state.season.year}.`);
-     news(`${m.opponent} is the Year ${state.season.year} Local Champion.`);
+     news(`${m.opponent} is the Year ${state.season.year} Local Champion.`,{h:`${m.opponent} is Local Champion`,p:`${m.opponent} is the Year ${state.season.year} Local Champion.`});
    }
  }
  if(t.status==="complete")scheduleActivityTime("tournament");
@@ -2066,6 +2126,8 @@ function createSaturdayOpen(ev){
   scores:{},pendingTables:[],call:"",playerFinish:null,
   playerAlive:true,afterReports:null,log:[]
  };
+ const names=(visitors||[]).map(v=>v.name).filter(Boolean);
+ if(names.length)news(null,{h:"Visitors for Saturday",p:`${names.join(", ")} arrived for the Open. They do not stay.`});
  save();
 }
 function openPersonBlurb(n){
@@ -2230,10 +2292,10 @@ function finalizeSaturdayOpenPlayerResult(playerWon){
   t.playerFinish=playerWon?"Champion":"Finalist";
   if(playerWon){
    stampTournamentWinner("You",t.name,playerFinalCopies);
-   news(`You win the ${t.name}.`);
+   news(`You win the ${t.name}.`,paperWin("You",t.name,t.scores?.final,"Final"));
   }else{
    stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
-   news(`${m.opponent} wins the ${t.name}.`);
+   news(`${m.opponent} wins the ${t.name}.`,paperWin(m.opponent,t.name,t.scores?.final,"Final"));
   }
   scheduleActivityTime("tournament");
  }
@@ -2361,7 +2423,7 @@ function finalizeTournamentPlayerResult(playerWon){
    t.finalWinner=playerWon?"You":m.opponent;t.status="complete";
    if(playerWon)stampTournamentWinner("You",t.name,playerFinalCopies);
    else stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
-   news(playerWon?`You win the ${t.name}.`:`${m.opponent} wins the ${t.name}.`);
+   news(playerWon?`You win the ${t.name}.`:`${m.opponent} wins the ${t.name}.`,paperWin(playerWon?"You":m.opponent,t.name,null,"Final"));
  }
  if(t.status==="complete")scheduleActivityTime("tournament");
  window._tournamentMatch=null;save();
@@ -2483,7 +2545,7 @@ function worldMatch(a,b){
  if(state.npcs[lose].length<=5)return false;
  let used=lose===a?A:B;let take=npcClaim(win,used);
  transfer(take,lose,win,`${lose} lost ${take} to ${win} in an NPC match.`);
- state.log.push(`${win} defeated ${lose} and claimed ${take}.`);news(`${win} defeated ${lose} and claimed ${take}.`);
+ state.log.push(`${win} defeated ${lose} and claimed ${take}.`);news(`${win} defeated ${lose} and claimed ${take}.`,paperClaim(win,lose,take));
  state.daily.lastNpcMatch=`${win} defeated ${lose}`;state.daily.lastCardMove=`${take}: ${lose} → ${win}`;
  // Seeing a named card in public Card News makes that card known in the winner's collection.
  markSeen(win,take);
@@ -2602,7 +2664,7 @@ function renderKnownCollection(npc){
  scheduleScreenLayout("challenge");
 }
 
-function news(text){if(!state.news)state.news=[];state.news.push(text)}
+function news(text,paper){if(text){if(!state.news)state.news=[];state.news.push(text)}if(paper)gazette(paper.h,paper.p)}
 function mem(n){
  if(!state.memory[n])state.memory[n]={playerWins:0,npcWins:0,draws:0,declines:0,cardsWon:[],cardsLost:[],affinity:0,rivalry:0,respect:0,meetings:0,lastReaction:"",moments:[]};
  let m=state.memory[n];
@@ -4018,7 +4080,7 @@ function settleSeries(winner){
       if(state.npcs[currentNpc].includes(n)){
         transfer(n,currentNpc,"You",`${currentNpc} lost named stake ${n} to you after the series.`);
         mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);
-        news(`You defeated ${currentNpc} ${seriesWins.p}-${seriesWins.ai} and won ${n}.`);
+        news(`You defeated ${currentNpc} ${seriesWins.p}-${seriesWins.ai} and won ${n}.`,paperClaim("You",currentNpc,n,`${seriesWins.p}-${seriesWins.ai}`));
         $("resultCaption").textContent="You claimed this copy.";
         playResultFlip(C[n],"p");
       }else{
@@ -4063,7 +4125,7 @@ function settleSeries(winner){
    $("resultCaption").textContent=`${currentNpc} claims this copy.`;
    transfer(take,"You",currentNpc,`${currentNpc} claimed ${take} from you after winning the series.`);
    mem(currentNpc).cardsLost.push(take);cardRelationship(currentNpc,"theyTook",take);
-   news(`${currentNpc} defeated you ${seriesWins.ai}-${seriesWins.p} and claimed ${take}.`);
+   news(`${currentNpc} defeated you ${seriesWins.ai}-${seriesWins.p} and claimed ${take}.`,paperClaim(currentNpc,"You",take,`${seriesWins.ai}-${seriesWins.p}`));
    recovery();save();
    playResultFlip(C[take],"ai");
  }
@@ -4172,7 +4234,7 @@ function playerOwnedCount(design){
 }
 function claim(n,copyIdChosen=null){
  let cp=getCopy(currentNpc,n,copyIdChosen),fp=state.npcs[currentNpc],ix=fp.indexOf(n);if(ix>=0)fp.splice(ix,1);state.player.push(n);moveCopy(cp,currentNpc,"You",`${currentNpc} lost ${n} to you after your victory.`);hist(n,`${currentNpc} lost ${n} to you after your victory.`);
- mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);state.log.push(`You defeated ${currentNpc} and claimed ${n}.`);news(`You defeated ${currentNpc} and claimed ${n}.`);recovery();maybeIncoming({npc:currentNpc,type:"lostCard",card:n});save();
+ mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);state.log.push(`You defeated ${currentNpc} and claimed ${n}.`);news(`You defeated ${currentNpc} and claimed ${n}.`,paperClaim("You",currentNpc,n));recovery();maybeIncoming({npc:currentNpc,type:"lostCard",card:n});save();
 }
 
 function showSeriesSummary(){
