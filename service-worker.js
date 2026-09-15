@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v82-tutorial-pacing';
+const CACHE_NAME = 'card-road-pwa-v83-gift-skip';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',

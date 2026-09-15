@@ -2699,7 +2699,7 @@ function openTutorialGift(){
  $("resultScore").textContent="";
  show("result");
  homeTutorial.gift=0;
- addResultContinue("Skip",finishTutorialToTown);
+ addResultContinue("Skip",showTutorialGiftComplete);
  playTutorialGiftFlip();
 }
 function keepGiftCard(n){
@@ -2710,17 +2710,32 @@ function keepGiftCard(n){
  wrap.innerHTML=cardHTML(C[n],"p");
  keep.appendChild(wrap);
 }
+function showTutorialGiftComplete(){
+ if(!inHomeTutorial()||homeTutorial.phase!=="gift")return;
+ if(giftFlipTimer){clearTimeout(giftFlipTimer);giftFlipTimer=null}
+ const keep=$("giftKeep");
+ if(keep){
+  keep.classList.remove("hidden");
+  keep.innerHTML="";
+  starter.forEach(n=>keepGiftCard(n));
+ }
+ $("result")?.classList.add("isGift","isGiftComplete");
+ $("resultCaption").textContent="The tin is yours.";
+ $("resultText").textContent="Fifteen cards. Take them into town.";
+ $("resultCeremony").classList.add("hidden");
+ $("resultCeremony").classList.remove("isLive");
+ $("resultCeremony").innerHTML="";
+ $("resultActions").innerHTML="";
+ addResultContinue("Into town",finishTutorialToTown);
+ homeTutorial.gift=starter.length;
+ scheduleScreenLayout("result");
+}
 function playTutorialGiftFlip(){
  if(!inHomeTutorial()||homeTutorial.phase!=="gift")return;
  if(giftFlipTimer){clearTimeout(giftFlipTimer);giftFlipTimer=null}
  const ids=starter;
  if(homeTutorial.gift>=ids.length){
-  $("resultCaption").textContent="The tin is yours.";
-  $("resultCeremony").classList.add("hidden");
-  $("resultCeremony").classList.remove("isLive");
-  $("resultActions").innerHTML="";
-  addResultContinue("Into town",finishTutorialToTown);
-  scheduleScreenLayout("result");
+  showTutorialGiftComplete();
   return;
  }
  const n=ids[homeTutorial.gift];
@@ -3445,7 +3460,7 @@ function resetResultChrome(){
   $("claimPanel").classList.remove("isFading");
   $("claimCards").innerHTML="";
   if($("giftKeep")){$("giftKeep").classList.add("hidden");$("giftKeep").innerHTML=""}
-  $("result")?.classList.remove("isGift");
+  $("result")?.classList.remove("isGift","isGiftComplete");
   $("resultCeremony").classList.add("hidden");
   $("resultCeremony").classList.remove("isLive");
   $("resultCeremony").innerHTML="";
@@ -6044,6 +6059,16 @@ if ('serviceWorker' in navigator) {
   opacity:1!important;
   pointer-events:none;
 }
+#result.isGiftComplete .giftKeep{
+  max-width:min(100%,340px);
+  gap:8px 6px;
+  margin:4px auto 10px;
+}
+#result.isGiftComplete .giftKept{
+  width:calc((100% - 24px) / 5);
+  max-width:58px;
+}
+#result.isGiftComplete .resultCeremony{display:none!important}
 </style>
 <style>
 /* v44 — opponent card backs (default) and lift-then-flip when they play. */
