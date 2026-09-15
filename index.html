@@ -1934,7 +1934,8 @@ function createSaturdayOpen(ev){
   qf4:[others[4],others[5]],
   qf1Winner:null,qf2Winner:null,qf3Winner:null,qf4Winner:null,
   sf1Winner:null,sf2Winner:null,finalWinner:null,
-  playerAlive:true,reports:[],reportIndex:0,afterReports:null,log:[]
+  scores:{},pendingTables:[],call:"",playerFinish:null,
+  playerAlive:true,afterReports:null,log:[]
  };
  save();
 }
@@ -1945,21 +1946,82 @@ function openIntroHTML(pair,index,total){
  if(!pair)return "";
  return `<div class="openIntro"><div class="openKicker">Quarterfinal · Table ${index+1} of ${total}</div><h3>${pair[0]} vs ${pair[1]}</h3>${openPersonBlurb(pair[0])}${openPersonBlurb(pair[1])}</div>`;
 }
-function openPairLine(pair,winner){
- if(!pair)return "Pending";
- const line=`${pair[0]} vs ${pair[1]}`;
- return winner?`${line} → <b>${winner}</b>`:line;
+function openPairLine(pair,winner,score){
+ if(!pair)return `<div class="openPair"><span>Pending</span></div>`;
+ const names=`${pair[0]} vs ${pair[1]}`;
+ if(!winner)return `<div class="openPair"><span>${names}</span></div>`;
+ const tag=score?`${winner} ${score}`:winner;
+ return `<div class="openPair"><span>${names}</span><span class="openPairScore">${tag}</span></div>`;
 }
 function openBracketHTML(t){
- const qf=[["qf1",t.qf1,t.qf1Winner],["qf2",t.qf2,t.qf2Winner],["qf3",t.qf3,t.qf3Winner],["qf4",t.qf4,t.qf4Winner]];
+ const sc=t.scores||{};
+ const qf=[["qf1",t.qf1,t.qf1Winner,sc.qf1],["qf2",t.qf2,t.qf2Winner,sc.qf2],["qf3",t.qf3,t.qf3Winner,sc.qf3],["qf4",t.qf4,t.qf4Winner,sc.qf4]];
  const sf1=t.qf1Winner&&t.qf2Winner?[t.qf1Winner,t.qf2Winner]:null;
  const sf2=t.qf3Winner&&t.qf4Winner?[t.qf3Winner,t.qf4Winner]:null;
  const fin=t.sf1Winner&&t.sf2Winner?[t.sf1Winner,t.sf2Winner]:null;
  return `<div class="openBracket">
-   <div class="openCol"><h3>Quarterfinals</h3>${qf.map(([,pair,w])=>`<div>${openPairLine(pair,w)}</div>`).join("")}</div>
-   <div class="openCol"><h3>Semifinals</h3><div>${openPairLine(sf1,t.sf1Winner)}</div><div>${openPairLine(sf2,t.sf2Winner)}</div></div>
-   <div class="openCol"><h3>Final</h3><div>${openPairLine(fin,t.finalWinner)}</div></div>
+   <div class="openCol"><h3>Quarterfinals</h3>${qf.map(([,pair,w,s])=>openPairLine(pair,w,s)).join("")}</div>
+   <div class="openCol"><h3>Semifinals</h3>${openPairLine(sf1,t.sf1Winner,sc.sf1)}${openPairLine(sf2,t.sf2Winner,sc.sf2)}</div>
+   <div class="openCol"><h3>Final</h3>${openPairLine(fin,t.finalWinner,sc.final)}</div>
  </div>`;
+}
+function formatOpenScore(score){
+ return String(score||"").replace(/-/g,"–");
+}
+function playerOpenScore(won){
+ return formatOpenScore(won?`${seriesWins.p}-${seriesWins.ai}`:`${seriesWins.ai}-${seriesWins.p}`);
+}
+function noteOpenScore(t,key,score){
+ if(!t.scores)t.scores={};
+ t.scores[key]=score;
+}
+function openTableJob(a,b,winnerField,scoreField,round,label){
+ return {a,b,winnerField,scoreField,round,label};
+}
+function queueOpenJobs(t,jobs,thenStatus){
+ t.pendingTables=[...(jobs||[])];
+ t.afterReports=thenStatus;
+ playNextOpenTable(t);
+}
+function playNextOpenTable(t){
+ const jobs=t.pendingTables||[];
+ if(!jobs.length){
+  const next=t.afterReports;
+  t.afterReports=null;
+  t.call="";
+  if(next==="spectateSemi"){
+   queueOpenJobs(t,[
+    openTableJob(t.qf1Winner,t.qf2Winner,"sf1Winner","sf1","Semifinal","semifinal"),
+    openTableJob(t.qf3Winner,t.qf4Winner,"sf2Winner","sf2","Semifinal","semifinal")
+   ],"spectateFinal");
+   return;
+  }
+  if(next==="spectateFinal"){
+   queueOpenJobs(t,[openTableJob(t.sf1Winner,t.sf2Winner,"finalWinner","final","Final","final")],"complete");
+   return;
+  }
+  t.status=next||"complete";
+  if(t.status==="complete")scheduleActivityTime("tournament");
+  return;
+ }
+ const job=jobs.shift();
+ t.pendingTables=jobs;
+ const r=simulatedTournamentMatch(job.a,job.b,t.name,job.round,{});
+ t[job.winnerField]=r.winner;
+ noteOpenScore(t,job.scoreField,formatOpenScore(r.score));
+ if(job.round==="Final"){
+  t.round="Complete";
+  t.finalWinner=r.winner;
+  stampTournamentWinner(r.winner,t.name,r.winnerDeck);
+  news(`${r.winner} wins the ${t.name}.`);
+ }
+ t.call=reportOpenSeries(r,job.label);
+ t.status="report";
+}
+function advanceOpenReport(){
+ const t=state.activeTournament;if(!t||t.status!=="report")return;
+ playNextOpenTable(t);
+ save();renderTournament();
 }
 function addTournamentAction(label,onClick,alt){
  const a=$("tournamentActions");if(!a)return;
@@ -1971,54 +2033,35 @@ function addTournamentAction(label,onClick,alt){
  b.onclick=onClick;
  a.appendChild(b);
 }
-function startOpenReports(t,lines,nextStatus){
- t.reports=(lines||[]).filter(Boolean);
- t.reportIndex=0;
- t.afterReports=nextStatus;
- if(!t.reports.length){
-  finishOpenReports(t);
-  return;
- }
- t.status="report";
-}
-function finishOpenReports(t){
- const next=t.afterReports;
- t.reports=[];t.reportIndex=0;t.afterReports=null;
- if(next==="spectateSemi"){
-  const s1=simulatedTournamentMatch(t.qf1Winner,t.qf2Winner,t.name,"Semifinal",{});
-  const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});
-  t.sf1Winner=s1.winner;t.sf2Winner=s2.winner;
-  startOpenReports(t,[reportOpenSeries(s1,"semifinal"),reportOpenSeries(s2,"semifinal")],"spectateFinal");
-  return;
- }
- if(next==="spectateFinal"){
-  const lines=[];
-  completeSaturdayNpcFinal(t,t.sf1Winner,t.sf2Winner,lines);
-  startOpenReports(t,lines,"complete");
-  return;
- }
- t.status=next||"complete";
- if(t.status==="complete")scheduleActivityTime("tournament");
-}
-function advanceOpenReport(){
- const t=state.activeTournament;if(!t||t.status!=="report")return;
- t.reportIndex=(t.reportIndex||0)+1;
- if(t.reportIndex>=(t.reports||[]).length)finishOpenReports(t);
- save();renderTournament();
-}
 function reportOpenSeries(r,roundName){
  if(!r)return "";
- return `${r.winner} takes the ${roundName} ${r.score} against ${r.loser}.`;
+ return `${r.winner} takes the ${roundName} ${formatOpenScore(r.score)} against ${r.loser}.`;
 }
-function completeSaturdayNpcFinal(t,a,b,reports){
- const fr=simulatedTournamentMatch(a,b,t.name,"Final",{});
- t.finalWinner=fr.winner;
- t.round="Complete";
- t.playerAlive=false;
- stampTournamentWinner(fr.winner,t.name,fr.winnerDeck);
- news(`${fr.winner} wins the ${t.name}.`);
- reports.push(reportOpenSeries(fr,"final"));
- reports.push(fr.winner==="You"?`You are the Saturday Open champion.`:`${fr.winner} takes the Saturday Open. Travelling players will be gone by morning.`);
+function yourOpenFinishLine(t){
+ if(t.finalWinner==="You")return "You are the Saturday Open champion.";
+ if(t.playerFinish==="Quarter-final")return `You fell in the quarter-finals to ${t.qf1Winner}${t.scores?.qf1?" "+t.scores.qf1:""}.`;
+ if(t.playerFinish==="Semi-final")return `You fell in the semi-finals to ${t.sf1Winner}${t.scores?.sf1?" "+t.scores.sf1:""}.`;
+ if(t.playerFinish==="Finalist")return `You were runner-up. ${t.finalWinner} took the final${t.scores?.final?" "+t.scores.final:""}.`;
+ return "";
+}
+function openResultsHTML(t){
+ const champ=t.finalWinner||"Unrecorded";
+ const you=champ==="You";
+ const runner=t.sf1Winner&&t.sf2Winner?(champ===t.sf1Winner?t.sf2Winner:t.sf1Winner):"";
+ const finalLine=runner?(t.scores?.final?`Final: ${champ} beat ${runner} ${t.scores.final}.`:`Final: ${champ} beat ${runner}.`):"";
+ const prize=you
+  ?"The five cards from your final take a Saturday Open stamp. Each series you won, you already claimed one copy."
+  :`${champ}'s winning five take a Saturday Open stamp. Claim One was settled at each table. Travelling players leave Lythmere by morning.`;
+ const lead=you?"The Club will remember this Saturday.":`${champ} takes the Saturday Open.`;
+ const yours=yourOpenFinishLine(t);
+ return `<div class="openResults">
+   <div class="openKicker">Results</div>
+   <div class="openChampionName">${champ}</div>
+   <p class="openReport">${lead}</p>
+   ${finalLine?`<p class="openReport">${finalLine}</p>`:""}
+   ${yours&&!you?`<p class="openReport">${yours}</p>`:""}
+   <div class="openPrize"><b>Prizes</b><p>${prize}</p></div>
+ </div>`;
 }
 function finalizeSaturdayOpenPlayerResult(playerWon){
  const t=state.activeTournament,m=window._tournamentMatch;if(!t||!m)return;
@@ -2027,42 +2070,43 @@ function finalizeSaturdayOpenPlayerResult(playerWon){
  if(playerWon)seasonRec("You").w++;else seasonRec(m.opponent).w++;
  if(playerWon)seasonRec(m.opponent).l++;else seasonRec("You").l++;
  const playerFinalCopies=[...seriesPlayerCopyDeck],npcFinalCopies=[...seriesAiCopyDeck];
- const reports=[];
+ const score=playerOpenScore(playerWon);
  if(m.round==="Quarterfinal"){
-  if(!t.qf2Winner){const r=simulatedTournamentMatch(t.qf2[0],t.qf2[1],t.name,"Quarterfinal",{});t.qf2Winner=r.winner;reports.push(reportOpenSeries(r,"quarterfinal"))}
-  if(!t.qf3Winner){const r=simulatedTournamentMatch(t.qf3[0],t.qf3[1],t.name,"Quarterfinal",{});t.qf3Winner=r.winner;reports.push(reportOpenSeries(r,"quarterfinal"))}
-  if(!t.qf4Winner){const r=simulatedTournamentMatch(t.qf4[0],t.qf4[1],t.name,"Quarterfinal",{});t.qf4Winner=r.winner;reports.push(reportOpenSeries(r,"quarterfinal"))}
+  noteOpenScore(t,"qf1",score);
+  if(!playerWon){t.playerAlive=false;t.playerFinish="Quarter-final"}
+  else t.round="Semifinal";
+  queueOpenJobs(t,[
+   openTableJob(t.qf2[0],t.qf2[1],"qf2Winner","qf2","Quarterfinal","quarterfinal"),
+   openTableJob(t.qf3[0],t.qf3[1],"qf3Winner","qf3","Quarterfinal","quarterfinal"),
+   openTableJob(t.qf4[0],t.qf4[1],"qf4Winner","qf4","Quarterfinal","quarterfinal")
+  ],playerWon?"awaitingPlayerSemi":"spectateSemi");
+ }else if(m.round==="Semifinal"){
+  noteOpenScore(t,"sf1",score);
+  if(playerWon)t.round="Final";
+  const other=[];
+  if(!t.sf2Winner)other.push(openTableJob(t.qf3Winner,t.qf4Winner,"sf2Winner","sf2","Semifinal","semifinal"));
   if(playerWon){
-   t.round="Semifinal";
-   reports.push(`Your semifinal is against ${t.qf2Winner}.`);
-   startOpenReports(t,reports,"awaitingPlayerSemi");
+   if(other.length)queueOpenJobs(t,other,"awaitingPlayerFinal");
+   else t.status="awaitingPlayerFinal";
   }else{
    t.playerAlive=false;
-   startOpenReports(t,reports,"spectateSemi");
-  }
- }else if(m.round==="Semifinal"){
-  if(playerWon){
-   if(!t.sf2Winner){const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});t.sf2Winner=s2.winner;reports.push(reportOpenSeries(s2,"semifinal"))}
-   t.round="Final";
-   reports.push(`The final is against ${t.sf2Winner}.`);
-   startOpenReports(t,reports,"awaitingPlayerFinal");
-  }else{
-   t.playerAlive=false;t.sf1Winner=m.opponent;
-   if(!t.sf2Winner){const s2=simulatedTournamentMatch(t.qf3Winner,t.qf4Winner,t.name,"Semifinal",{});t.sf2Winner=s2.winner;reports.push(reportOpenSeries(s2,"semifinal"))}
-   startOpenReports(t,reports,"spectateFinal");
+   t.playerFinish="Semi-final";
+   t.sf1Winner=m.opponent;
+   queueOpenJobs(t,other,"spectateFinal");
   }
  }else{
-  t.finalWinner=playerWon?"You":m.opponent;t.status="complete";t.round="Complete";
+  noteOpenScore(t,"final",score);
+  t.finalWinner=playerWon?"You":m.opponent;
+  t.status="complete";t.round="Complete";
+  t.playerFinish=playerWon?"Champion":"Finalist";
   if(playerWon){
    stampTournamentWinner("You",t.name,playerFinalCopies);
    news(`You win the ${t.name}.`);
-   reports.push(`You take the Saturday Open.`);
   }else{
    stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
    news(`${m.opponent} wins the ${t.name}.`);
-   reports.push(`${m.opponent} takes the Saturday Open.`);
   }
-  startOpenReports(t,reports,"complete");
+  scheduleActivityTime("tournament");
  }
  window._tournamentMatch=null;save();
 }
@@ -2088,12 +2132,20 @@ function renderSaturdayOpen(){
   return;
  }
  if(t.status==="report"){
-  const line=(t.reports||[])[t.reportIndex]||"";
-  const last=t.reportIndex>=(t.reports||[]).length-1;
-  if(intro)intro.innerHTML=`<div class="openIntro"><div class="openKicker">From the other tables</div><p class="openReport">${line}</p></div>`;
+  const pending=(t.pendingTables||[]).length;
+  const next=t.afterReports;
+  if(intro)intro.innerHTML=`<div class="openIntro"><div class="openKicker">From the other tables</div><p class="openReport">${t.call||""}</p></div>`;
   if(bracket)bracket.innerHTML=openBracketHTML(t);
-  const label=last?(t.afterReports==="complete"?"See the champion":t.afterReports==="awaitingPlayerSemi"?"Your semifinal":t.afterReports==="awaitingPlayerFinal"?"The final":"Continue"):"Continue";
+  const label=!pending&&next==="complete"?"See the results":!pending&&next==="awaitingPlayerSemi"?"Your semifinal":!pending&&next==="awaitingPlayerFinal"?"The final":"Continue";
   addTournamentAction(label,advanceOpenReport);
+  scheduleScreenLayout("tournament");
+  return;
+ }
+ if(t.status==="complete"){
+  if($("tournamentInfo"))$("tournamentInfo").innerHTML=`<b>${formattedWorldDate(t.date)}</b> · Card Club`;
+  if(intro)intro.innerHTML=openResultsHTML(t);
+  if(bracket)bracket.innerHTML=openBracketHTML(t);
+  addTournamentAction("Return to the Club",()=>{consumePendingActivityTime();show("home");renderHome()});
   scheduleScreenLayout("tournament");
   return;
  }
@@ -2108,9 +2160,6 @@ function renderSaturdayOpen(){
   addTournamentAction(`Play semifinal vs ${t.qf2Winner}`,()=>beginTournamentPlayerMatch(t.qf2Winner,"sf1Winner","Semifinal"));
  }else if(t.status==="awaitingPlayerFinal"){
   addTournamentAction(`Play final vs ${t.sf2Winner}`,()=>beginTournamentPlayerMatch(t.sf2Winner,"finalWinner","Final"));
- }else if(t.status==="complete"){
-  if(intro)intro.innerHTML=`<div class="openIntro"><div class="openKicker">Champion</div><h3>${t.finalWinner||"Unrecorded"}</h3><p class="openReport">${t.finalWinner==="You"?"The Club will remember this Saturday.":`${t.finalWinner} takes the Open. The travelling players move on.`}</p></div>`;
-  addTournamentAction("Return to the Club",()=>{consumePendingActivityTime();show("home");renderHome()});
  }
  scheduleScreenLayout("tournament");
 }
@@ -9038,6 +9087,60 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   line-height:1.45;
 }
 #tournament .openCol>div{margin:2px 0}
+#tournament .openPair{
+  display:flex;
+  justify-content:space-between;
+  align-items:baseline;
+  gap:8px;
+  margin:4px 0;
+  min-width:0;
+}
+#tournament .openPair>span:first-child{
+  min-width:0;
+  flex:1 1 auto;
+}
+#tournament .openPairScore{
+  flex:0 0 auto;
+  font-weight:800;
+  color:#f6e2a8;
+  white-space:nowrap;
+  font-size:clamp(12px,3.4vw,15px);
+}
+#tournament .openResults{margin-bottom:4px}
+#tournament .openChampionName{
+  margin:6px 0 10px;
+  text-align:center;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(26px,8vw,36px);
+  font-weight:800;
+  letter-spacing:.06em;
+  color:#f6e2a8;
+  line-height:1.1;
+}
+#tournament .openResults .openReport{
+  margin:0 0 8px;
+  text-align:center;
+}
+#tournament .openPrize{
+  margin:10px 0 12px;
+  padding:10px 12px;
+  background:rgba(18,12,8,.28);
+  border:1px solid rgba(231,196,123,.35);
+  border-radius:6px;
+}
+#tournament .openPrize b{
+  display:block;
+  font-size:11px;
+  letter-spacing:.1em;
+  text-transform:uppercase;
+  color:#e7c47b;
+  margin-bottom:4px;
+}
+#tournament .openPrize p{
+  margin:0;
+  font-size:clamp(13px,3.6vw,16px);
+  line-height:1.4;
+}
 #tournament .challengeActions{
   display:flex;
   flex-direction:column;
