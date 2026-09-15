@@ -1140,9 +1140,20 @@ function fresh(){
 
 function newCopy(design,owner,origin){return {id:"CP-"+Math.random().toString(36).slice(2,10).toUpperCase(),design,owner,origin,signatures:[],stamps:[],inspected:false}}
 function ensureCopies(){
+ if(!state)return;
  if(!state.copies)state.copies={};if(!state.copyOwners)state.copyOwners={You:[]};Object.keys(npcDefs).forEach(n=>{if(!state.copyOwners[n])state.copyOwners[n]=[]});
- let holders={You:state.player,...state.npcs};
- Object.entries(holders).forEach(([owner,cards])=>{let have={};(state.copyOwners[owner]||[]).forEach(id=>{let c=state.copies[id];if(c)have[c.design]=(have[c.design]||0)+1});let need={};cards.forEach(c=>need[c]=(need[c]||0)+1);Object.entries(need).forEach(([design,num])=>{for(let i=have[design]||0;i<num;i++){let cp=newCopy(design,owner,owner==="You"?"Starter collection":"Local circulation");state.copies[cp.id]=cp;state.copyOwners[owner].push(cp.id)}})});
+ if(!state.npcs)state.npcs={};
+ Object.keys(state.npcs).forEach(n=>{
+  if(!Array.isArray(state.npcs[n]))state.npcs[n]=[...(npcDefs[n]?.start||[])];
+ });
+ let holders={You:Array.isArray(state.player)?state.player:[],...state.npcs};
+ Object.entries(holders).forEach(([owner,cards])=>{
+  if(!Array.isArray(cards))return;
+  if(!state.copyOwners[owner])state.copyOwners[owner]=[];
+  let have={};(state.copyOwners[owner]||[]).forEach(id=>{let c=state.copies[id];if(c)have[c.design]=(have[c.design]||0)+1});
+  let need={};cards.forEach(c=>{if(c)need[c]=(need[c]||0)+1});
+  Object.entries(need).forEach(([design,num])=>{for(let i=have[design]||0;i<num;i++){let cp=newCopy(design,owner,owner==="You"?"Starter collection":"Local circulation");state.copies[cp.id]=cp;state.copyOwners[owner].push(cp.id)}});
+ });
  if(!state.inspectedCopies)state.inspectedCopies={};
  Object.values(state.copies).forEach(cp=>{
   if(!cp)return;
@@ -1544,7 +1555,10 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  if(!state.npcs)state.npcs={};
  // Save migration: add any newly introduced prototype NPC/visitor collections to older saves.
  Object.entries(npcDefs).forEach(([n,d])=>{
-   if(!Array.isArray(state.npcs[n]))state.npcs[n]=[...d.start];
+   if(!Array.isArray(state.npcs[n]))state.npcs[n]=[...(d.start||[])];
+ });
+ Object.keys(state.npcs).forEach(n=>{
+  if(!Array.isArray(state.npcs[n]))state.npcs[n]=[...(npcDefs[n]?.start||[])];
  });
  hydrateTournamentVisitors();
  if(!state.history){state.history={};[...new Set([...state.player,...Object.values(state.npcs).flat()])].forEach(c=>state.history[c]=["History tracking began in prototype v0.3."])}
@@ -4274,11 +4288,12 @@ function settleSeries(winner){
         scheduleScreenLayout("result");
         return;
       }
-      $("claimPanel").classList.remove("hidden");
-      $("resultCaption").textContent="Choose a copy";
       $("claimCards").innerHTML="";
       eligible.forEach(n=>{
-        let cp=getCopy(currentNpc,n),owned=playerOwnedCount(n);
+        if(!C[n])return;
+        let cp=null;
+        try{cp=getCopy(currentNpc,n)}catch(err){console.warn(err)}
+        let owned=playerOwnedCount(n);
         let w=document.createElement("div");w.className="claimPick";
         let face=document.createElement("button");face.type="button";face.className="claimFace";
         face.setAttribute("aria-label",owned===0?`Claim ${n}, new card`:`Claim ${n}, owned ${owned}`);
@@ -4292,6 +4307,14 @@ function settleSeries(winner){
         w.appendChild(face);w.appendChild(meta);w.appendChild(inspect);
         $("claimCards").appendChild(w);
       });
+      if(!$("claimCards").children.length){
+        $("resultCaption").textContent="No copies were exposed.";
+        $("resultHome").classList.remove("hidden");
+        scheduleScreenLayout("result");
+        return;
+      }
+      $("claimPanel").classList.remove("hidden");
+      $("resultCaption").textContent="Choose a copy";
       const claimStage=document.querySelector("#result .resultStage");
       if(claimStage)claimStage.scrollTop=0;
    }
@@ -4408,7 +4431,7 @@ function finish(){
  scheduleScreenLayout("result");
 }
 function playerOwnedCount(design){
- return state.player.reduce((count,n)=>count+(n===design?1:0),0);
+ return (Array.isArray(state?.player)?state.player:[]).reduce((count,n)=>count+(n===design?1:0),0);
 }
 function claim(n,copyIdChosen=null){
  let cp=getCopy(currentNpc,n,copyIdChosen),fp=state.npcs[currentNpc],ix=fp.indexOf(n);if(ix>=0)fp.splice(ix,1);state.player.push(n);moveCopy(cp,currentNpc,"You",`${currentNpc} lost ${n} to you after your victory.`);hist(n,`${currentNpc} lost ${n} to you after your victory.`);
@@ -8435,10 +8458,10 @@ html,body,#visualShell{color-scheme:only light}
   flex:0 0 auto;
 }
 #result .resultWell{
-  overflow-y:hidden!important;
+  overflow-y:auto!important;
 }
 #result .resultStage{
-  min-height:0!important;
+  min-height:min(42vw,188px)!important;
   align-items:flex-start!important;
   justify-content:flex-start!important;
   overflow-x:hidden;
@@ -8447,8 +8470,11 @@ html,body,#visualShell{color-scheme:only light}
   overscroll-behavior:contain;
   padding:4px 0 12px;
   scroll-padding-top:8px;
+  z-index:4;
 }
 #result #claimPanel{
+  position:relative;
+  z-index:4;
   width:100%!important;
   max-width:100%;
   flex:0 0 auto;
