@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v91-claim-copies';
+const CACHE_NAME = 'card-road-pwa-v92-screen-safe';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
