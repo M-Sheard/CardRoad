@@ -474,6 +474,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     </div>
     <div id="npcHotspots"></div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
+    <button id="houseTinHotspot" class="worldObject houseTinHotspot hidden" type="button">House tin</button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide paperPlaque" id="locationStrip" aria-label="Lythmere locations">
     <span class="paperCorners" aria-hidden="true">
@@ -517,6 +518,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devReset">Reset prototype save</button>
         <button id="devSaturdayOpen" type="button" style="margin-top:8px">Jump to Saturday Open</button>
         <button id="devNewsGazette" type="button" style="margin-top:8px">Preview Card News</button>
+        <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (4 cards)</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -615,6 +617,24 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <div id="tournamentBracket" class="tournamentBracket"></div>
     </div>
     <div id="tournamentActions" class="challengeActions"></div>
+  </div>
+</div>
+
+<div id="houseTin" class="hidden">
+  <div class="houseTinTable leftoverTable">
+    <div class="houseTinWell">
+      <h2 class="challengePlaque">House Tin</h2>
+      <p id="houseTinCaption" class="houseTinCaption"></p>
+      <div class="houseTinStage">
+        <img class="houseTinArt" src="assets/ui/house_tin.png" alt="The club house tin">
+        <div id="houseTinCard" class="houseTinCard hidden"></div>
+      </div>
+      <div id="houseTinCount" class="houseTinCount"></div>
+    </div>
+    <div class="houseTinActions">
+      <button type="button" id="houseTinTake" class="challengePlaqueBtn">Take a house card</button>
+      <button type="button" id="houseTinBack" class="challengePlaqueBtn challengePlaqueBtnAlt">Back</button>
+    </div>
   </div>
 </div>
 
@@ -1255,6 +1275,67 @@ function wantsSaturdayPreview(){
 function newsMockKind(){
  return typeof location!=="undefined"&&/(?:^|[?&])newsMock=1(?:&|$)/.test(location.search);
 }
+function wantsHouseTinPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])housetin=1(?:&|$)/.test(location.search);
+}
+const HOUSE_TIN_FLOOR=7;
+let houseTinPreview=false,houseTinPreviewCount=4,houseTinLast=null;
+function houseTinHeld(){
+ return houseTinPreview?houseTinPreviewCount:(Array.isArray(state.player)?state.player.length:0);
+}
+function pickHouseCommon(){
+ const commons=Object.keys(C).filter(d=>C[d]&&C[d].budget<=16);
+ return commons.length?commons[Math.floor(Math.random()*commons.length)]:"C001";
+}
+function renderHouseTin(){
+ const n=houseTinHeld();
+ const short=n<HOUSE_TIN_FLOOR;
+ const cap=$("houseTinCaption"),count=$("houseTinCount"),take=$("houseTinTake"),held=$("houseTinCard");
+ if(cap){
+  cap.textContent=short
+   ?"The club keeps ordinary cards so a table can still sit. These are house commons, not the copies you lost. Take until you have seven."
+   :"You already have enough for a table. The house tin stays shut until you drop below seven.";
+ }
+ if(count)count.textContent=n===1?"You have 1 card.":`You have ${n} cards.`;
+ if(take){
+  take.disabled=!short;
+  take.textContent=short?"Take a house card":"Tin is shut";
+ }
+ if(held){
+  if(houseTinLast&&C[houseTinLast]){
+   held.classList.remove("hidden");
+   held.innerHTML=cardHTML(C[houseTinLast])+"<span class=\"houseTinGiven\">The tin hands you "+(C[houseTinLast].display||houseTinLast)+".</span>";
+  }else{
+   held.classList.add("hidden");
+   held.innerHTML="";
+  }
+ }
+}
+function openHouseTin(opts){
+ closeNoticeView();
+ if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
+ houseTinPreview=!!(opts&&opts.preview);
+ houseTinLast=null;
+ if(houseTinPreview)houseTinPreviewCount=4;
+ renderHouseTin();
+ show("houseTin");
+}
+function closeHouseTin(){
+ houseTinPreview=false;
+ houseTinLast=null;
+ show("home");
+ renderHome();
+}
+function takeHouseCard(){
+ if(houseTinHeld()>=HOUSE_TIN_FLOOR)return;
+ if(!houseTinPreview){
+  houseTinPreview=true;
+  houseTinPreviewCount=houseTinHeld();
+ }
+ houseTinLast=pickHouseCommon();
+ houseTinPreviewCount++;
+ renderHouseTin();
+}
 let gazettePages=[],gazetteIndex=0,gazetteFlipping=false,gazetteSwipeX=null,gazetteFitGen=0;
 function gazetteEventName(title){
  if(/Open/i.test(title||""))return "Open";
@@ -1451,6 +1532,7 @@ function jumpVisualToSaturdayOpen(){
 }
 function bootTownOrTutorial(){
  if(newsMockKind()){renderHome();openNewsGazette();return}
+ if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
  if(wantsSaturdayPreview()){jumpVisualToSaturdayOpen();save();renderHome();show("home");return}
  if(wantsHomeTutorial())startGrandpaTutorial();
  else{renderHome();show("home")}
@@ -1658,7 +1740,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  ensureVisualState();
 }
 const $=x=>document.getElementById(x);
-const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","seriesSummary","cardInspector"];
+const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","houseTin","seriesSummary","cardInspector"];
 function leftoverScreenId(){
  const j=$("journalOverlay");
  if(j&&!j.classList.contains("hidden"))return "journal";
@@ -1666,7 +1748,7 @@ function leftoverScreenId(){
 }
 function show(id){
  if(id!=="newsGazette")gazetteFitGen++;
- ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","savedDecks","game","seriesSummary","result","tournament","newsGazette"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
+ ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","savedDecks","game","seriesSummary","result","tournament","newsGazette","houseTin"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
  scheduleScreenLayout(id);
 }
 function matchViewBox(){
@@ -1727,6 +1809,10 @@ function layoutScreenFit(id){
   layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
   paginateGazette();
   return;
+ }
+ if(id==="houseTin"){
+  const root=$("houseTin");
+  return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
  }
  if(id==="journal"){
   const root=$("journalOverlay");
@@ -2602,6 +2688,10 @@ function renderWorldScene(){
  updateWorldRecordButton();
  $("eventHotspot").classList.toggle("hidden",!saturdayOpen);
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
+ if($("houseTinHotspot")){
+  const atClub=state.visual.location==="Card Club";
+  $("houseTinHotspot").classList.toggle("hidden",!atClub);
+ }
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
  syncTownStandees();
@@ -4609,6 +4699,10 @@ if($("game"))$("game").addEventListener("pointerup",e=>{
 if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();bootTownOrTutorial()}};
 if($("devSaturdayOpen"))$("devSaturdayOpen").onclick=()=>{jumpVisualToSaturdayOpen();save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
 if($("devNewsGazette"))$("devNewsGazette").onclick=()=>openNewsGazette();
+if($("devHouseTin"))$("devHouseTin").onclick=()=>openHouseTin({preview:true});
+if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
+if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
+if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:false});
 if($("newsGazetteClose"))$("newsGazetteClose").onclick=closeNewsGazette;
 if($("gazettePrev"))$("gazettePrev").onclick=()=>turnGazette(-1);
 if($("gazetteNext"))$("gazetteNext").onclick=()=>turnGazette(1);
@@ -5310,6 +5404,21 @@ if ('serviceWorker' in navigator) {
 #eventHotspot.eventHotspot{
   top:168px!important;
   right:10px!important;
+  transform:none!important;
+  background:#f6e7c8!important;
+  color:#1a120c!important;
+  border:3px solid #24160f!important;
+  box-shadow:0 0 0 2px #c9a45a, 0 8px 16px #000a!important;
+  font:800 12px/1.15 Georgia,serif!important;
+  letter-spacing:.04em!important;
+  text-transform:uppercase!important;
+  z-index:28!important;
+}
+#houseTinHotspot.houseTinHotspot{
+  left:8%!important;
+  right:auto!important;
+  top:auto!important;
+  bottom:20%!important;
   transform:none!important;
   background:#f6e7c8!important;
   color:#1a120c!important;
@@ -8564,6 +8673,7 @@ html,body,#visualShell{color-scheme:only light}
 #starter,
 #tournament,
 #newsGazette,
+#houseTin,
 .journalOverlay{
   --stage-w:440px;
 }
@@ -10047,6 +10157,210 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   border-radius:6px;
 }
 #newsGazette .gazetteTurn button.gazetteArrow:disabled{opacity:.35}
+
+#houseTin{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#1a120c!important;
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  touch-action:pan-y;
+}
+#houseTin.hidden{display:none!important}
+#houseTin .houseTinTable{
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#houseTin .houseTinWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  padding:14px 12px 12px;
+  overflow:hidden;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0009;
+}
+#houseTin .houseTinWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:0;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#houseTin .challengePlaque{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  align-self:center;
+  margin:0 0 8px;
+  width:min(92%,280px);
+  padding:12px 14px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(16px,5.2vw,24px);
+  font-weight:800;
+  letter-spacing:.1em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#houseTin .houseTinCaption,
+#houseTin .houseTinCount{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:0;
+  text-align:center;
+  font-family:Georgia,serif;
+  color:#f4ead3;
+  text-shadow:0 1px 2px #000a;
+}
+#houseTin .houseTinCaption{
+  font-size:clamp(12px,3.4vw,15px);
+  line-height:1.35;
+  margin:0 0 8px;
+}
+#houseTin .houseTinCount{
+  margin-top:8px;
+  font-size:clamp(13px,3.6vw,16px);
+  font-weight:800;
+  letter-spacing:.04em;
+  text-transform:uppercase;
+  color:#e7c47b;
+}
+#houseTin .houseTinStage{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#houseTin .houseTinArt{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+  filter:drop-shadow(0 10px 16px #0008);
+}
+#houseTin .houseTinCard{
+  position:absolute;
+  left:50%;
+  bottom:6%;
+  width:min(42%,132px);
+  transform:translateX(-50%) rotate(-5deg);
+  z-index:2;
+  text-align:center;
+  filter:drop-shadow(0 8px 12px #0009);
+}
+#houseTin .houseTinCard.hidden{display:none}
+#houseTin .houseTinCard .card{
+  width:100%;
+  height:auto;
+  min-height:0!important;
+  aspect-ratio:5/7;
+}
+#houseTin .houseTinCard .card .n,
+#houseTin .houseTinCard .card .e,
+#houseTin .houseTinCard .card .s,
+#houseTin .houseTinCard .card .w{
+  font-size:clamp(8px,calc(var(--stage-w,440px) * .038),16px)!important;
+}
+#houseTin .houseTinGiven{
+  display:block;
+  margin-top:6px;
+  font-family:Georgia,serif;
+  font-size:clamp(11px,3.2vw,13px);
+  font-weight:800;
+  letter-spacing:.03em;
+  color:#f7efdc;
+  text-shadow:0 1px 3px #000c;
+  transform:rotate(5deg);
+}
+#houseTin .houseTinActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+  padding-bottom:4px;
+}
+#houseTin .houseTinActions button{
+  display:block;
+  width:100%;
+  margin:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(14px,4vw,17px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+#houseTin .houseTinActions button.challengePlaqueBtnAlt{
+  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+}
+#houseTin .houseTinActions button:disabled{
+  opacity:.45;
+}
+@media(max-width:620px){
+  #houseTin .houseTinWell{border-width:8px;padding:12px 10px 12px}
+}
 
 .journalOverlay:not(.hidden){
   position:fixed!important;
