@@ -1231,7 +1231,7 @@ function onWorldRecord(){
  if(unreadInboxCount()){openJournalView("inbox");return;}
  openJournalView();
 }
-function readNoticeboard(){openNoticeView();}
+function readNoticeboard(){absorbPublicNoticesHere();openJournalView();}
 function isSaturdayEventNow(){return state.visual.phase==="Afternoon"&&eventsOnDate(state.visual.date).some(e=>e.tier==="Local"&&e.place==="Lythmere Card Club")}
 function shuffledList(arr){return [...arr].sort(()=>Math.random()-.5)}
 function ensureTraveller(v){
