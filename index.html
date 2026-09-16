@@ -1294,7 +1294,9 @@ function renderHouseTin(){
  if(cap){
   cap.textContent=short
    ?"The club keeps ordinary cards so a table can still sit. These are house commons, not the copies you lost. Take until you have seven."
-   :"You already have enough for a table. The house tin stays shut until you drop below seven.";
+   :houseTinLast
+    ?"That's seven. Enough for a table. The tin stays shut."
+    :"You already have enough for a table. The house tin stays shut until you drop below seven.";
  }
  if(count)count.textContent=n===1?"You have 1 card.":`You have ${n} cards.`;
  if(take){
@@ -2690,7 +2692,8 @@ function renderWorldScene(){
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
  if($("houseTinHotspot")){
   const atClub=state.visual.location==="Card Club";
-  $("houseTinHotspot").classList.toggle("hidden",!atClub);
+  const short=(Array.isArray(state.player)?state.player.length:0)<HOUSE_TIN_FLOOR;
+  $("houseTinHotspot").classList.toggle("hidden",!(atClub&&short));
  }
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
