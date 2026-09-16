@@ -528,7 +528,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devReset">Reset prototype save</button>
         <button id="devSaturdayOpen" type="button" style="margin-top:8px">Jump to Saturday Open</button>
         <button id="devNewsGazette" type="button" style="margin-top:8px">Preview Card News</button>
-        <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (4 cards)</button>
+        <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (5 cards)</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -1292,7 +1292,7 @@ function wantsHouseTinClubPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])housetin=club(?:&|$)/.test(location.search);
 }
 const HOUSE_TIN_FLOOR=7;
-let houseTinPreview=false,houseTinPreviewCount=4,houseTinLast=null,houseTinTownPreview=false;
+let houseTinPreview=false,houseTinPreviewCount=5,houseTinLast=null,houseTinTownPreview=false;
 function houseTinHeld(){
  return houseTinPreview?houseTinPreviewCount:(Array.isArray(state.player)?state.player.length:0);
 }
@@ -1331,7 +1331,7 @@ function openHouseTin(opts){
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  houseTinPreview=!!(opts&&opts.preview);
  houseTinLast=null;
- if(houseTinPreview)houseTinPreviewCount=4;
+ if(houseTinPreview)houseTinPreviewCount=5;
  renderHouseTin();
  show("houseTin");
 }
