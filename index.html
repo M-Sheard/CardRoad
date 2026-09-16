@@ -1035,6 +1035,7 @@ function ensureVisualState(){
  if(!state.visual.discoveredEvents)state.visual.discoveredEvents=[];
  if(!state.visual.history)state.visual.history=[];
  if(state.visual.pendingTimeCost===undefined)state.visual.pendingTimeCost=null;
+ if(state.visual.inboxOpen===undefined)state.visual.inboxOpen=null;
 }
 function visualDateObj(){
  ensureVisualState();
@@ -1134,7 +1135,7 @@ function updateWorldRecordButton(){
 function closeNoticeView(){if($("noticeOverlay"))$("noticeOverlay").classList.add("hidden");}
 function openJournalView(tab){
  closeNoticeView();
- if(tab){ensureVisualState();state.visual.journalTab=tab}
+ if(tab){ensureVisualState();state.visual.journalTab=tab;if(tab==="inbox")state.visual.inboxOpen=null}
  if($("journalOverlay"))$("journalOverlay").classList.remove("hidden");
  renderJournal();
  scheduleScreenLayout("journal");
@@ -1469,12 +1470,39 @@ function postInbox(msg,opts){
  updateWorldRecordButton();
  return mail;
 }
-function markInboxRead(){
+function inboxById(id){
  ensureInbox();
- let changed=false;
- state.inbox.forEach(m=>{if(!m.read){m.read=true;changed=true}});
- if(changed&&!houseTinPreview&&!houseTinTownPreview)save();
+ return state.inbox.find(m=>m.id===id)||null;
+}
+function openInboxMessage(id){
+ ensureVisualState();
+ const mail=inboxById(id);
+ if(!mail){state.visual.inboxOpen=null;renderJournal("inbox");return;}
+ state.visual.inboxOpen=id;
+ if(!mail.read){
+  mail.read=true;
+  if(!houseTinPreview&&!houseTinTownPreview)save();
+ }
+ renderJournal("inbox");
  updateWorldRecordButton();
+}
+function closeInboxMessage(){
+ ensureVisualState();
+ state.visual.inboxOpen=null;
+ renderJournal("inbox");
+ updateWorldRecordButton();
+}
+function renderInboxList(){
+ ensureInbox();
+ const mail=[...state.inbox].reverse();
+ if(!mail.length)return `<div class="journalEmpty">No messages yet.</div>`;
+ return `<div class="journalMailList">${mail.map(m=>{
+  const seal=m.read?"":`<img class="journalMailSeal" src="./assets/ui/paper_seal.png" alt="">`;
+  return `<button type="button" class="journalMailRow${m.read?"":" isUnread"}" data-mail="${journalEsc(m.id)}"><span class="journalMailSealSlot">${seal}</span><span class="journalMailRowCopy"><b>${journalEsc(m.title)}</b><span class="source">${journalEsc([m.from,m.date].filter(Boolean).join(" · "))}</span></span></button>`;
+ }).join("")}</div>`;
+}
+function renderInboxLetter(mail){
+ return `<div class="journalMailLetter"><button type="button" class="journalMailBack" data-inbox-back>Inbox</button><b>${journalEsc(mail.title)}</b><div class="source">${journalEsc([mail.from,mail.date].filter(Boolean).join(" · "))}</div><div class="journalMailBody">${journalEsc(mail.body)}</div></div>`;
 }
 function noteHouseTinIfNeeded(opts){
  const preview=!!(opts&&opts.preview);
@@ -2897,10 +2925,9 @@ function renderWorldScene(){
 }
 function renderJournal(tab){
  if(!$("journalContent"))return;ensureVisualState();if(tab)state.visual.journalTab=tab;let t=state.visual.journalTab||"calendar";
- const journalOpen=$("journalOverlay")&&!$("journalOverlay").classList.contains("hidden");
  document.querySelectorAll(".journalTabs button").forEach(b=>{
   b.classList.toggle("active",b.dataset.jtab===t);
-  if(b.dataset.jtab==="inbox")b.classList.toggle("hasMail",unreadInboxCount()>0&&!(journalOpen&&t==="inbox"));
+  if(b.dataset.jtab==="inbox")b.classList.toggle("hasMail",unreadInboxCount()>0);
  });
  let out="";
  if(t==="calendar"){
@@ -2915,15 +2942,16 @@ function renderJournal(tab){
    out=(state.news||[]).slice(-18).reverse().map(x=>`<div class="journalEntry">${x}</div>`).join("")||`<div class="journalEmpty">No noteworthy Card News yet.</div>`;
  }else if(t==="inbox"){
    ensureInbox();
-   const mail=[...state.inbox].reverse();
-   out=mail.length?mail.map(m=>`<div class="journalEntry journalMail${m.read?"":" isUnread"}"><b>${journalEsc(m.title)}</b><div class="source">${journalEsc([m.from,m.date].filter(Boolean).join(" · "))}</div><div>${journalEsc(m.body)}</div></div>`).join(""):`<div class="journalEmpty">No messages yet.</div>`;
+   const open=state.visual.inboxOpen?inboxById(state.visual.inboxOpen):null;
+   if(state.visual.inboxOpen&&!open)state.visual.inboxOpen=null;
+   out=open?renderInboxLetter(open):renderInboxList();
  }else{
    out=`<div class="journalEmpty">No messages yet.</div>`;
  }
  $("journalContent").innerHTML=out;
- $("journalContent").classList.toggle("isProse",t!=="cards");
+ $("journalContent").classList.toggle("isProse",t!=="cards"&&t!=="inbox");
+ $("journalContent").classList.toggle("isMail",t==="inbox");
  $("journalContent").scrollTop=0;
- if(t==="inbox"&&journalOpen)markInboxRead();
 }
 
 function renderHome(){
@@ -4888,7 +4916,11 @@ $("resultHome").onclick=()=>{
 
 if($("advanceTime"))$("advanceTime").onclick=advanceVisualTime;
 if($("worldRecord"))$("worldRecord").onclick=onWorldRecord;
-if($("closeJournal"))$("closeJournal").onclick=()=>$("journalOverlay").classList.add("hidden");
+if($("closeJournal"))$("closeJournal").onclick=()=>{
+ if(state&&state.visual)state.visual.inboxOpen=null;
+ $("journalOverlay").classList.add("hidden");
+ updateWorldRecordButton();
+};
 if($("closeNotice"))$("closeNotice").onclick=closeNoticeView;
 if($("noticeOverlay"))$("noticeOverlay").onclick=e=>{if(e.target===$("noticeOverlay"))closeNoticeView();};
 document.querySelectorAll("#locationStrip button").forEach(b=>b.onclick=()=>{closeNoticeView();state.visual.location=b.dataset.loc;save();renderWorldScene()});
@@ -4903,7 +4935,14 @@ document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>{
   openNewsGazette("journal");
   return;
  }
+ if(b.dataset.jtab==="inbox"&&state&&state.visual)state.visual.inboxOpen=null;
  renderJournal(b.dataset.jtab);
+});
+if($("journalContent"))$("journalContent").addEventListener("click",e=>{
+ const back=e.target.closest("[data-inbox-back]");
+ if(back){e.preventDefault();closeInboxMessage();return;}
+ const row=e.target.closest("[data-mail]");
+ if(row){e.preventDefault();openInboxMessage(row.dataset.mail);}
 });
 if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
@@ -10765,12 +10804,99 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   display:block;
 }
 .journalOverlay .journalEntry:last-child{border-bottom:0}
-.journalOverlay .journalMail.isUnread{
-  background:rgba(201,164,90,.16);
-  margin:0 -4px;
-  padding-left:8px;
-  padding-right:8px;
+.journalOverlay .journalSheetInner.isMail{
+  text-align:left;
+}
+.journalOverlay .journalMailList{
+  display:flex;
+  flex-direction:column;
+  gap:0;
+  min-width:0;
+}
+.journalOverlay .journalMailRow{
+  display:flex;
+  align-items:center;
+  gap:8px;
+  width:100%;
+  min-width:0;
+  min-height:44px;
+  margin:0;
+  padding:8px 4px;
+  text-align:left;
+  font:inherit;
+  color:inherit;
+  background:transparent;
+  border:0;
+  border-bottom:1px dashed #a58e6a;
+  border-radius:0;
+  box-shadow:none;
+  cursor:pointer;
+}
+.journalOverlay .journalMailRow:last-child{border-bottom:0}
+.journalOverlay .journalMailRowCopy{
+  display:flex;
+  flex-direction:column;
+  gap:2px;
+  min-width:0;
+  flex:1 1 auto;
+}
+.journalOverlay .journalMailRowCopy b{
+  font-size:clamp(13px,3.6vw,15px);
+  line-height:1.2;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.journalOverlay .journalMailRowCopy .source{
+  display:block;
+  overflow:hidden;
+  text-overflow:ellipsis;
+  white-space:nowrap;
+}
+.journalOverlay .journalMailSealSlot{
+  flex:0 0 18px;
+  width:18px;
+  height:18px;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+.journalOverlay .journalMailSeal{
+  width:18px;
+  height:18px;
+  object-fit:contain;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
+  pointer-events:none;
+}
+.journalOverlay .journalMailLetter{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  min-width:0;
+  padding:4px 2px 10px;
+  text-align:left;
+}
+.journalOverlay .journalMailLetter > b{
+  font-size:clamp(15px,4.2vw,18px);
+  line-height:1.2;
+}
+.journalOverlay .journalMailBody{
+  font-size:clamp(13px,3.6vw,15px);
+  line-height:1.45;
+}
+.journalOverlay .journalMailBack{
+  align-self:flex-start;
+  min-height:36px;
+  margin:0 0 4px;
+  padding:6px 10px;
+  font:800 11px/1 Georgia,serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#1a0c08;
+  background:linear-gradient(180deg,#cbb07a 0%,#e8d7b0 50%,#c4a46a 100%);
+  border:1px solid #6b4220;
   border-radius:4px;
+  box-shadow:0 2px 0 #3d2414;
 }
 .journalOverlay .journalTabs button.hasMail:after{
   content:"";
