@@ -522,6 +522,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devNewsGazette" type="button" style="margin-top:8px">Preview Card News</button>
         <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (5 cards)</button>
         <button id="devInbox" type="button" style="margin-top:8px">Preview tin inbox</button>
+        <button id="devOvernightGossip" type="button" style="margin-top:8px">Preview overnight gossip</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -1057,23 +1058,56 @@ function npcPriority(n){
  return d.competitive>.7?"competitive practice":"ordinary local play";
 }
 function discoverEvent(ev){ensureVisualState();if(!state.visual.discoveredEvents.some(x=>x.id===ev.id)){state.visual.discoveredEvents.push(ev);state.visual.history.push(`Discovered ${ev.name} from ${ev.source}.`);news(`${ev.name} added to your journal calendar.`);save();}}
+function latestGossip(){
+ return state&&state.daily&&state.daily.gossip&&state.daily.gossip.win?state.daily.gossip:null;
+}
+function unreadGossip(){
+ const g=latestGossip();
+ return g&&!g.read?g:null;
+}
+function publishGossip(g){
+ if(!g||!g.win||!g.lose||!g.design)return;
+ const name=cardLabel(g.design);
+ if(!state.daily)state.daily={};
+ state.daily.gossip={win:g.win,lose:g.lose,design:g.design,name,place:g.place||"Lythmere",date:state.visual?.date||"",read:false};
+ state.daily.lastNpcMatch=`${g.win} defeated ${g.lose}`;
+ state.daily.lastCardMove=`${g.design}: ${g.lose} → ${g.win}`;
+}
+function gossipTalkLine(name){
+ const g=latestGossip();
+ if(!g||!name)return "";
+ const held=(state.npcs[name]||[]).includes(g.design);
+ if(name===g.win&&held)return `${name} is still holding ${g.lose}'s ${g.name}.`;
+ if(name===g.lose)return `${name} lost ${g.name} to ${g.win}${g.place&&g.place!=="Lythmere"?" at the "+g.place:""}.`;
+ return "";
+}
 function unreadNoticeIds(){
  let info=publicInfoHere();if(!info)return[];
  let known=new Set((state.visual.discoveredEvents||[]).map(e=>e.id));
  return (info.ids||[]).filter(id=>{let e=worldEvent(id);return e&&!known.has(id);});
 }
+function unreadNoticeCount(){
+ return unreadNoticeIds().length+(unreadGossip()?1:0);
+}
 function fillNoticeBoard(info){
- if(!$("noticeBoard")||!info)return;
- let noticeEvents=(info.ids||[]).map(worldEvent).filter(Boolean).slice(0,3);
- $("noticeBoard").innerHTML=`<span class="noticeTitle">${info.label}</span><span class="noticeItems">${
-   noticeEvents.length
-     ? noticeEvents.map(e=>`<span class="noticeItem"><b>${noticeEventName(e.name)}</b><small>${noticeDateLabel(e.date)}</small></span>`).join("")
-     : `<span class="noticeItem"><b>No notices</b><small>Tap to close</small></span>`
- }</span>`;
+ if(!$("noticeBoard"))return;
+ info=info||{label:"Notices",ids:[]};
+ const g=latestGossip();
+ const noticeEvents=(info.ids||[]).map(worldEvent).filter(Boolean).slice(0,3);
+ const parts=[];
+ if(g){
+  const where=g.place&&g.place!=="Lythmere"?` · ${g.place}`:"";
+  parts.push(`<span class="noticeItem"><b>${g.win} took ${g.name}</b><small>from ${g.lose}${where}</small></span>`);
+ }
+ noticeEvents.forEach(e=>{
+  parts.push(`<span class="noticeItem"><b>${noticeEventName(e.name)}</b><small>${noticeDateLabel(e.date)}</small></span>`);
+ });
+ if(!parts.length)parts.push(`<span class="noticeItem"><b>No notices</b><small>Tap to close</small></span>`);
+ $("noticeBoard").innerHTML=`<span class="noticeTitle">${g?"Town talk":info.label}</span><span class="noticeItems">${parts.join("")}</span>`;
 }
 function updateWorldRecordButton(){
  let b=$("worldRecord");if(!b)return;
- let n=unreadNoticeIds().length;
+ let n=unreadNoticeCount();
  let mail=unreadInboxCount();
  b.classList.toggle("hasUnread",n>0);
  b.classList.toggle("hasMail",mail>0);
@@ -1093,15 +1127,19 @@ function openJournalView(tab){
  scheduleScreenLayout("journal");
 }
 function openNoticeView(){
- let info=publicInfoHere();if(!info){openJournalView();return;}
+ let info=publicInfoHere();
+ if(!info&&!latestGossip()){openJournalView();return;}
+ if(!info)info={label:"Notices",ids:[]};
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  fillNoticeBoard(info);
  if($("noticeOverlay"))$("noticeOverlay").classList.remove("hidden");
- discoverEvents(info.ids);state.visual.noticeRead=true;save();renderJournal();updateWorldRecordButton();
+ discoverEvents(info.ids);
+ if(state.daily&&state.daily.gossip)state.daily.gossip.read=true;
+ state.visual.noticeRead=true;save();renderJournal();updateWorldRecordButton();
 }
 function onWorldRecord(){
  if($("noticeOverlay")&&!$("noticeOverlay").classList.contains("hidden")){openJournalView();return;}
- if(unreadNoticeIds().length){openNoticeView();return;}
+ if(unreadNoticeCount()){openNoticeView();return;}
  if(unreadInboxCount()){openJournalView("inbox");return;}
  openJournalView();
 }
@@ -1144,18 +1182,26 @@ function openSaturdayTournament(){
  show("tournament");renderTournament();
 }
 function backgroundV6Day(){
- // Ordinary play is mostly abstract. At most one consequential local match is resolved per day.
+ // At most one consequential local match is resolved per day, when two locals share a table.
  let ns=localNpcNames();let pairs=[];
  for(let i=0;i<ns.length;i++)for(let j=i+1;j<ns.length;j++){
    let a=ns[i],b=ns[j];
    for(const phase of ["Morning","Afternoon","Evening"]){
      let ra=(V6_ROUTINES[a]?.[visualWeekday()]||{})[phase],rb=(V6_ROUTINES[b]?.[visualWeekday()]||{})[phase];
-     if(ra&&ra===rb)pairs.push([a,b]);
+     if(ra&&ra===rb)pairs.push([a,b,ra]);
    }
  }
- state.daily={lastNpcMatch:null,lastCardMove:null};
- if(pairs.length&&Math.random()<.38){let [a,b]=pairs[Math.floor(Math.random()*pairs.length)];worldMatch(a,b)}
- else {let a=ns[Math.floor(Math.random()*ns.length)];state.daily.lastNpcMatch=`${a} spent some time in ordinary local play`;}
+ state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null};
+ if(pairs.length){
+  let [a,b,place]=pairs[Math.floor(Math.random()*pairs.length)];
+  if(!worldMatch(a,b,place)){
+   let n=ns[Math.floor(Math.random()*ns.length)];
+   state.daily.lastNpcMatch=`${n} spent some time in ordinary local play`;
+  }
+ }else{
+  let n=ns[Math.floor(Math.random()*ns.length)];
+  state.daily.lastNpcMatch=`${n} spent some time in ordinary local play`;
+ }
  if(Math.random()<.35)runNpcEconomy();recovery();
 }
 function advanceVisualTime(){
@@ -1174,7 +1220,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -1221,7 +1267,8 @@ function ensureWorldDefaults(){
  if(!state.season)state.season={day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]};
  if(!state.season.tournamentHistory)state.season.tournamentHistory=[];
  if(state.activeTournament===undefined)state.activeTournament=null;
- if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null};
+ if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null};
+ if(state.daily.gossip===undefined)state.daily.gossip=null;
  if(!state.seasonStats)state.seasonStats={playerChallenges:0,incomingAccepted:0,incomingDeclined:0};
  if(!Array.isArray(state.inbox))state.inbox=[];
  if(state.houseTinNoted==null)state.houseTinNoted=false;
@@ -1293,6 +1340,9 @@ function wantsHouseTinClubPreview(){
 }
 function wantsInboxPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])inbox=1(?:&|$)/.test(location.search);
+}
+function wantsGossipPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])gossip=1(?:&|$)/.test(location.search);
 }
 const HOUSE_TIN_FLOOR=7;
 let houseTinPreview=false,houseTinPreviewCount=5,houseTinLast=null,houseTinTownPreview=false;
@@ -1616,8 +1666,39 @@ function jumpVisualToSaturdayOpen(){
  state.visual.location="Card Club";
  syncCalendarState();
 }
+function bootOvernightGossip(){
+ gossipPreview=true;
+ state=fresh();
+ ensureWorldDefaults();
+ ensureVisualState();
+ state.grandpaTutorial=true;
+ state.tutorialDone=true;
+ state.visual.date="2026-03-05";
+ state.visual.phase="Afternoon";
+ state.visual.location="Card Club";
+ syncCalendarState();
+ ensureCopies();
+ seedProvenance();
+ const win="Elira",lose="Bram",design="C089";
+ if(!(state.npcs[lose]||[]).includes(design)){
+  const alt=(state.npcs[lose]||[])[0];
+  if(!alt)return;
+  transfer(alt,lose,win,`${lose} lost ${alt} to ${win} in an NPC match.`);
+  news(`${win} defeated ${lose} and claimed ${cardLabel(alt)}.`,paperClaim(win,lose,alt));
+  publishGossip({win,lose,design:alt,place:"Card Club"});
+  markSeen(win,alt);
+ }else{
+  transfer(design,lose,win,`${lose} lost ${design} to ${win} in an NPC match.`);
+  news(`${win} defeated ${lose} and claimed ${cardLabel(design)}.`,paperClaim(win,lose,design));
+  publishGossip({win,lose,design,place:"Card Club"});
+  markSeen(win,design);
+ }
+ renderHome();show("home");
+ openNoticeView();
+}
 function bootTownOrTutorial(){
  if(newsMockKind()){renderHome();openNewsGazette();return}
+ if(wantsGossipPreview()){bootOvernightGossip();return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
  if(wantsHouseTinClubPreview()){
   ensureVisualState();
@@ -1810,7 +1891,8 @@ function runNpcEconomy(){
 
 function seedProvenance(){ensureCopies();if(state.provenanceSeeded)return;let n=localNpcNames();let a=getCopy(n[0],state.npcs[n[0]][0]);if(a)a.signatures.push({owner:"Edda",date:"2025-09-14",reason:"Local wager"});let c=getCopy(n[2],state.npcs[n[2]][0]);if(c)c.signatures.push({owner:"Hale",date:"2025-12-02",reason:"Trade"});state.provenanceSeeded=true;save()}
 
-function save(){localStorage.setItem("cardRoadV120",JSON.stringify(state))}
+let gossipPreview=false;
+function save(){if(gossipPreview)return;localStorage.setItem("cardRoadV120",JSON.stringify(state))}
 function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!state||typeof state!=="object")state=fresh()}catch{state=fresh()}
  // v21 wrote schema v1.2.1 but previously wiped any save that was not v1.2.0.
  if(!Array.isArray(state.player))state=fresh();
@@ -2790,8 +2872,8 @@ function renderWorldScene(){
  let positions=[[51,43],[72,64],[30,62],[80,70]];
  present.forEach((n,i)=>{let b=document.createElement("button");b.className="npcHotspot"+(n==="Tomas"?" tomas-production":"");b.dataset.npc=n;b.dataset.slot=String(i);b.style.left=positions[i%positions.length][0]+"%";b.style.top=positions[i%positions.length][1]+"%";b.innerHTML=`<span class="figure"></span><span class="tag">${n}</span>`;b.title=npcPriority(n);b.onclick=()=>openChallenge(n);spots.appendChild(b)});
  let info=publicInfoHere();
- if(info)fillNoticeBoard(info);
- if($("noticeOverlay")&&!info)$("noticeOverlay").classList.add("hidden");
+ if(info||latestGossip())fillNoticeBoard(info);
+ if($("noticeOverlay")&&!info&&!latestGossip())$("noticeOverlay").classList.add("hidden");
  updateWorldRecordButton();
  $("eventHotspot").classList.toggle("hidden",!saturdayOpen);
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
@@ -2877,7 +2959,7 @@ function transfer(card,from,to,reason){
  let i=fp.indexOf(card);if(i<0)return;let cp=getCopy(from,card);fp.splice(i,1);tp.push(card);moveCopy(cp,from,to,reason);hist(card,reason);
  if(from==="You")noteHouseTinIfNeeded();
 }
-function worldMatch(a,b){
+function worldMatch(a,b,place){
  if(state.npcs[a].length<5||state.npcs[b].length<5)return false;
  let A=[...state.npcs[a]].sort((x,y)=>C[y].budget-C[x].budget).slice(0,5);
  let B=[...state.npcs[b]].sort((x,y)=>C[y].budget-C[x].budget).slice(0,5);
@@ -2888,9 +2970,10 @@ function worldMatch(a,b){
  if(state.npcs[lose].length<=5)return false;
  let used=lose===a?A:B;let take=npcClaim(win,used);
  transfer(take,lose,win,`${lose} lost ${take} to ${win} in an NPC match.`);
- state.log.push(`${win} defeated ${lose} and claimed ${take}.`);news(`${win} defeated ${lose} and claimed ${take}.`,paperClaim(win,lose,take));
- state.daily.lastNpcMatch=`${win} defeated ${lose}`;state.daily.lastCardMove=`${take}: ${lose} → ${win}`;
- // Seeing a named card in public Card News makes that card known in the winner's collection.
+ const name=cardLabel(take);
+ state.log.push(`${win} defeated ${lose} and claimed ${name}.`);
+ news(`${win} defeated ${lose} and claimed ${name}.`,paperClaim(win,lose,take));
+ publishGossip({win,lose,design:take,place:place||"Lythmere"});
  markSeen(win,take);
  return true;
 }
@@ -3240,7 +3323,8 @@ function openChallenge(name){
  currentNpc=name;state.seasonStats.playerChallenges++;challengeDirection="outgoing";seriesTarget=1;seriesWins={p:0,ai:0};seriesGame=0;namedWagers=null;currentTerms={...npcDefs[name].terms};
  setChallengePlaque(name, name);
  fillChallengeTerms();
- $("challengeMsg").textContent=`You challenged ${name}, so ${name} sets the rules.`;$("seriesSetup").textContent="Series: single game. Wager settles after the match.";
+ const talk=gossipTalkLine(name);
+ $("challengeMsg").textContent=talk?`${talk} You challenged ${name}, so ${name} sets the rules.`:`You challenged ${name}, so ${name} sets the rules.`;$("seriesSetup").textContent="Series: single game. Wager settles after the match.";
  renderKnownCollection(name);
  $("deckPanel").classList.add("hidden");show("challenge");
 }
@@ -4825,6 +4909,7 @@ if($("devInbox"))$("devInbox").onclick=()=>{
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  show("home");renderHome();
 };
+if($("devOvernightGossip"))$("devOvernightGossip").onclick=()=>bootOvernightGossip();
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
 if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
 if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:houseTinTownPreview});
@@ -4839,6 +4924,7 @@ if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
 if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
 
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();bootTownOrTutorial()}};
+if(wantsGossipPreview())gossipPreview=true;
 load();syncDevControls();
 bootTownOrTutorial();
 if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
