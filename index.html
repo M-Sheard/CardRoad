@@ -474,7 +474,9 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     </div>
     <div id="npcHotspots"></div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
-    <button id="houseTinHotspot" class="worldObject houseTinHotspot hidden" type="button">House tin</button>
+    <button id="houseTinHotspot" class="houseTinHotspot hidden" type="button" aria-label="House tin">
+      <img src="assets/ui/house_tin_cutout.png" alt="">
+    </button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide paperPlaque" id="locationStrip" aria-label="Lythmere locations">
     <span class="paperCorners" aria-hidden="true">
@@ -1278,8 +1280,11 @@ function newsMockKind(){
 function wantsHouseTinPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])housetin=1(?:&|$)/.test(location.search);
 }
+function wantsHouseTinClubPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])housetin=club(?:&|$)/.test(location.search);
+}
 const HOUSE_TIN_FLOOR=7;
-let houseTinPreview=false,houseTinPreviewCount=4,houseTinLast=null;
+let houseTinPreview=false,houseTinPreviewCount=4,houseTinLast=null,houseTinTownPreview=false;
 function houseTinHeld(){
  return houseTinPreview?houseTinPreviewCount:(Array.isArray(state.player)?state.player.length:0);
 }
@@ -1535,6 +1540,15 @@ function jumpVisualToSaturdayOpen(){
 function bootTownOrTutorial(){
  if(newsMockKind()){renderHome();openNewsGazette();return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
+ if(wantsHouseTinClubPreview()){
+  ensureVisualState();
+  state.grandpaTutorial=true;
+  state.tutorialDone=true;
+  state.visual.location="Card Club";
+  houseTinTownPreview=true;
+  renderHome();show("home");
+  return;
+ }
  if(wantsSaturdayPreview()){jumpVisualToSaturdayOpen();save();renderHome();show("home");return}
  if(wantsHomeTutorial())startGrandpaTutorial();
  else{renderHome();show("home")}
@@ -2692,7 +2706,7 @@ function renderWorldScene(){
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
  if($("houseTinHotspot")){
   const atClub=state.visual.location==="Card Club";
-  const short=(Array.isArray(state.player)?state.player.length:0)<HOUSE_TIN_FLOOR;
+  const short=houseTinTownPreview||((Array.isArray(state.player)?state.player.length:0)<HOUSE_TIN_FLOOR);
   $("houseTinHotspot").classList.toggle("hidden",!(atClub&&short));
  }
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
@@ -4705,7 +4719,7 @@ if($("devNewsGazette"))$("devNewsGazette").onclick=()=>openNewsGazette();
 if($("devHouseTin"))$("devHouseTin").onclick=()=>openHouseTin({preview:true});
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
 if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
-if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:false});
+if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:houseTinTownPreview});
 if($("newsGazetteClose"))$("newsGazetteClose").onclick=closeNewsGazette;
 if($("gazettePrev"))$("gazettePrev").onclick=()=>turnGazette(-1);
 if($("gazetteNext"))$("gazetteNext").onclick=()=>turnGazette(1);
@@ -5418,19 +5432,40 @@ if ('serviceWorker' in navigator) {
   z-index:28!important;
 }
 #houseTinHotspot.houseTinHotspot{
-  left:8%!important;
+  position:absolute!important;
+  left:50%!important;
   right:auto!important;
   top:auto!important;
-  bottom:20%!important;
-  transform:none!important;
-  background:#f6e7c8!important;
-  color:#1a120c!important;
-  border:3px solid #24160f!important;
-  box-shadow:0 0 0 2px #c9a45a, 0 8px 16px #000a!important;
-  font:800 12px/1.15 Georgia,serif!important;
-  letter-spacing:.04em!important;
-  text-transform:uppercase!important;
-  z-index:28!important;
+  bottom:22%!important;
+  width:min(38vw,158px)!important;
+  height:auto!important;
+  padding:0!important;
+  margin:0!important;
+  border:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  color:transparent!important;
+  font-size:0!important;
+  transform:translateX(-50%)!important;
+  transform-origin:50% 100%!important;
+  z-index:24!important;
+  cursor:pointer;
+  filter:drop-shadow(0 8px 8px rgba(18,12,8,.4))!important;
+}
+#houseTinHotspot.houseTinHotspot img{
+  display:block;
+  width:100%;
+  height:auto;
+  pointer-events:none;
+}
+#houseTinHotspot.houseTinHotspot:active{
+  transform:translateX(-50%) scale(.97)!important;
+}
+@media(max-width:620px){
+  #houseTinHotspot.houseTinHotspot{
+    width:min(44vw,152px)!important;
+    bottom:22.5%!important;
+  }
 }
 .npcNameplate{
   display:none!important;
