@@ -523,6 +523,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (5 cards)</button>
         <button id="devInbox" type="button" style="margin-top:8px">Preview tin inbox</button>
         <button id="devOvernightGossip" type="button" style="margin-top:8px">Preview overnight gossip</button>
+        <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -1161,6 +1162,17 @@ function unreadNoticeIds(){
 function unreadNoticeCount(){
  return unreadNoticeIds().length+(unreadGossip()?1:0);
 }
+let noticePreview=false;
+function absorbPublicNoticesHere(){
+ ensureVisualState();
+ const info=publicInfoHere();
+ if(info)discoverEvents(info.ids);
+ if(state.daily&&state.daily.gossip)state.daily.gossip.read=true;
+ state.visual.noticeRead=true;
+ save();
+ syncJournalTabSeals();
+ updateWorldRecordButton();
+}
 function fillNoticeBoard(info){
  if(!$("noticeBoard"))return;
  info=info||{label:"Notices",ids:[]};
@@ -1179,18 +1191,20 @@ function fillNoticeBoard(info){
 }
 function updateWorldRecordButton(){
  let b=$("worldRecord");if(!b)return;
- let n=unreadNoticeCount();
  let mail=unreadInboxCount();
- b.classList.toggle("hasUnread",n>0);
+ b.classList.remove("hasUnread");
  b.classList.toggle("hasMail",mail>0);
- b.setAttribute("aria-label",n>0?"Open notices":mail>0?"Open journal inbox":"Open journal");
- if($("worldRecordLabel"))$("worldRecordLabel").textContent=n>0?"Notices":"Journal";
+ b.setAttribute("aria-label",mail>0?"Open journal inbox":"Open journal");
+ if($("worldRecordLabel"))$("worldRecordLabel").textContent="Journal";
  if($("worldRecordBadge")){
-  $("worldRecordBadge").textContent=n>0?String(n):"";
-  $("worldRecordBadge").classList.toggle("hidden",n===0);
+  $("worldRecordBadge").textContent="";
+  $("worldRecordBadge").classList.add("hidden");
  }
 }
-function closeNoticeView(){if($("noticeOverlay"))$("noticeOverlay").classList.add("hidden");}
+function closeNoticeView(){
+ noticePreview=false;
+ if($("noticeOverlay"))$("noticeOverlay").classList.add("hidden");
+}
 function openJournalView(tab){
  closeNoticeView();
  if(tab){ensureVisualState();state.visual.journalTab=tab;if(tab==="inbox")state.visual.inboxOpen=null}
@@ -1199,19 +1213,21 @@ function openJournalView(tab){
  scheduleScreenLayout("journal");
 }
 function openNoticeView(){
+ // Parked town-talk overlay: kept for later, not used in play. Preview with ?notices=1 or Developer tools.
  let info=publicInfoHere();
  if(!info&&!latestGossip()){openJournalView();return;}
  if(!info)info={label:"Notices",ids:[]};
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  fillNoticeBoard(info);
+ noticePreview=true;
  if($("noticeOverlay"))$("noticeOverlay").classList.remove("hidden");
  discoverEvents(info.ids);
  if(state.daily&&state.daily.gossip)state.daily.gossip.read=true;
  state.visual.noticeRead=true;save();renderJournal();updateWorldRecordButton();
 }
 function onWorldRecord(){
- if($("noticeOverlay")&&!$("noticeOverlay").classList.contains("hidden")){openJournalView();return;}
- if(unreadNoticeCount()){openNoticeView();return;}
+ closeNoticeView();
+ absorbPublicNoticesHere();
  if(unreadInboxCount()){openJournalView("inbox");return;}
  openJournalView();
 }
@@ -1416,6 +1432,9 @@ function wantsInboxPreview(){
 }
 function wantsGossipPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])gossip=1(?:&|$)/.test(location.search);
+}
+function wantsNoticesPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
 }
 const HOUSE_TIN_FLOOR=7;
 let houseTinPreview=false,houseTinPreviewCount=5,houseTinLast=null,houseTinTownPreview=false;
@@ -1716,7 +1735,7 @@ function turnGazette(dir){
 }
 function journalInBookTab(){
  const t=state?.visual?.journalTab;
- if(t==="people"||t==="cards"||t==="inbox"||t==="news")return t;
+ if(t==="people"||t==="cards"||t==="inbox")return t;
  return "calendar";
 }
 function returnToJournal(){
@@ -1728,7 +1747,6 @@ function returnToJournal(){
  openJournalView(tab);
 }
 function openNewsGazette(from){
- // Gazette stays in source for later; play now reads Card News in the Journal News tab.
  closeNoticeView();
  if(from==="journal"||window._journalReturn){
   window._gazetteFrom="journal";
@@ -1793,10 +1811,17 @@ function bootOvernightGossip(){
  }
  save();
  renderHome();show("home");
- openNoticeView();
 }
 function bootTownOrTutorial(){
  if(newsMockKind()){renderHome();openNewsGazette();return}
+ if(wantsNoticesPreview()){
+  ensureVisualState();
+  state.grandpaTutorial=true;
+  state.tutorialDone=true;
+  renderHome();show("home");
+  openNoticeView();
+  return;
+ }
  if(wantsGossipPreview()){bootOvernightGossip();return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
  if(wantsHouseTinClubPreview()){
@@ -2972,7 +2997,7 @@ function renderWorldScene(){
  present.forEach((n,i)=>{let b=document.createElement("button");b.className="npcHotspot"+(n==="Tomas"?" tomas-production":"");b.dataset.npc=n;b.dataset.slot=String(i);b.style.left=positions[i%positions.length][0]+"%";b.style.top=positions[i%positions.length][1]+"%";b.innerHTML=`<span class="figure"></span><span class="tag">${n}</span>`;b.title=npcPriority(n);b.onclick=()=>openChallenge(n);spots.appendChild(b)});
  let info=publicInfoHere();
  if(info||latestGossip())fillNoticeBoard(info);
- if($("noticeOverlay")&&!info&&!latestGossip())$("noticeOverlay").classList.add("hidden");
+ if($("noticeOverlay")&&!noticePreview)$("noticeOverlay").classList.add("hidden");
  updateWorldRecordButton();
  $("eventHotspot").classList.toggle("hidden",!saturdayOpen);
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
@@ -4994,6 +5019,11 @@ document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>{
   openSavedDecks({from:"journal"});
   return;
  }
+ if(b.dataset.jtab==="news"){
+  window._journalReturnTab=journalInBookTab();
+  openNewsGazette("journal");
+  return;
+ }
  if(b.dataset.jtab==="inbox"&&state&&state.visual)state.visual.inboxOpen=null;
  renderJournal(b.dataset.jtab);
 });
@@ -5022,6 +5052,11 @@ if($("devInbox"))$("devInbox").onclick=()=>{
  show("home");renderHome();
 };
 if($("devOvernightGossip"))$("devOvernightGossip").onclick=()=>bootOvernightGossip();
+if($("devTownTalk"))$("devTownTalk").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ show("home");renderHome();
+ openNoticeView();
+};
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
 if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
 if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:houseTinTownPreview});

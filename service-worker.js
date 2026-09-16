@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v103-tab-seals';
+const CACHE_NAME = 'card-road-pwa-v104-park-notices';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
