@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v100-house-tin-align';
+const CACHE_NAME = 'card-road-pwa-v101-house-tin-button';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
