@@ -2623,6 +2623,7 @@ function renderJournal(tab){
  }
  $("journalContent").innerHTML=out;
  $("journalContent").classList.toggle("isProse",t!=="cards");
+ $("journalContent").scrollTop=0;
 }
 
 function renderHome(){
