@@ -511,7 +511,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
   <div class="journalTable leftoverTable">
     <div class="journalWell">
       <h2 class="challengePlaque">Journal</h2>
-      <div class="journalTabs"><button type="button" data-jtab="calendar">Calendar</button><button type="button" data-jtab="people">People</button><button type="button" data-jtab="cards">Cards</button><button type="button" data-jtab="decks">Decks</button><button type="button" data-jtab="news">News</button><button type="button" data-jtab="history">History</button></div>
+      <div class="journalTabs"><button type="button" data-jtab="calendar">Calendar</button><button type="button" data-jtab="people">People</button><button type="button" data-jtab="cards">Cards</button><button type="button" data-jtab="decks">Decks</button><button type="button" data-jtab="news">News</button><button type="button" data-jtab="inbox">Inbox</button></div>
       <div class="journalSheet"><div id="journalContent" class="journalSheetInner"></div></div>
     <details class="journalDev"><summary>Developer tools</summary>
       <div style="margin-top:8px">
@@ -521,6 +521,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devSaturdayOpen" type="button" style="margin-top:8px">Jump to Saturday Open</button>
         <button id="devNewsGazette" type="button" style="margin-top:8px">Preview Card News</button>
         <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (5 cards)</button>
+        <button id="devInbox" type="button" style="margin-top:8px">Preview tin inbox</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -1029,6 +1030,7 @@ function ensureVisualState(){
  if(!state.visual.phase)state.visual.phase=defaults.phase;
  if(!state.visual.location)state.visual.location=defaults.location;
  if(!state.visual.journalTab)state.visual.journalTab=defaults.journalTab;
+ if(state.visual.journalTab==="history")state.visual.journalTab="inbox";
  if(!state.visual.discoveredEvents)state.visual.discoveredEvents=[];
  if(!state.visual.history)state.visual.history=[];
  if(state.visual.pendingTimeCost===undefined)state.visual.pendingTimeCost=null;
@@ -1072,8 +1074,10 @@ function fillNoticeBoard(info){
 function updateWorldRecordButton(){
  let b=$("worldRecord");if(!b)return;
  let n=unreadNoticeIds().length;
+ let mail=unreadInboxCount();
  b.classList.toggle("hasUnread",n>0);
- b.setAttribute("aria-label",n>0?"Open notices":"Open journal");
+ b.classList.toggle("hasMail",mail>0);
+ b.setAttribute("aria-label",n>0?"Open notices":mail>0?"Open journal inbox":"Open journal");
  if($("worldRecordLabel"))$("worldRecordLabel").textContent=n>0?"Notices":"Journal";
  if($("worldRecordBadge")){
   $("worldRecordBadge").textContent=n>0?String(n):"";
@@ -1097,7 +1101,9 @@ function openNoticeView(){
 }
 function onWorldRecord(){
  if($("noticeOverlay")&&!$("noticeOverlay").classList.contains("hidden")){openJournalView();return;}
- if(unreadNoticeIds().length)openNoticeView();else openJournalView();
+ if(unreadNoticeIds().length){openNoticeView();return;}
+ if(unreadInboxCount()){openJournalView("inbox");return;}
+ openJournalView();
 }
 function readNoticeboard(){openNoticeView();}
 function isSaturdayEventNow(){return state.visual.phase==="Afternoon"&&eventsOnDate(state.visual.date).some(e=>e.tier==="Local"&&e.place==="Lythmere Card Club")}
@@ -1168,7 +1174,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -1217,6 +1223,8 @@ function ensureWorldDefaults(){
  if(state.activeTournament===undefined)state.activeTournament=null;
  if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null};
  if(!state.seasonStats)state.seasonStats={playerChallenges:0,incomingAccepted:0,incomingDeclined:0};
+ if(!Array.isArray(state.inbox))state.inbox=[];
+ if(state.houseTinNoted==null)state.houseTinNoted=false;
 }
 function ensureOwnerCopies(owner){
  try{
@@ -1282,6 +1290,9 @@ function wantsHouseTinPreview(){
 }
 function wantsHouseTinClubPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])housetin=club(?:&|$)/.test(location.search);
+}
+function wantsInboxPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])inbox=1(?:&|$)/.test(location.search);
 }
 const HOUSE_TIN_FLOOR=7;
 let houseTinPreview=false,houseTinPreviewCount=5,houseTinLast=null,houseTinTownPreview=false;
@@ -1357,6 +1368,59 @@ function takeHouseCard(){
  houseTinLast=design;
  save();
  renderHouseTin();
+}
+function ensureInbox(){
+ if(!state)return;
+ if(!Array.isArray(state.inbox))state.inbox=[];
+ if(state.houseTinNoted==null)state.houseTinNoted=false;
+}
+function unreadInboxCount(){
+ ensureInbox();
+ return state.inbox.filter(m=>!m.read).length;
+}
+function journalEsc(s){
+ return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
+}
+const HOUSE_TIN_MAIL={
+ id:"house-tin",
+ title:"The house tin",
+ from:"Lythmere Card Club",
+ body:"You are short of a table. The Club keeps ordinary house cards in the tin under Journal — only when you are at the Card Club. They are not the copies you lost. Take until you have seven."
+};
+function postInbox(msg,opts){
+ ensureInbox();
+ if(!msg)return null;
+ if(msg.id&&state.inbox.some(m=>m.id===msg.id))return null;
+ const mail={
+  id:msg.id||("IN-"+Math.random().toString(36).slice(2,10).toUpperCase()),
+  title:msg.title||"Message",
+  body:msg.body||"",
+  from:msg.from||"",
+  date:formattedWorldDate(),
+  phase:state.visual?.phase||"",
+  read:false
+ };
+ state.inbox.push(mail);
+ if(!(opts&&opts.preview))save();
+ updateWorldRecordButton();
+ return mail;
+}
+function markInboxRead(){
+ ensureInbox();
+ let changed=false;
+ state.inbox.forEach(m=>{if(!m.read){m.read=true;changed=true}});
+ if(changed&&!houseTinPreview&&!houseTinTownPreview)save();
+ updateWorldRecordButton();
+}
+function noteHouseTinIfNeeded(opts){
+ const preview=!!(opts&&opts.preview);
+ if(!preview&&inHomeTutorial())return;
+ ensureInbox();
+ if(!preview&&state.houseTinNoted)return;
+ const n=Array.isArray(state.player)?state.player.length:0;
+ if(!preview&&n>=HOUSE_TIN_FLOOR)return;
+ if(!preview)state.houseTinNoted=true;
+ postInbox(HOUSE_TIN_MAIL,{preview});
 }
 let gazettePages=[],gazetteIndex=0,gazetteFlipping=false,gazetteSwipeX=null,gazetteFitGen=0;
 function gazetteEventName(title){
@@ -1501,7 +1565,7 @@ function turnGazette(dir){
 }
 function journalInBookTab(){
  const t=state?.visual?.journalTab;
- if(t==="people"||t==="cards"||t==="history")return t;
+ if(t==="people"||t==="cards"||t==="inbox")return t;
  return "calendar";
 }
 function returnToJournal(){
@@ -1561,6 +1625,14 @@ function bootTownOrTutorial(){
   state.tutorialDone=true;
   state.visual.location="Card Club";
   houseTinTownPreview=true;
+  renderHome();show("home");
+  return;
+ }
+ if(wantsInboxPreview()){
+  ensureVisualState();
+  state.grandpaTutorial=true;
+  state.tutorialDone=true;
+  noteHouseTinIfNeeded({preview:true});
   renderHome();show("home");
   return;
  }
@@ -1667,6 +1739,7 @@ function sendToExchange(owner,design){
  cp.owner="Exchange Pool";state.exchangePool.push(cp.id);
  state.economyStats.exchangeTrades++;
  news(`${owner} traded ${design} into the local exchange.`);
+ if(owner==="You")noteHouseTinIfNeeded();
  return true;
 }
 function acquireExchange(owner,preferLow=false){
@@ -1769,6 +1842,8 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  ensureSavedDecks();
  ensureTutorial();
  ensureVisualState();
+ ensureInbox();
+ noteHouseTinIfNeeded();
 }
 const $=x=>document.getElementById(x);
 const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","houseTin","seriesSummary","cardInspector"];
@@ -2729,7 +2804,13 @@ function renderWorldScene(){
  syncTownStandees();
 }
 function renderJournal(tab){
- if(!$("journalContent"))return;ensureVisualState();if(tab)state.visual.journalTab=tab;let t=state.visual.journalTab||"calendar";document.querySelectorAll(".journalTabs button").forEach(b=>b.classList.toggle("active",b.dataset.jtab===t));let out="";
+ if(!$("journalContent"))return;ensureVisualState();if(tab)state.visual.journalTab=tab;let t=state.visual.journalTab||"calendar";
+ const journalOpen=$("journalOverlay")&&!$("journalOverlay").classList.contains("hidden");
+ document.querySelectorAll(".journalTabs button").forEach(b=>{
+  b.classList.toggle("active",b.dataset.jtab===t);
+  if(b.dataset.jtab==="inbox")b.classList.toggle("hasMail",unreadInboxCount()>0&&!(journalOpen&&t==="inbox"));
+ });
+ let out="";
  if(t==="calendar"){
    let ev=[...state.visual.discoveredEvents].sort((a,b)=>a.date.localeCompare(b.date));out=ev.length?ev.map(e=>`<div class="journalEntry"><b>${new Date(e.date+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})} — ${e.name}</b><div>${e.place}</div><div class="source">Added from ${e.source}</div></div>`).join(""):`<div class="journalEmpty">No future events recorded yet.<br>Public schedules exist in the world; seek them out.</div>`;
  }else if(t==="people"){
@@ -2740,12 +2821,17 @@ function renderJournal(tab){
    out=`<div class="journalCardGrid">${CARDS.map(card=>{let id=card.name,label=card.display||id,owned=counts[id]||0;if(owned)return `<div class="journalCard"><b>${label}</b><div>N ${card.n} · E ${card.e} · S ${card.s} · W ${card.w}</div><div class="small">Owned ×${owned} · Total ${card.budget}</div><div class="cardMeta">${card.geometry}</div></div>`;if(seen.has(id))return `<div class="journalCard"><b>${label}</b><div>N ${card.n} · E ${card.e} · S ${card.s} · W ${card.w}</div><div class="small">Seen · Total ${card.budget}</div></div>`;return `<div class="journalCard"><b>Unknown</b><div class="small">Card not yet identified.</div></div>`}).join("")}</div>`;
  }else if(t==="news"){
    out=(state.news||[]).slice(-18).reverse().map(x=>`<div class="journalEntry">${x}</div>`).join("")||`<div class="journalEmpty">No noteworthy Card News yet.</div>`;
+ }else if(t==="inbox"){
+   ensureInbox();
+   const mail=[...state.inbox].reverse();
+   out=mail.length?mail.map(m=>`<div class="journalEntry journalMail${m.read?"":" isUnread"}"><b>${journalEsc(m.title)}</b><div class="source">${journalEsc([m.from,m.date].filter(Boolean).join(" · "))}</div><div>${journalEsc(m.body)}</div></div>`).join(""):`<div class="journalEmpty">No messages yet.</div>`;
  }else{
-   let hist=[...(state.visual.history||[]),...(state.season.history||[])];out=hist.slice(-24).reverse().map(x=>`<div class="journalEntry">${x}</div>`).join("")||`<div class="journalEmpty">Your journal is still nearly clean.</div>`;
+   out=`<div class="journalEmpty">No messages yet.</div>`;
  }
  $("journalContent").innerHTML=out;
  $("journalContent").classList.toggle("isProse",t!=="cards");
  $("journalContent").scrollTop=0;
+ if(t==="inbox"&&journalOpen)markInboxRead();
 }
 
 function renderHome(){
@@ -2788,6 +2874,7 @@ function npcClaim(npc,eligible){
 function transfer(card,from,to,reason){
  let fp=from==="You"?state.player:state.npcs[from],tp=to==="You"?state.player:state.npcs[to];
  let i=fp.indexOf(card);if(i<0)return;let cp=getCopy(from,card);fp.splice(i,1);tp.push(card);moveCopy(cp,from,to,reason);hist(card,reason);
+ if(from==="You")noteHouseTinIfNeeded();
 }
 function worldMatch(a,b){
  if(state.npcs[a].length<5||state.npcs[b].length<5)return false;
@@ -4732,6 +4819,11 @@ if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?"))
 if($("devSaturdayOpen"))$("devSaturdayOpen").onclick=()=>{jumpVisualToSaturdayOpen();save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
 if($("devNewsGazette"))$("devNewsGazette").onclick=()=>openNewsGazette();
 if($("devHouseTin"))$("devHouseTin").onclick=()=>openHouseTin({preview:true});
+if($("devInbox"))$("devInbox").onclick=()=>{
+ noteHouseTinIfNeeded({preview:true});
+ if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
+ show("home");renderHome();
+};
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
 if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
 if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:houseTinTownPreview});
@@ -10573,6 +10665,24 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   display:block;
 }
 .journalOverlay .journalEntry:last-child{border-bottom:0}
+.journalOverlay .journalMail.isUnread{
+  background:rgba(201,164,90,.16);
+  margin:0 -4px;
+  padding-left:8px;
+  padding-right:8px;
+  border-radius:4px;
+}
+.journalOverlay .journalTabs button.hasMail:after{
+  content:"";
+  display:inline-block;
+  width:7px;
+  height:7px;
+  margin-left:5px;
+  border-radius:50%;
+  background:#8b1e1e;
+  box-shadow:0 0 0 1px #f4d78a;
+  vertical-align:middle;
+}
 .journalOverlay .journalEmpty{
   padding:24px 8px;
   text-align:center;
@@ -10786,6 +10896,19 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   pointer-events:none!important;
   filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));
   z-index:6;
+}
+#visualShell #worldRecord .paperSeal{
+  display:none!important;
+  width:0!important;
+  height:0!important;
+  margin:0!important;
+  flex:0 0 0!important;
+}
+#visualShell #worldRecord.hasMail .paperSeal{
+  display:block!important;
+  width:28px!important;
+  height:28px!important;
+  flex:0 0 auto!important;
 }
 #visualShell #advanceTime.paperPlaque{
   height:52px!important;
