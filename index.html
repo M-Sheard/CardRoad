@@ -1632,6 +1632,7 @@ function bootTownOrTutorial(){
   ensureVisualState();
   state.grandpaTutorial=true;
   state.tutorialDone=true;
+  state.visual.location="Inn";
   noteHouseTinIfNeeded({preview:true});
   renderHome();show("home");
   return;
