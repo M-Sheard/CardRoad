@@ -492,10 +492,11 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </section>
 
 <div id="journalOverlay" class="journalOverlay hidden">
-  <div class="journalBook">
-    <div class="journalHeader"><div><b>Travel Journal</b><div class="small">It records what you have actually learned.</div></div><button id="closeJournal">Close</button></div>
-    <div class="journalTabs"><button data-jtab="calendar">Calendar</button><button data-jtab="people">People</button><button data-jtab="cards">Cards</button><button data-jtab="decks">Decks</button><button data-jtab="news">Card News</button><button data-jtab="history">History</button></div>
-    <div id="journalContent"></div>
+  <div class="journalTable leftoverTable">
+    <div class="journalWell">
+      <h2 class="challengePlaque">Journal</h2>
+      <div class="journalTabs"><button type="button" data-jtab="calendar">Calendar</button><button type="button" data-jtab="people">People</button><button type="button" data-jtab="cards">Cards</button><button type="button" data-jtab="decks">Decks</button><button type="button" data-jtab="news">News</button><button type="button" data-jtab="history">History</button></div>
+      <div id="journalContent" class="journalSheet"></div>
     <details class="journalDev"><summary>Developer tools</summary>
       <div style="margin-top:8px">
         <label class="devToggle"><input type="checkbox" id="devSeeOpponentCards"> <span>See opponent cards</span></label>
@@ -506,6 +507,10 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
+    </div>
+    <div class="journalActions">
+      <button type="button" id="closeJournal" class="challengePlaqueBtn">Back</button>
+    </div>
   </div>
 </div>
 <section class="panel">
@@ -609,13 +614,13 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <article class="gazetteSheet gazetteFront" id="gazetteFront"></article>
       </div>
       <div class="gazetteTurn">
-        <button type="button" id="gazettePrev">Back</button>
+        <button type="button" id="gazettePrev" class="gazetteArrow" aria-label="Previous page">‹</button>
         <span id="gazetteFolio">1 of 1</span>
-        <button type="button" id="gazetteNext">Turn page</button>
+        <button type="button" id="gazetteNext" class="gazetteArrow" aria-label="Next page">›</button>
       </div>
     </div>
     <div class="gazetteActions">
-      <button type="button" id="newsGazetteClose" class="challengePlaqueBtn challengePlaqueBtnAlt">Close</button>
+      <button type="button" id="newsGazetteClose" class="challengePlaqueBtn">Back</button>
     </div>
   </div>
 </div>
@@ -687,16 +692,16 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 </div>
 
 <div id="savedDecks" class="hidden">
-  <div class="savedDecksTable">
-    <div class="savedDecksBar">
-      <button type="button" id="savedDecksBack">Back</button>
-      <div class="savedDecksCopy">
-        <b id="savedDecksTitle">Your decks</b>
-        <span id="savedDecksInfo" class="small">Five lists from cards you own. The same card can sit in more than one.</span>
-      </div>
-      <button type="button" id="savedDecksBinder" class="hidden">Binder</button>
+  <div class="savedDecksTable leftoverTable">
+    <div class="savedDecksWell">
+      <h2 id="savedDecksTitle" class="challengePlaque">Your decks</h2>
+      <p id="savedDecksInfo" class="savedDecksCaption">Five lists from cards you own. The same card can sit in more than one.</p>
+      <div id="savedDecksList" class="savedDecksList"></div>
     </div>
-    <div id="savedDecksList" class="savedDecksList"></div>
+    <div class="savedDecksActions">
+      <button type="button" id="savedDecksBinder" class="challengePlaqueBtn hidden">Binder</button>
+      <button type="button" id="savedDecksBack" class="challengePlaqueBtn challengePlaqueBtnAlt">Back</button>
+    </div>
   </div>
 </div>
 
@@ -1041,10 +1046,12 @@ function updateWorldRecordButton(){
  }
 }
 function closeNoticeView(){if($("noticeOverlay"))$("noticeOverlay").classList.add("hidden");}
-function openJournalView(){
+function openJournalView(tab){
  closeNoticeView();
+ if(tab){ensureVisualState();state.visual.journalTab=tab}
  if($("journalOverlay"))$("journalOverlay").classList.remove("hidden");
  renderJournal();
+ scheduleScreenLayout("journal");
 }
 function openNoticeView(){
  let info=publicInfoHere();if(!info){openJournalView();return;}
@@ -1376,13 +1383,34 @@ function turnGazette(dir){
   setTimeout(()=>{gazetteIndex=next;paintGazettePage(gazetteIndex);gazetteFlipping=false},280);
  }else{gazetteIndex=next;paintGazettePage(gazetteIndex)}
 }
-function openNewsGazette(){
+function journalInBookTab(){
+ const t=state?.visual?.journalTab;
+ if(t==="people"||t==="cards"||t==="history")return t;
+ return "calendar";
+}
+function returnToJournal(){
+ const tab=window._journalReturnTab||journalInBookTab();
+ window._journalReturn=false;
+ window._journalReturnTab=null;
+ show("home");
+ renderHome();
+ openJournalView(tab);
+}
+function openNewsGazette(from){
  closeNoticeView();
+ if(from==="journal"||window._journalReturn){
+  window._gazetteFrom="journal";
+  window._journalReturnTab=window._journalReturnTab||journalInBookTab();
+  window._journalReturn=true;
+ }else window._gazetteFrom=from||"home";
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  gazetteIndex=0;gazetteFlipping=false;
  show("newsGazette");
 }
-function closeNewsGazette(){show("home");renderHome();}
+function closeNewsGazette(){
+ if(window._gazetteFrom==="journal"){returnToJournal();return}
+ show("home");renderHome();
+}
 function onGazettePointerDown(e){gazetteSwipeX=e.clientX}
 function onGazettePointerUp(e){
  if(gazetteSwipeX==null)return;
@@ -1619,6 +1647,8 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
 const $=x=>document.getElementById(x);
 const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","seriesSummary","cardInspector"];
 function leftoverScreenId(){
+ const j=$("journalOverlay");
+ if(j&&!j.classList.contains("hidden"))return "journal";
  return LEFTOVER_SCREENS.find(x=>{const n=$(x);return n&&!n.classList.contains("hidden")});
 }
 function show(id){
@@ -1684,6 +1714,10 @@ function layoutScreenFit(id){
   layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
   paginateGazette();
   return;
+ }
+ if(id==="journal"){
+  const root=$("journalOverlay");
+  return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
  }
  if(id==="result"){
   const root=$("result");
@@ -3005,6 +3039,10 @@ function openSavedDecks(opts){
  deckEdit=null;
  window._savedDecksFrom=opts.from||"journal";
  window._savedDecksPick=!!opts.pick;
+ if(window._savedDecksFrom==="journal"){
+  window._journalReturnTab=window._journalReturnTab||journalInBookTab();
+  window._journalReturn=true;
+ }
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  if($("savedDecksTitle"))$("savedDecksTitle").textContent=opts.pick?"Choose a deck":"Your decks";
  if($("savedDecksInfo"))$("savedDecksInfo").textContent=opts.pick
@@ -3101,6 +3139,7 @@ function useSavedDeck(slot){
 function closeSavedDecks(){
  const from=window._savedDecksFrom;
  window._savedDecksPick=false;
+ if(from==="journal"||window._journalReturn){returnToJournal();return}
  if(from==="match"){
   if(window._tournamentMatch){show("tournament");renderTournament();return}
   show("challenge");
@@ -4531,13 +4570,27 @@ if($("closeNotice"))$("closeNotice").onclick=closeNoticeView;
 if($("noticeOverlay"))$("noticeOverlay").onclick=e=>{if(e.target===$("noticeOverlay"))closeNoticeView();};
 document.querySelectorAll("#locationStrip button").forEach(b=>b.onclick=()=>{closeNoticeView();state.visual.location=b.dataset.loc;save();renderWorldScene()});
 document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>{
- if(b.dataset.jtab==="decks"){openSavedDecks({from:"journal"});return}
- if(b.dataset.jtab==="news"){openNewsGazette();return}
+ if(b.dataset.jtab==="decks"){
+  window._journalReturnTab=journalInBookTab();
+  openSavedDecks({from:"journal"});
+  return;
+ }
+ if(b.dataset.jtab==="news"){
+  window._journalReturnTab=journalInBookTab();
+  openNewsGazette("journal");
+  return;
+ }
  renderJournal(b.dataset.jtab);
 });
 if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
 if($("tableTalk"))$("tableTalk").onclick=()=>{if(tableTalkQueue&&tableTalkQueue.advance)tableTalkQueue.advance()};
+if($("game"))$("game").addEventListener("pointerup",e=>{
+ if(!tableTalkQueue||!tableTalkQueue.advance||!inHomeTutorial())return;
+ if(homeTutorial.phase==="play"&&!homeTutorial.lock)return;
+ if(e.target&&e.target.closest&&e.target.closest("#tableTalk"))return;
+ tableTalkQueue.advance();
+});
 if($("devReset"))$("devReset").onclick=()=>{if(confirm("Reset prototype save?")){localStorage.removeItem("cardRoadV120");state=fresh();save();bootTownOrTutorial()}};
 if($("devSaturdayOpen"))$("devSaturdayOpen").onclick=()=>{jumpVisualToSaturdayOpen();save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
 if($("devNewsGazette"))$("devNewsGazette").onclick=()=>openNewsGazette();
@@ -8495,7 +8548,8 @@ html,body,#visualShell{color-scheme:only light}
 #savedDecks,
 #starter,
 #tournament,
-#newsGazette{
+#newsGazette,
+.journalOverlay{
   --stage-w:440px;
 }
 .leftoverTable{
@@ -8813,38 +8867,10 @@ html,body,#visualShell{color-scheme:only light}
 #cardInspector .inspectCardWrap{
   max-width:min(180px,42vw);
 }
-.journalOverlay:not(.hidden){
-  position:fixed!important;
-  inset:0!important;
-  z-index:100!important;
-  display:flex!important;
-  flex-direction:column;
-  padding:max(12px,env(safe-area-inset-top) + 8px) max(12px,env(safe-area-inset-right) + 8px) max(12px,env(safe-area-inset-bottom) + 8px) max(12px,env(safe-area-inset-left) + 8px)!important;
-  overflow:hidden!important;
-  box-sizing:border-box;
-}
-.journalBook{
-  flex:1 1 auto;
-  min-height:0!important;
-  max-height:100%;
-  width:min(100%,800px);
-  margin:0 auto!important;
-  display:flex;
-  flex-direction:column;
-  overflow:hidden;
-  box-sizing:border-box;
-}
+.journalOverlay.hidden{display:none!important}
 .journalHeader,
 .journalTabs,
 .journalDev{flex:0 0 auto}
-#journalContent{
-  flex:1 1 auto;
-  min-height:0;
-  overflow-x:hidden;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  touch-action:pan-y;
-}
 #historyModal:not(.hidden){
   display:flex!important;
   flex-direction:column;
@@ -8865,7 +8891,6 @@ html,body,#visualShell{color-scheme:only light}
 #historyModal #historyBody{max-height:none}
 @media(max-width:620px){
   #visualShell .townScene{height:100svh!important;height:100dvh!important;min-height:0!important}
-  .journalBook{min-height:0!important}
 }
 </style>
 <script>
@@ -9992,8 +10017,335 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
 @media(max-width:620px){
   #newsGazette .gazetteWell{border-width:8px;padding:12px 10px 12px}
 }
-@media(prefers-reduced-motion:reduce){
-  #newsGazette .gazetteFront{transition:none}
+#newsGazette .gazetteTurn button.gazetteArrow{
+  flex:0 0 44px;
+  width:44px;
+  min-width:44px;
+  min-height:44px;
+  padding:0;
+  font-size:28px;
+  line-height:1;
+  letter-spacing:0;
+  color:#f4ead3!important;
+  background:#2a1c12cc!important;
+  border:1px solid rgba(231,196,123,.55)!important;
+  border-radius:6px;
+}
+#newsGazette .gazetteTurn button.gazetteArrow:disabled{opacity:.35}
+
+.journalOverlay:not(.hidden){
+  position:fixed!important;
+  inset:0!important;
+  z-index:100!important;
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  max-width:none!important;
+  overflow:hidden!important;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#1a120c!important;
+  backdrop-filter:none!important;
+  touch-action:pan-y;
+}
+.journalOverlay .journalTable{
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+.journalOverlay .journalWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  padding:14px 12px 12px;
+  overflow:hidden;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0008;
+}
+.journalOverlay .journalWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+.journalOverlay .challengePlaque{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  align-self:center;
+  margin:0 0 8px;
+  width:min(92%,280px);
+  padding:12px 14px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(16px,5.2vw,24px);
+  font-weight:800;
+  letter-spacing:.1em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+.journalOverlay .journalTabs{
+  position:relative;
+  z-index:1;
+  display:flex;
+  flex-wrap:nowrap;
+  gap:4px;
+  width:100%;
+  min-width:0;
+  margin:0 0 8px;
+  overflow:hidden;
+}
+.journalOverlay .journalTabs button{
+  flex:1 1 0;
+  min-width:0;
+  min-height:32px;
+  padding:6px 2px;
+  font-family:Georgia,serif!important;
+  font-size:clamp(9px,2.5vw,12px)!important;
+  font-weight:800!important;
+  letter-spacing:.02em;
+  text-transform:uppercase;
+  color:#f4ead3!important;
+  background:#2a1c12cc!important;
+  border:1px solid rgba(231,196,123,.45)!important;
+  border-radius:4px!important;
+  box-shadow:none!important;
+}
+.journalOverlay .journalTabs button.active{
+  color:#1a0c08!important;
+  background:linear-gradient(180deg,#cbb07a 0%,#e8d7b0 50%,#c4a46a 100%)!important;
+  border-color:#6b4220!important;
+}
+.journalOverlay .journalSheet{
+  position:relative;
+  z-index:1;
+  flex:1 1 auto;
+  min-height:0;
+  min-width:0;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  padding:10px 12px 12px;
+  color:#1a120c;
+  background-color:#f3e6c8;
+  background-image:url("assets/ui/deck_binder_page.png");
+  background-position:center;
+  background-size:cover;
+  background-repeat:no-repeat;
+  border:1px solid #c9a45a;
+  border-radius:3px;
+  box-shadow:0 8px 18px #0005;
+}
+.journalOverlay .journalEntry{
+  padding:8px 0;
+  border-bottom:1px dashed #a58e6a;
+}
+.journalOverlay .journalEntry:last-child{border-bottom:0}
+.journalOverlay .journalEmpty{
+  padding:24px 8px;
+  text-align:center;
+  font-style:italic;
+}
+.journalOverlay .journalCardGrid{
+  display:grid;
+  grid-template-columns:repeat(2,minmax(0,1fr));
+  gap:8px;
+}
+.journalOverlay .journalCard{
+  background:#f7ead3;
+  border:1px solid #c9a45a;
+  padding:8px;
+  border-radius:4px;
+  min-width:0;
+}
+.journalOverlay .journalDev{
+  position:relative;
+  z-index:1;
+  margin-top:8px;
+  color:#e8d7b6;
+}
+.journalOverlay .journalActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+  padding-bottom:4px;
+}
+.journalOverlay .journalActions button{
+  display:block;
+  width:100%;
+  margin:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(14px,4vw,17px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+@media(max-width:620px){
+  .journalOverlay .journalWell{border-width:8px;padding:12px 10px 12px}
+}
+
+#savedDecks .savedDecksWell{
+  position:relative;
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  flex-direction:column;
+  align-items:stretch;
+  padding:14px 12px 12px;
+  overflow:hidden;
+  background:#163528;
+  border:10px solid #5a3a22;
+  border-radius:10px;
+  box-shadow:
+    inset 0 0 0 2px #24150e,
+    inset 0 0 0 5px rgba(201,161,90,.45),
+    inset 0 8px 18px #0006,
+    0 12px 28px #0008;
+}
+#savedDecks .savedDecksWell:before{
+  content:"";
+  position:absolute;
+  inset:-12px;
+  pointer-events:none;
+  z-index:3;
+  background:
+    linear-gradient(135deg,#f0d48a 0 42%,#8d691f 78%) 0 0/20px 22px no-repeat,
+    linear-gradient(225deg,#f0d48a 0 42%,#8d691f 78%) 100% 0/20px 22px no-repeat,
+    linear-gradient(45deg,#f0d48a 0 42%,#8d691f 78%) 0 100%/20px 22px no-repeat,
+    linear-gradient(-45deg,#f0d48a 0 42%,#8d691f 78%) 100% 100%/20px 22px no-repeat;
+  filter:drop-shadow(0 1px 1px #0008);
+}
+#savedDecks .savedDecksTable{
+  height:100%;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:12px 12px 0;
+}
+#savedDecks .challengePlaque{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  align-self:center;
+  margin:0 0 8px;
+  width:min(92%,280px);
+  padding:12px 14px;
+  font-family:Georgia,"Times New Roman",serif;
+  font-size:clamp(16px,5.2vw,24px);
+  font-weight:800;
+  letter-spacing:.1em;
+  line-height:1.15;
+  text-transform:uppercase;
+  color:#1a0c08;
+  text-align:center;
+  background:
+    radial-gradient(circle at 11px 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) 10px,#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at 11px calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    radial-gradient(circle at calc(100% - 11px) calc(100% - 10px),#e6c57a 0 3px,#5a3814 5px,transparent 6px),
+    linear-gradient(180deg,#cbb07a 0%,#e8d7b0 18% 82%,#c4a46a 100%);
+  border:5px solid #6b4220;
+  border-radius:5px;
+  box-shadow:inset 0 1px 0 #f3e6c4,0 4px 0 #3d2414,0 8px 16px #0007;
+}
+#savedDecks .savedDecksCaption{
+  position:relative;
+  z-index:1;
+  flex:0 0 auto;
+  margin:0 0 8px;
+  text-align:center;
+  font-family:Georgia,serif;
+  font-size:clamp(12px,3.3vw,14px);
+  color:#e8d7b6;
+}
+#savedDecks .savedDecksList{
+  position:relative;
+  z-index:1;
+}
+#savedDecks .savedDecksActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+  padding-bottom:4px;
+}
+#savedDecks .savedDecksActions button{
+  display:block;
+  width:100%;
+  margin:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(14px,4vw,17px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
+}
+#savedDecks .savedDecksActions button.challengePlaqueBtnAlt{
+  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+}
+#savedDecks .savedDecksActions button.hidden{display:none!important}
+@media(max-width:620px){
+  #savedDecks .savedDecksWell{border-width:8px;padding:12px 10px 12px}
 }
 </style>
 
