@@ -436,23 +436,23 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <section id="visualShell">
   <div class="worldTopbar">
     <button type="button" id="advanceTime" class="scrollPlaque" aria-label="Pass time">
-      <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
-      <span class="scrollWell">
+      <span class="scrollPaper">
         <img class="scrollSun" src="./assets/ui/date_frame_probe_sun.png" alt="">
         <span class="scrollCopy"><b id="visualDate">Monday, 2 March · Year 1</b><span id="visualPhase" class="small">Morning</span></span>
-        <span class="scrollFrame" aria-hidden="true"></span>
       </span>
-      <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
+      <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left_cutout.png" alt="">
+      <span class="scrollRail" aria-hidden="true"></span>
+      <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right_cutout.png" alt="">
     </button>
     <div class="worldActions">
       <button id="worldRecord" class="scrollPlaque scrollPlaque-sm" type="button" aria-label="Open journal">
-        <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
-        <span class="scrollWell">
+        <span class="scrollPaper">
           <span id="worldRecordLabel">Journal</span>
           <span id="worldRecordBadge" class="worldRecordBadge hidden"></span>
-          <span class="scrollFrame" aria-hidden="true"></span>
         </span>
-        <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
+        <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left_cutout.png" alt="">
+        <span class="scrollRail" aria-hidden="true"></span>
+        <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right_cutout.png" alt="">
       </button>
     </div>
   </div>
@@ -470,15 +470,15 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide" id="locationStrip" aria-label="Lythmere locations">
-    <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
-    <div class="scrollWell locationWell">
+    <div class="scrollPaper locationWell">
       <button type="button" data-loc="Market">Market</button>
       <button type="button" data-loc="Riverside">Riverside</button>
       <button type="button" data-loc="Inn">Inn</button>
       <button type="button" data-loc="Card Club" title="Card Club">Club</button>
-      <span class="scrollFrame" aria-hidden="true"></span>
     </div>
-    <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
+    <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left_cutout.png" alt="">
+    <span class="scrollRail" aria-hidden="true"></span>
+    <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right_cutout.png" alt="">
   </nav>
   <div id="worldStatus" class="worldStatus"></div>
 <div id="noticeOverlay" class="noticeOverlay hidden">
@@ -10359,58 +10359,88 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
 }
 </style>
 <style>
-/* v96 — town banners sit on top of the writing. Paper + copy stay in the
-   window; carved rails overlay that window as a cutout. Rollers tuck over
-   the paper ends so the well is not a box sitting on the scroll. */
-#visualShell .scrollPlaque{--scroll-h:74px}
-#visualShell #worldRecord.scrollPlaque{--scroll-h:58px}
-#visualShell .scrollCap.scrollCap-left{
-  margin-right:calc(var(--scroll-h) * -.14)!important;
-  z-index:5!important;
+/* v96 — parchment is behind; writing sits on it; carved scroll work overlays
+   as a cutout. Roller art has the paper punched out so the frame is on top. */
+#visualShell .scrollPlaque{
+  --scroll-h:74px;
+  position:relative!important;
 }
-#visualShell .scrollCap.scrollCap-right{
-  margin-left:calc(var(--scroll-h) * -.10)!important;
-  z-index:5!important;
+#visualShell .locationStrip.scrollPlaque{
+  position:absolute!important;
 }
-#visualShell .scrollWell{
+#visualShell #worldRecord.scrollPlaque{
+  --scroll-h:58px;
+  min-width:128px!important;
+}
+#visualShell .scrollPaper{
+  position:absolute!important;
   z-index:0!important;
+  top:22%!important;
+  bottom:16%!important;
+  left:calc(var(--scroll-h) * .30)!important;
+  right:calc(var(--scroll-h) * .10)!important;
+  display:flex!important;
+  flex-direction:row!important;
+  align-items:center!important;
+  justify-content:center!important;
+  gap:6px!important;
+  margin:0!important;
+  padding:0 calc(var(--scroll-h) * .12) 0 calc(var(--scroll-h) * .18)!important;
+  min-width:0!important;
+  height:auto!important;
+  background-color:#f3d9a8!important;
+  background-image:url("./assets/ui/date_frame_paper.png")!important;
+  background-repeat:repeat-x!important;
+  background-size:auto 100%!important;
+  background-position:center!important;
+  box-shadow:none!important;
   overflow:hidden!important;
-  background-image:
-    linear-gradient(to bottom,rgba(40,22,8,.28),rgba(40,22,8,0) 26%),
-    linear-gradient(to top,rgba(40,22,8,.20),rgba(40,22,8,0) 22%),
-    url("./assets/ui/date_frame_paper.png")!important;
-  background-repeat:no-repeat,no-repeat,repeat-x!important;
-  background-size:100% 100%,100% 100%,auto 100%!important;
-  background-position:center top,center bottom,center!important;
 }
-#visualShell .scrollWell > *{
+#visualShell .scrollPaper > *{
   position:relative;
   z-index:1;
 }
-#visualShell .scrollFrame{
-  position:absolute!important;
-  inset:0!important;
-  z-index:4!important;
+#visualShell .scrollRail{
+  flex:1 1 auto!important;
+  min-width:0!important;
+  position:relative!important;
+  z-index:3!important;
   pointer-events:none!important;
+  margin:0 calc(var(--scroll-h) * -.06)!important;
+  background-color:transparent!important;
   background-image:url("./assets/ui/date_frame_mid_cutout.png")!important;
   background-repeat:repeat-x!important;
   background-size:auto 100%!important;
   background-position:center!important;
 }
-#visualShell .locationWell > .scrollFrame{
-  grid-area:1/1/-1/-1;
-  width:100%;
-  height:100%;
+#visualShell .scrollCap{
+  position:relative!important;
+  z-index:4!important;
+}
+#visualShell .locationWell.scrollPaper{
+  display:grid!important;
+  grid-template-columns:repeat(4,minmax(0,1fr))!important;
+  align-items:stretch!important;
+  justify-content:stretch!important;
+  gap:0!important;
+  padding:0!important;
+  height:auto!important;
 }
 #visualShell .worldRecordBadge{z-index:6!important}
 #visualShell .locationWell button.active:after{
-  top:26%!important;
+  top:1px!important;
+  width:12px!important;
+  height:12px!important;
+  margin-left:-6px!important;
   z-index:2;
+}
+#visualShell .locationWell button.active{
+  padding-top:14px!important;
 }
 @media(max-width:620px){
   #visualShell .scrollPlaque{--scroll-h:64px}
   #visualShell #advanceTime.scrollPlaque{--scroll-h:58px}
-  #visualShell #worldRecord.scrollPlaque{--scroll-h:50px}
+  #visualShell #worldRecord.scrollPlaque{--scroll-h:50px;min-width:128px!important}
 }
 </style>
 
