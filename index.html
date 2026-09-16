@@ -460,16 +460,8 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
           <span id="worldRecordBadge" class="worldRecordBadge hidden"></span>
         </span>
       </button>
-      <button id="houseTinHotspot" class="scrollPlaque scrollPlaque-sm paperPlaque" type="button" aria-label="House tin">
-        <span class="paperCorners" aria-hidden="true">
-          <img class="paperCorner paperCorner-tl" src="./assets/ui/paper_corner.png" alt="">
-          <img class="paperCorner paperCorner-tr" src="./assets/ui/paper_corner.png" alt="">
-          <img class="paperCorner paperCorner-bl" src="./assets/ui/paper_corner.png" alt="">
-          <img class="paperCorner paperCorner-br" src="./assets/ui/paper_corner.png" alt="">
-        </span>
-        <span class="scrollWell">
-          <span>House tin</span>
-        </span>
+      <button id="houseTinHotspot" class="houseTinHotspot hidden" type="button" aria-label="House tin">
+        <img src="assets/ui/house_tin_cutout.png" alt="">
       </button>
     </div>
   </div>
@@ -1552,6 +1544,7 @@ function bootTownOrTutorial(){
   ensureVisualState();
   state.grandpaTutorial=true;
   state.tutorialDone=true;
+  state.visual.location="Card Club";
   houseTinTownPreview=true;
   renderHome();show("home");
   return;
@@ -2711,6 +2704,11 @@ function renderWorldScene(){
  updateWorldRecordButton();
  $("eventHotspot").classList.toggle("hidden",!saturdayOpen);
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
+ if($("houseTinHotspot")){
+  const atClub=state.visual.location==="Card Club";
+  const short=houseTinTownPreview||((Array.isArray(state.player)?state.player.length:0)<HOUSE_TIN_FLOOR);
+  $("houseTinHotspot").classList.toggle("hidden",!(atClub&&short));
+ }
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
  syncTownStandees();
@@ -6475,8 +6473,7 @@ if ('serviceWorker' in navigator) {
   pointer-events:auto!important;
 }
 #visualShell #advanceTime img,
-#visualShell #worldRecord img,
-#visualShell #houseTinHotspot img{
+#visualShell #worldRecord img{
   pointer-events:none!important;
 }
 #visualShell #advanceTime.scrollPlaque{
@@ -6527,15 +6524,40 @@ if ('serviceWorker' in navigator) {
   flex:0 0 auto!important;
   display:flex!important;
   flex-direction:column!important;
-  align-items:stretch!important;
+  align-items:flex-end!important;
   gap:8px!important;
 }
-#visualShell #worldRecord.scrollPlaque,
-#visualShell #houseTinHotspot.scrollPlaque{
+#visualShell #worldRecord.scrollPlaque{
   width:auto!important;
   max-width:none!important;
   min-width:0!important;
   filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))!important;
+}
+#visualShell #houseTinHotspot{
+  display:block!important;
+  width:min(118px,32vw)!important;
+  min-width:0!important;
+  min-height:0!important;
+  height:auto!important;
+  margin:0!important;
+  padding:0!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  filter:drop-shadow(0 4px 8px rgba(0,0,0,.45))!important;
+  cursor:pointer;
+}
+#visualShell #houseTinHotspot.hidden{display:none!important}
+#visualShell #houseTinHotspot img{
+  display:block;
+  width:100%;
+  height:auto;
+  pointer-events:none;
+}
+#visualShell #houseTinHotspot:active{transform:scale(.97)}
+@media(max-width:620px){
+  #visualShell #houseTinHotspot{width:min(108px,30vw)!important}
 }
 @media(max-width:620px){
   #visualShell #advanceTime.scrollPlaque{
@@ -10755,8 +10777,7 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   min-height:52px!important;
   min-width:0!important;
 }
-#visualShell #worldRecord.paperPlaque,
-#visualShell #houseTinHotspot.paperPlaque{
+#visualShell #worldRecord.paperPlaque{
   height:44px!important;
   min-height:44px!important;
   min-width:118px!important;
@@ -10771,13 +10792,7 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   gap:6px!important;
   padding:4px 12px 4px 14px!important;
 }
-#visualShell #houseTinHotspot.paperPlaque .scrollWell{
-  justify-content:center!important;
-  gap:0!important;
-  padding:4px 12px!important;
-}
-#visualShell #worldRecord .paperCorner,
-#visualShell #houseTinHotspot .paperCorner{width:16px;height:19px}
+#visualShell #worldRecord .paperCorner{width:16px;height:19px}
 #visualShell .locationStrip.paperPlaque{
   position:absolute!important;
   height:52px!important;
@@ -10802,8 +10817,7 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
 @media(max-width:620px){
   #visualShell #advanceTime.paperPlaque,
   #visualShell .locationStrip.paperPlaque{height:48px!important;min-height:48px!important}
-  #visualShell #worldRecord.paperPlaque,
-  #visualShell #houseTinHotspot.paperPlaque{height:42px!important;min-height:42px!important;min-width:108px!important}
+  #visualShell #worldRecord.paperPlaque{height:42px!important;min-height:42px!important;min-width:108px!important}
   #visualShell .paperCorner{width:16px;height:19px}
   #visualShell .locationStrip .paperSeal-left{width:26px!important;height:26px!important;left:-6px}
 }
