@@ -1095,6 +1095,10 @@ function syncJournalTabSeals(){
   b.classList.toggle("hasNew",tab!=="inbox"&&on);
   b.classList.toggle("hasMail",tab==="inbox"&&on);
  });
+ updateWorldRecordButton();
+}
+function journalFrontHasSeal(){
+ return unreadInboxCount()>0||JOURNAL_SEAL_TABS.some(tab=>journalTabHasNew(tab));
 }
 function visualDateObj(){
  ensureVisualState();
@@ -1191,10 +1195,10 @@ function fillNoticeBoard(info){
 }
 function updateWorldRecordButton(){
  let b=$("worldRecord");if(!b)return;
- let mail=unreadInboxCount();
+ const seal=journalFrontHasSeal();
  b.classList.remove("hasUnread");
- b.classList.toggle("hasMail",mail>0);
- b.setAttribute("aria-label",mail>0?"Open journal inbox":"Open journal");
+ b.classList.toggle("hasMail",seal);
+ b.setAttribute("aria-label",unreadInboxCount()>0?"Open journal inbox":seal?"Open journal":"Open journal");
  if($("worldRecordLabel"))$("worldRecordLabel").textContent="Journal";
  if($("worldRecordBadge")){
   $("worldRecordBadge").textContent="";
@@ -1606,30 +1610,68 @@ function gazette(h,p){
  state.gazette.push({h,p,date:state.visual?.date||""});
  if(state.gazette.length>36)state.gazette=state.gazette.slice(-36);
 }
-function paperClaim(winner,loser,card,score){
+function newsWho(n){return n==="You"?"You":n}
+function newsWhom(n){return n==="You"?"you":n}
+function newsScore(score){return String(score||"").replace(/–/g,"-").trim()}
+function roundNewsName(round){
+ const r=String(round||"").toLowerCase();
+ if(r.includes("quarter"))return "quarter-final";
+ if(r.includes("semi"))return "semi-final";
+ if(r.includes("final"))return "final";
+ return r||"match";
+}
+function matchNewsPlace(opts){
+ if(opts&&opts.tournament)return `the ${opts.tournament} ${roundNewsName(opts.round)}`;
+ return "a friendly match";
+}
+function currentClaimNewsOpts(){
+ const t=state&&state.activeTournament;
+ const m=typeof window!=="undefined"?window._tournamentMatch:null;
+ if(t&&m&&t.name)return {tournament:t.name,round:m.round};
+ return null;
+}
+function paperClaimMatch(winner,loser,card,opts){
  const name=cardLabel(card);
- const h=winner==="You"?`You take ${name}`:`${winner} takes ${name}`;
- const p=score
-  ? `${winner==="You"?"You":winner} defeated ${loser==="You"?"you":loser} ${score} and claimed ${name}.`
-  : `${winner==="You"?"You":winner} claimed ${name} from ${loser==="You"?"you":loser}.`;
+ const w=newsWho(winner),l=newsWhom(loser);
+ const h=winner==="You"?`You take ${name}`:`${w} takes ${name}`;
+ return {h,p:`${w} took ${name} from ${l} in ${matchNewsPlace(opts)}.`}
+}
+function paperClaim(winner,loser,card,score,opts){
+ return paperClaimMatch(winner,loser,card,opts||null);
+}
+function paperContestWin(winner,loser,tournament,score,round){
+ const event=gazetteEventName(tournament);
+ const w=newsWho(winner),l=newsWhom(loser);
+ const h=winner==="You"?`You win the ${event}`:`${w} wins the ${event}`;
+ const bit=newsScore(score);
+ const p=`${w} won the ${tournament}, beating ${l}${bit?" "+bit:""} in the ${roundNewsName(round||"Final")}.`;
  return {h,p};
 }
-function paperWin(winner,title,score,round){
- const event=gazetteEventName(title);
- const h=winner==="You"?`You take the ${event}`:`${winner} takes the ${event}`;
- const who=winner==="You"?"You":winner;
- const verb=winner==="You"?"win":"wins";
- const bit=score?` ${score}`:"";
- const stage=/Final/i.test(round||"Final")?" in the final":round?` in the ${round.toLowerCase()}`:"";
- return {h,p:`${who} ${verb} the ${title}${bit}${stage}.`};
+function paperWin(winner,title,score,round,loser){
+ if(loser)return paperContestWin(winner,loser,title,score,round);
+ return paperContestWin(winner,"the field",title,score,round);
+}
+function reportMatchClaim(winner,loser,card,opts){
+ const paper=paperClaimMatch(winner,loser,card,opts);
+ news(paper.p,paper);
+ return paper;
+}
+function reportContestWin(winner,loser,tournament,score,round){
+ const paper=paperContestWin(winner,loser,tournament,score,round);
+ news(paper.p,paper);
+ return paper;
 }
 function newsLineToGazette(text){
  if(!text||typeof text!=="string")return null;
  if(/common-card supply|exchange pool|local exchange|journal calendar|relationship with|declined |challenged you|Grandfather said|Card News began|local card scene is quiet| added to your journal|drew /.test(text))return null;
- let m=text.match(/^(.+): (.+) defeated (.+) (\d+-\d+) in the (.+)\.$/);
+ let m=text.match(/^(.+) took (.+) from (.+) in (.+)\.$/);
+ if(m)return {h:m[1]==="You"?`You take ${m[2]}`:`${m[1]} takes ${m[2]}`,p:text};
+ m=text.match(/^(.+) won the (.+), beating (.+?)(?: (\d+-\d+))? in the (.+)\.$/);
+ if(m)return {h:m[1]==="You"?`You win the ${gazetteEventName(m[2])}`:`${m[1]} wins the ${gazetteEventName(m[2])}`,p:text};
+ m=text.match(/^(.+): (.+) defeated (.+) (\d+-\d+) in the (.+)\.$/);
  if(m){
   if(String(m[5]).toLowerCase()!=="final")return null;
-  return paperWin(m[2],m[1],m[4],"Final");
+  return paperContestWin(m[2],m[3],m[1],m[4],"Final");
  }
  m=text.match(/^You are the Year (\d+) Local Champion\.$/);
  if(m)return {h:"You are Local Champion",p:`You are the Year ${m[1]} Local Champion.`};
@@ -1805,7 +1847,7 @@ function bootOvernightGossip(){
  const cp=getCopy(win,design);
  const name=cardLabel(design);
  if(gossipWorthy(design,cp)){
-  news(`${win} defeated ${lose} and claimed ${name}.`,paperClaim(win,lose,design));
+  reportMatchClaim(win,lose,design);
   publishGossip({win,lose,design,place:"Card Club"});
   markSeen(win,design);
  }
@@ -2450,8 +2492,11 @@ function simulatedTournamentSeries(a,b,tournament,round,progress){
  tournamentRecord(b,tournament,`${round} series ${wins[b]}-${wins[a]}`,seasonDeck(b));
 
  state.season.history.push(`${tournament}: ${winner} defeated ${loser} ${wins[winner]}-${wins[loser]} (${round}).`);
- news(`${tournament}: ${winner} defeated ${loser} ${wins[winner]}-${wins[loser]} in the ${round}.`,
-  round==="Final"?paperWin(winner,tournament,`${wins[winner]}-${wins[loser]}`,"Final"):null);
+ if(round==="Final")reportContestWin(winner,loser,tournament,`${wins[winner]}-${wins[loser]}`,round);
+ else{
+  const p=`${newsWho(winner)} beat ${newsWhom(loser)} ${wins[winner]}-${wins[loser]} in ${matchNewsPlace({tournament,round})}.`;
+  news(p,{h:`${newsWho(winner)} takes a ${roundNewsName(round)}`,p});
+ }
 
  // One tournament card transfer after the series, from a card in the loser's decisive-game deck.
  if(a!=="You"&&b!=="You"&&state.npcs[loser].length>5){
@@ -2465,7 +2510,7 @@ function simulatedTournamentSeries(a,b,tournament,round,progress){
        moveCopy(state.copies[chosen],loser,winner,`${loser} lost ${design} to ${winner} at ${tournament} (${round}).`);
        hist(design,`${loser} lost ${design} to ${winner} at ${tournament} (${round}).`);
        markSeen(winner,design);
-       gazette(`${cardLabel(design)} changes hands`,`${loser} lost ${cardLabel(design)} to ${winner} at ${tournament}.`);
+       reportMatchClaim(winner,loser,design,{tournament,round});
      }
    }
  }
@@ -2490,7 +2535,7 @@ function runSeasonEvent(day){
    state.season.history.push(`${champ} became Local Champion, Year ${state.season.year}.`);
    news(`${champ} is the Year ${state.season.year} Local Champion.`,{h:`${champ} is Local Champion`,p:`${champ} is the Year ${state.season.year} Local Champion.`});
  }else{
-   state.season.history.push(`${champ} won the ${title}.`);news(`${champ} wins the ${title}.`);
+   state.season.history.push(`${champ} won the ${title}.`);
  }
 }
 
@@ -2734,7 +2779,6 @@ function playNextOpenTable(t){
   t.round="Complete";
   t.finalWinner=r.winner;
   stampTournamentWinner(r.winner,t.name,r.winnerDeck);
-  news(`${r.winner} wins the ${t.name}.`);
  }
  t.call=reportOpenSeries(r,job.label);
  t.status="report";
@@ -2822,10 +2866,10 @@ function finalizeSaturdayOpenPlayerResult(playerWon){
   t.playerFinish=playerWon?"Champion":"Finalist";
   if(playerWon){
    stampTournamentWinner("You",t.name,playerFinalCopies);
-   news(`You win the ${t.name}.`,paperWin("You",t.name,t.scores?.final,"Final"));
+   reportContestWin("You",m.opponent,t.name,t.scores?.final,"Final");
   }else{
    stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
-   news(`${m.opponent} wins the ${t.name}.`,paperWin(m.opponent,t.name,t.scores?.final,"Final"));
+   reportContestWin(m.opponent,"You",t.name,t.scores?.final,"Final");
   }
   scheduleActivityTime("tournament");
  }
@@ -2947,13 +2991,13 @@ function finalizeTournamentPlayerResult(playerWon){
    else{
      t.playerAlive=false;
      let prog={},fr=simulatedTournamentMatch(m.opponent,t.semifinal2Winner,t.name,"Final",prog);
-     t.finalWinner=fr.winner;t.status="complete";stampTournamentWinner(fr.winner,t.name,fr.winnerDeck);news(`${fr.winner} wins the ${t.name}.`);
+     t.finalWinner=fr.winner;t.status="complete";stampTournamentWinner(fr.winner,t.name,fr.winnerDeck);
    }
  }else{
    t.finalWinner=playerWon?"You":m.opponent;t.status="complete";
    if(playerWon)stampTournamentWinner("You",t.name,playerFinalCopies);
    else stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
-   news(playerWon?`You win the ${t.name}.`:`${m.opponent} wins the ${t.name}.`,paperWin(playerWon?"You":m.opponent,t.name,null,"Final"));
+   reportContestWin(playerWon?"You":m.opponent,playerWon?m.opponent:"You",t.name,playerWon?`${seriesWins.p}-${seriesWins.ai}`:`${seriesWins.ai}-${seriesWins.p}`,"Final");
  }
  if(t.status==="complete")scheduleActivityTime("tournament");
  window._tournamentMatch=null;save();
@@ -3101,7 +3145,7 @@ function worldMatch(a,b,place){
  state.daily.lastNpcMatch=`${win} defeated ${lose}`;
  state.daily.lastCardMove=`${take}: ${lose} → ${win}`;
  if(gossipWorthy(take,cp)){
-  news(`${win} defeated ${lose} and claimed ${name}.`,paperClaim(win,lose,take));
+  reportMatchClaim(win,lose,take);
   publishGossip({win,lose,design:take,place:place||"Lythmere"});
   markSeen(win,take);
  }
@@ -4817,7 +4861,7 @@ function settleSeries(winner){
       if(state.npcs[currentNpc].includes(n)){
         transfer(n,currentNpc,"You",`${currentNpc} lost named stake ${n} to you after the series.`);
         mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);
-        news(`You defeated ${currentNpc} ${seriesWins.p}-${seriesWins.ai} and won ${n}.`,paperClaim("You",currentNpc,n,`${seriesWins.p}-${seriesWins.ai}`));
+        reportMatchClaim("You",currentNpc,n,currentClaimNewsOpts());
         $("resultCaption").textContent="You claimed this copy.";
         playResultFlip(C[n],"p");
       }else{
@@ -4871,7 +4915,7 @@ function settleSeries(winner){
    $("resultCaption").textContent=`${currentNpc} claims this copy.`;
    transfer(take,"You",currentNpc,`${currentNpc} claimed ${take} from you after winning the series.`);
    mem(currentNpc).cardsLost.push(take);cardRelationship(currentNpc,"theyTook",take);
-   news(`${currentNpc} defeated you ${seriesWins.ai}-${seriesWins.p} and claimed ${take}.`,paperClaim(currentNpc,"You",take,`${seriesWins.ai}-${seriesWins.p}`));
+   reportMatchClaim(currentNpc,"You",take,currentClaimNewsOpts());
    recovery();save();
    playResultFlip(C[take],"ai");
  }
@@ -4980,7 +5024,7 @@ function playerOwnedCount(design){
 }
 function claim(n,copyIdChosen=null){
  let cp=getCopy(currentNpc,n,copyIdChosen),fp=state.npcs[currentNpc],ix=fp.indexOf(n);if(ix>=0)fp.splice(ix,1);state.player.push(n);moveCopy(cp,currentNpc,"You",`${currentNpc} lost ${n} to you after your victory.`);hist(n,`${currentNpc} lost ${n} to you after your victory.`);
- mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);state.log.push(`You defeated ${currentNpc} and claimed ${n}.`);news(`You defeated ${currentNpc} and claimed ${n}.`,paperClaim("You",currentNpc,n));recovery();maybeIncoming({npc:currentNpc,type:"lostCard",card:n});save();
+ mem(currentNpc).cardsWon.push(n);cardRelationship(currentNpc,"youTook",n);state.log.push(`You defeated ${currentNpc} and claimed ${n}.`);reportMatchClaim("You",currentNpc,n,currentClaimNewsOpts());recovery();maybeIncoming({npc:currentNpc,type:"lostCard",card:n});save();
 }
 
 function showSeriesSummary(){
