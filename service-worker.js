@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v100-inbox-gossip';
+const CACHE_NAME = 'card-road-pwa-v101-gossip-save';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',

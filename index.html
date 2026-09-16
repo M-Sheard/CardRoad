@@ -1058,6 +1058,19 @@ function npcPriority(n){
  return d.competitive>.7?"competitive practice":"ordinary local play";
 }
 function discoverEvent(ev){ensureVisualState();if(!state.visual.discoveredEvents.some(x=>x.id===ev.id)){state.visual.discoveredEvents.push(ev);state.visual.history.push(`Discovered ${ev.name} from ${ev.source}.`);news(`${ev.name} added to your journal calendar.`);save();}}
+function copyTouchedByPlayer(cp){
+ if(!cp)return false;
+ if((cp.signatures||[]).some(s=>s.owner==="You"))return true;
+ const origin=cp.origin||"";
+ return origin==="Starter collection"||/Grandfather/i.test(origin);
+}
+function gossipWorthy(design,cp){
+ // Town talk names a card when Lythmere would actually gossip:
+ // house commons stay quiet unless this physical copy used to be yours;
+ // anything heavier is named (one story a day at most).
+ if(copyTouchedByPlayer(cp))return true;
+ return !isRenewableCommon(design);
+}
 function latestGossip(){
  return state&&state.daily&&state.daily.gossip&&state.daily.gossip.win?state.daily.gossip:null;
 }
@@ -1191,7 +1204,8 @@ function backgroundV6Day(){
      if(ra&&ra===rb)pairs.push([a,b,ra]);
    }
  }
- state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null};
+ const kept=state.daily&&state.daily.gossip;
+ state.daily={lastNpcMatch:null,lastCardMove:null,gossip:kept||null};
  if(pairs.length){
   let [a,b,place]=pairs[Math.floor(Math.random()*pairs.length)];
   if(!worldMatch(a,b,place)){
@@ -1667,9 +1681,6 @@ function jumpVisualToSaturdayOpen(){
  syncCalendarState();
 }
 function bootOvernightGossip(){
- gossipPreview=true;
- state=fresh();
- ensureWorldDefaults();
  ensureVisualState();
  state.grandpaTutorial=true;
  state.tutorialDone=true;
@@ -1679,20 +1690,19 @@ function bootOvernightGossip(){
  syncCalendarState();
  ensureCopies();
  seedProvenance();
- const win="Elira",lose="Bram",design="C089";
- if(!(state.npcs[lose]||[]).includes(design)){
-  const alt=(state.npcs[lose]||[])[0];
-  if(!alt)return;
-  transfer(alt,lose,win,`${lose} lost ${alt} to ${win} in an NPC match.`);
-  news(`${win} defeated ${lose} and claimed ${cardLabel(alt)}.`,paperClaim(win,lose,alt));
-  publishGossip({win,lose,design:alt,place:"Card Club"});
-  markSeen(win,alt);
- }else{
-  transfer(design,lose,win,`${lose} lost ${design} to ${win} in an NPC match.`);
-  news(`${win} defeated ${lose} and claimed ${cardLabel(design)}.`,paperClaim(win,lose,design));
+ const win="Elira",lose="Bram";
+ const held=state.npcs[lose]||[];
+ const design=held.includes("C089")?"C089":(held.find(d=>gossipWorthy(d,getCopy(lose,d)))||held[0]);
+ if(!design)return;
+ transfer(design,lose,win,`${lose} lost ${design} to ${win} in an NPC match.`);
+ const cp=getCopy(win,design);
+ const name=cardLabel(design);
+ if(gossipWorthy(design,cp)){
+  news(`${win} defeated ${lose} and claimed ${name}.`,paperClaim(win,lose,design));
   publishGossip({win,lose,design,place:"Card Club"});
   markSeen(win,design);
  }
+ save();
  renderHome();show("home");
  openNoticeView();
 }
@@ -1891,8 +1901,7 @@ function runNpcEconomy(){
 
 function seedProvenance(){ensureCopies();if(state.provenanceSeeded)return;let n=localNpcNames();let a=getCopy(n[0],state.npcs[n[0]][0]);if(a)a.signatures.push({owner:"Edda",date:"2025-09-14",reason:"Local wager"});let c=getCopy(n[2],state.npcs[n[2]][0]);if(c)c.signatures.push({owner:"Hale",date:"2025-12-02",reason:"Trade"});state.provenanceSeeded=true;save()}
 
-let gossipPreview=false;
-function save(){if(gossipPreview)return;localStorage.setItem("cardRoadV120",JSON.stringify(state))}
+function save(){localStorage.setItem("cardRoadV120",JSON.stringify(state))}
 function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!state||typeof state!=="object")state=fresh()}catch{state=fresh()}
  // v21 wrote schema v1.2.1 but previously wiped any save that was not v1.2.0.
  if(!Array.isArray(state.player))state=fresh();
@@ -2971,10 +2980,15 @@ function worldMatch(a,b,place){
  let used=lose===a?A:B;let take=npcClaim(win,used);
  transfer(take,lose,win,`${lose} lost ${take} to ${win} in an NPC match.`);
  const name=cardLabel(take);
+ const cp=getCopy(win,take);
  state.log.push(`${win} defeated ${lose} and claimed ${name}.`);
- news(`${win} defeated ${lose} and claimed ${name}.`,paperClaim(win,lose,take));
- publishGossip({win,lose,design:take,place:place||"Lythmere"});
- markSeen(win,take);
+ state.daily.lastNpcMatch=`${win} defeated ${lose}`;
+ state.daily.lastCardMove=`${take}: ${lose} → ${win}`;
+ if(gossipWorthy(take,cp)){
+  news(`${win} defeated ${lose} and claimed ${name}.`,paperClaim(win,lose,take));
+  publishGossip({win,lose,design:take,place:place||"Lythmere"});
+  markSeen(win,take);
+ }
  return true;
 }
 function recovery(){
@@ -4924,7 +4938,6 @@ if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
 if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
 
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();bootTownOrTutorial()}};
-if(wantsGossipPreview())gossipPreview=true;
 load();syncDevControls();
 bootTownOrTutorial();
 if(/(?:^|[?&])banditlock=1(?:&|$)/.test(location.search)){
