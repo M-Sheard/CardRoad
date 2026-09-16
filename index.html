@@ -2495,7 +2495,7 @@ function simulatedTournamentSeries(a,b,tournament,round,progress){
  if(round==="Final")reportContestWin(winner,loser,tournament,`${wins[winner]}-${wins[loser]}`,round);
  else{
   const p=`${newsWho(winner)} beat ${newsWhom(loser)} ${wins[winner]}-${wins[loser]} in ${matchNewsPlace({tournament,round})}.`;
-  news(p,{h:`${newsWho(winner)} takes a ${roundNewsName(round)}`,p});
+  news(p,{h:winner==="You"?`You take a ${roundNewsName(round)}`:`${newsWho(winner)} takes a ${roundNewsName(round)}`,p});
  }
 
  // One tournament card transfer after the series, from a card in the loser's decisive-game deck.
