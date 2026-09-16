@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v97-journal-gilt';
+const CACHE_NAME = 'card-road-pwa-v98-house-tin';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
