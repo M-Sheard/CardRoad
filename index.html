@@ -1716,7 +1716,7 @@ function turnGazette(dir){
 }
 function journalInBookTab(){
  const t=state?.visual?.journalTab;
- if(t==="people"||t==="cards"||t==="inbox")return t;
+ if(t==="people"||t==="cards"||t==="inbox"||t==="news")return t;
  return "calendar";
 }
 function returnToJournal(){
@@ -4991,11 +4991,6 @@ document.querySelectorAll(".journalTabs button").forEach(b=>b.onclick=()=>{
  if(b.dataset.jtab==="decks"){
   window._journalReturnTab=journalInBookTab();
   openSavedDecks({from:"journal"});
-  return;
- }
- if(b.dataset.jtab==="news"){
-  window._journalReturnTab=journalInBookTab();
-  openNewsGazette("journal");
   return;
  }
  if(b.dataset.jtab==="inbox"&&state&&state.visual)state.visual.inboxOpen=null;
