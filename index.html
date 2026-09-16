@@ -435,22 +435,30 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
 <div id="home">
 <section id="visualShell">
   <div class="worldTopbar">
-    <button type="button" id="advanceTime" class="scrollPlaque" aria-label="Pass time">
-      <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
+    <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+      <span class="paperCorners" aria-hidden="true">
+        <img class="paperCorner paperCorner-tl" src="./assets/ui/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-tr" src="./assets/ui/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-bl" src="./assets/ui/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-br" src="./assets/ui/paper_corner.png" alt="">
+      </span>
       <span class="scrollWell">
-        <img class="scrollSun" src="./assets/ui/date_frame_probe_sun.png" alt="">
         <span class="scrollCopy"><b id="visualDate">Monday, 2 March · Year 1</b><span id="visualPhase" class="small">Morning</span></span>
       </span>
-      <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
     </button>
     <div class="worldActions">
-      <button id="worldRecord" class="scrollPlaque scrollPlaque-sm" type="button" aria-label="Open journal">
-        <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
+      <button id="worldRecord" class="scrollPlaque scrollPlaque-sm paperPlaque" type="button" aria-label="Open journal">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="./assets/ui/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="./assets/ui/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="./assets/ui/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="./assets/ui/paper_corner.png" alt="">
+        </span>
         <span class="scrollWell">
           <span id="worldRecordLabel">Journal</span>
+          <img class="paperSeal" src="./assets/ui/paper_seal.png" alt="">
           <span id="worldRecordBadge" class="worldRecordBadge hidden"></span>
         </span>
-        <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
       </button>
     </div>
   </div>
@@ -467,15 +475,20 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div id="npcHotspots"></div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
   </div>
-  <nav class="locationStrip scrollPlaque scrollPlaque-wide" id="locationStrip" aria-label="Lythmere locations">
-    <img class="scrollCap scrollCap-left" src="./assets/ui/date_frame_left.png" alt="">
+  <nav class="locationStrip scrollPlaque scrollPlaque-wide paperPlaque" id="locationStrip" aria-label="Lythmere locations">
+    <span class="paperCorners" aria-hidden="true">
+      <img class="paperCorner paperCorner-tl" src="./assets/ui/paper_corner.png" alt="">
+      <img class="paperCorner paperCorner-tr" src="./assets/ui/paper_corner.png" alt="">
+      <img class="paperCorner paperCorner-bl" src="./assets/ui/paper_corner.png" alt="">
+      <img class="paperCorner paperCorner-br" src="./assets/ui/paper_corner.png" alt="">
+    </span>
+    <img class="paperSeal paperSeal-left" src="./assets/ui/paper_seal.png" alt="">
     <div class="scrollWell locationWell">
       <button type="button" data-loc="Market">Market</button>
       <button type="button" data-loc="Riverside">Riverside</button>
       <button type="button" data-loc="Inn">Inn</button>
       <button type="button" data-loc="Card Club" title="Card Club">Club</button>
     </div>
-    <img class="scrollCap scrollCap-right" src="./assets/ui/date_frame_right.png" alt="">
   </nav>
   <div id="worldStatus" class="worldStatus"></div>
 <div id="noticeOverlay" class="noticeOverlay hidden">
@@ -10353,6 +10366,101 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
 #savedDecks .savedDecksActions button.hidden{display:none!important}
 @media(max-width:620px){
   #savedDecks .savedDecksWell{border-width:8px;padding:12px 10px 12px}
+}
+</style>
+<style>
+/* v96 — option 4: parchment strips with brass corner overlays and wax seals.
+   Writing sits on the paper; the hardware sits on top of it. */
+#visualShell .paperPlaque{
+  position:relative!important;
+  height:52px!important;
+  min-height:52px!important;
+  border:1px solid #c4a06a!important;
+  border-radius:2px!important;
+  background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%)!important;
+  background-image:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%)!important;
+  box-shadow:0 4px 10px rgba(0,0,0,.35)!important;
+  filter:drop-shadow(0 3px 6px rgba(0,0,0,.28))!important;
+  overflow:visible!important;
+}
+#visualShell .paperPlaque .scrollCap{display:none!important}
+#visualShell .paperPlaque .scrollSun{display:none!important}
+#visualShell .paperPlaque .scrollWell{
+  background:none!important;
+  background-image:none!important;
+  padding:4px 16px!important;
+}
+#visualShell .paperCorners{
+  position:absolute;
+  inset:0;
+  z-index:5;
+  pointer-events:none;
+}
+#visualShell .paperCorner{
+  position:absolute;
+  width:24px;
+  height:28px;
+  object-fit:contain;
+  pointer-events:none;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
+}
+#visualShell .paperCorner-tl{top:-4px;left:-4px}
+#visualShell .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+#visualShell .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+#visualShell .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+#visualShell .paperSeal{
+  width:28px!important;
+  height:28px!important;
+  flex:0 0 auto!important;
+  object-fit:contain!important;
+  pointer-events:none!important;
+  filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));
+  z-index:6;
+}
+#visualShell #advanceTime.paperPlaque{
+  height:52px!important;
+  min-height:52px!important;
+  min-width:0!important;
+}
+#visualShell #worldRecord.paperPlaque{
+  height:44px!important;
+  min-height:44px!important;
+  min-width:118px!important;
+  padding:0!important;
+  gap:0!important;
+}
+#visualShell #worldRecord.paperPlaque .scrollWell{
+  gap:6px!important;
+  padding:4px 12px 4px 14px!important;
+}
+#visualShell #worldRecord .paperCorner{width:16px;height:19px}
+#visualShell .locationStrip.paperPlaque{
+  position:absolute!important;
+  height:52px!important;
+  min-height:52px!important;
+}
+#visualShell .locationStrip.paperPlaque .scrollWell{
+  padding:4px 12px 4px 28px!important;
+}
+#visualShell .locationStrip .paperSeal-left{
+  position:absolute!important;
+  left:-8px;
+  top:50%;
+  transform:translateY(-50%);
+  width:32px!important;
+  height:32px!important;
+  z-index:6;
+}
+#visualShell .paperPlaque .locationWell button.active:after{display:none!important}
+#visualShell .paperPlaque .locationWell button{
+  padding:8px 4px!important;
+}
+@media(max-width:620px){
+  #visualShell #advanceTime.paperPlaque,
+  #visualShell .locationStrip.paperPlaque{height:48px!important;min-height:48px!important}
+  #visualShell #worldRecord.paperPlaque{height:42px!important;min-height:42px!important;min-width:108px!important}
+  #visualShell .paperCorner{width:16px;height:19px}
+  #visualShell .locationStrip .paperSeal-left{width:26px!important;height:26px!important;left:-6px}
 }
 </style>
 
