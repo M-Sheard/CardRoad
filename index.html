@@ -2609,6 +2609,7 @@ function renderJournal(tab){
    let hist=[...(state.visual.history||[]),...(state.season.history||[])];out=hist.slice(-24).reverse().map(x=>`<div class="journalEntry">${x}</div>`).join("")||`<div class="journalEmpty">Your journal is still nearly clean.</div>`;
  }
  $("journalContent").innerHTML=out;
+ $("journalContent").classList.toggle("isProse",t!=="cards");
 }
 
 function renderHome(){
@@ -10178,9 +10179,15 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   border-radius:3px;
   box-shadow:0 8px 18px #0005;
 }
+.journalOverlay .journalSheet.isProse{
+  text-align:center;
+}
 .journalOverlay .journalEntry{
   padding:8px 0;
   border-bottom:1px dashed #a58e6a;
+}
+.journalOverlay .journalSheet.isProse .journalEntry .source{
+  display:block;
 }
 .journalOverlay .journalEntry:last-child{border-bottom:0}
 .journalOverlay .journalEmpty{
