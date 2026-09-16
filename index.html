@@ -509,7 +509,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div class="journalWell">
       <h2 class="challengePlaque">Journal</h2>
       <div class="journalTabs"><button type="button" data-jtab="calendar">Calendar</button><button type="button" data-jtab="people">People</button><button type="button" data-jtab="cards">Cards</button><button type="button" data-jtab="decks">Decks</button><button type="button" data-jtab="news">News</button><button type="button" data-jtab="history">History</button></div>
-      <div id="journalContent" class="journalSheet"></div>
+      <div class="journalSheet"><div id="journalContent" class="journalSheetInner"></div></div>
     <details class="journalDev"><summary>Developer tools</summary>
       <div style="margin-top:8px">
         <label class="devToggle"><input type="checkbox" id="devSeeOpponentCards"> <span>See opponent cards</span></label>
@@ -9853,7 +9853,7 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   inset:0;
   display:flex;
   flex-direction:column;
-  padding:10px 12px 12px;
+  padding:max(32px,8.5%) max(24px,8%);
   overflow:hidden;
   box-sizing:border-box;
   color:#1a120c;
@@ -10177,11 +10177,8 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   flex:1 1 auto;
   min-height:0;
   min-width:0;
-  overflow-x:hidden;
-  overflow-y:auto;
-  -webkit-overflow-scrolling:touch;
-  touch-action:pan-y;
-  padding:10px 12px 12px;
+  overflow:hidden;
+  box-sizing:border-box;
   color:#1a120c;
   background-color:#f3e6c8;
   background-image:url("assets/ui/deck_binder_page.png");
@@ -10192,14 +10189,26 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   border-radius:3px;
   box-shadow:0 8px 18px #0005;
 }
-.journalOverlay .journalSheet.isProse{
+.journalOverlay .journalSheetInner{
+  position:absolute;
+  /* Gilt window of deck_binder_page.png: top/bottom % of height, sides % of width. */
+  inset:8.5% 8%;
+  overflow-x:hidden;
+  overflow-y:auto;
+  -webkit-overflow-scrolling:touch;
+  touch-action:pan-y;
+  overscroll-behavior:contain;
+  padding:2px 4px 6px;
+  box-sizing:border-box;
+}
+.journalOverlay .journalSheetInner.isProse{
   text-align:center;
 }
 .journalOverlay .journalEntry{
   padding:8px 0;
   border-bottom:1px dashed #a58e6a;
 }
-.journalOverlay .journalSheet.isProse .journalEntry .source{
+.journalOverlay .journalSheetInner.isProse .journalEntry .source{
   display:block;
 }
 .journalOverlay .journalEntry:last-child{border-bottom:0}
