@@ -1292,6 +1292,17 @@ function pickHouseCommon(){
  const commons=Object.keys(C).filter(d=>C[d]&&C[d].budget<=16);
  return commons.length?commons[Math.floor(Math.random()*commons.length)]:"C001";
 }
+function issueHouseCommon(){
+ ensureCopies();ensureWorldDefaults();
+ const design=pickHouseCommon();
+ const cp=newCopy(design,"You","Lythmere Card Club house tin");
+ state.copies[cp.id]=cp;
+ (state.copyOwners.You||(state.copyOwners.You=[])).push(cp.id);
+ state.player.push(design);
+ if(state.economyStats)state.economyStats.commonIssued=(state.economyStats.commonIssued||0)+1;
+ news("The club house tin handed you "+cardLabel(design)+".");
+ return design;
+}
 function renderHouseTin(){
  const n=houseTinHeld();
  const short=n<HOUSE_TIN_FLOOR;
@@ -1335,12 +1346,16 @@ function closeHouseTin(){
 }
 function takeHouseCard(){
  if(houseTinHeld()>=HOUSE_TIN_FLOOR)return;
- if(!houseTinPreview){
-  houseTinPreview=true;
-  houseTinPreviewCount=houseTinHeld();
+ if(houseTinPreview){
+  houseTinLast=pickHouseCommon();
+  houseTinPreviewCount++;
+  renderHouseTin();
+  return;
  }
- houseTinLast=pickHouseCommon();
- houseTinPreviewCount++;
+ const design=issueHouseCommon();
+ if(!design)return;
+ houseTinLast=design;
+ save();
  renderHouseTin();
 }
 let gazettePages=[],gazetteIndex=0,gazetteFlipping=false,gazetteSwipeX=null,gazetteFitGen=0;

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v104-house-tin-smaller';
+const CACHE_NAME = 'card-road-pwa-v98-house-tin';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
