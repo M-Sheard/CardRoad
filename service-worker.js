@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v102-inbox-mail';
+const CACHE_NAME = 'card-road-pwa-v103-tab-seals';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',

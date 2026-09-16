@@ -1037,6 +1037,64 @@ function ensureVisualState(){
  if(state.visual.pendingTimeCost===undefined)state.visual.pendingTimeCost=null;
  if(state.visual.inboxOpen===undefined)state.visual.inboxOpen=null;
 }
+const JOURNAL_SEAL_TABS=["calendar","people","cards","news"];
+function journalOverlayOpen(){const j=$("journalOverlay");return !!(j&&!j.classList.contains("hidden"))}
+function journalTabFingerprint(tab){
+ ensureVisualState();
+ if(tab==="calendar")return (state.visual.discoveredEvents||[]).map(e=>e.id).sort().join("|");
+ if(tab==="people")return localNpcNames().map(n=>n+":"+relationshipLabel(n)).join("|");
+ if(tab==="cards"){
+  const counts={};(state.player||[]).forEach(c=>counts[c]=(counts[c]||0)+1);
+  const seen=new Set(Object.values(state.seenByNpc||{}).flat());
+  Object.keys(counts).forEach(c=>seen.add(c));
+  return CARDS.map(card=>{
+   const id=card.name;
+   if(counts[id])return id+"=x"+counts[id];
+   if(seen.has(id))return id+"=seen";
+   return id+"=?";
+  }).join("|");
+ }
+ if(tab==="news"){
+  const news=(state.news||[]).join("\n");
+  const gaz=(state.gazette||[]).map(x=>(x.h||"")+"\t"+(x.date||"")+"\t"+(x.p||"")).join("\n");
+  return news+"\n\x1e\n"+gaz;
+ }
+ return "";
+}
+function ensureJournalSeen(){
+ if(!state)return false;
+ ensureVisualState();
+ let dirty=false;
+ if(!state.visual.journalSeen||typeof state.visual.journalSeen!=="object"){state.visual.journalSeen={};dirty=true}
+ JOURNAL_SEAL_TABS.forEach(tab=>{
+  if(typeof state.visual.journalSeen[tab]!=="string"){state.visual.journalSeen[tab]=journalTabFingerprint(tab);dirty=true}
+ });
+ return dirty;
+}
+function markJournalTabSeen(tab){
+ if(!JOURNAL_SEAL_TABS.includes(tab))return false;
+ ensureJournalSeen();
+ const fp=journalTabFingerprint(tab);
+ if(state.visual.journalSeen[tab]===fp)return false;
+ state.visual.journalSeen[tab]=fp;
+ return true;
+}
+function journalTabHasNew(tab){
+ if(tab==="inbox")return unreadInboxCount()>0;
+ if(!JOURNAL_SEAL_TABS.includes(tab))return false;
+ ensureJournalSeen();
+ return journalTabFingerprint(tab)!==state.visual.journalSeen[tab];
+}
+function syncJournalTabSeals(){
+ if(!state)return;
+ ensureJournalSeen();
+ document.querySelectorAll(".journalTabs button").forEach(b=>{
+  const tab=b.dataset.jtab;
+  const on=journalTabHasNew(tab);
+  b.classList.toggle("hasNew",tab!=="inbox"&&on);
+  b.classList.toggle("hasMail",tab==="inbox"&&on);
+ });
+}
 function visualDateObj(){
  ensureVisualState();
  const d=new Date(state.visual.date+"T12:00:00");
@@ -1058,7 +1116,7 @@ function npcPriority(n){
  if(n==="Elira"&&npcLocationNow(n)==="Card Club")return "structured practice";
  return d.competitive>.7?"competitive practice":"ordinary local play";
 }
-function discoverEvent(ev){ensureVisualState();if(!state.visual.discoveredEvents.some(x=>x.id===ev.id)){state.visual.discoveredEvents.push(ev);state.visual.history.push(`Discovered ${ev.name} from ${ev.source}.`);news(`${ev.name} added to your journal calendar.`);save();}}
+function discoverEvent(ev){ensureVisualState();if(!state.visual.discoveredEvents.some(x=>x.id===ev.id)){state.visual.discoveredEvents.push(ev);state.visual.history.push(`Discovered ${ev.name} from ${ev.source}.`);news(`${ev.name} added to your journal calendar.`);save();syncJournalTabSeals();}}
 function copyTouchedByPlayer(cp){
  if(!cp)return false;
  if((cp.signatures||[]).some(s=>s.owner==="You"))return true;
@@ -1468,6 +1526,7 @@ function postInbox(msg,opts){
  state.inbox.push(mail);
  if(!(opts&&opts.preview))save();
  updateWorldRecordButton();
+ syncJournalTabSeals();
  return mail;
 }
 function inboxById(id){
@@ -1676,6 +1735,7 @@ function openNewsGazette(from){
   window._journalReturn=true;
  }else window._gazetteFrom=from||"home";
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
+ if(markJournalTabSeen("news"))save();
  gazetteIndex=0;gazetteFlipping=false;
  show("newsGazette");
 }
@@ -1963,6 +2023,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  ensureTutorial();
  ensureVisualState();
  ensureInbox();
+ if(ensureJournalSeen())save();
  noteHouseTinIfNeeded();
 }
 const $=x=>document.getElementById(x);
@@ -2924,11 +2985,12 @@ function renderWorldScene(){
  syncTownStandees();
 }
 function renderJournal(tab){
- if(!$("journalContent"))return;ensureVisualState();if(tab)state.visual.journalTab=tab;let t=state.visual.journalTab||"calendar";
+ if(!$("journalContent"))return;ensureVisualState();ensureJournalSeen();if(tab)state.visual.journalTab=tab;let t=state.visual.journalTab||"calendar";
+ if(journalOverlayOpen()&&markJournalTabSeen(t))save();
  document.querySelectorAll(".journalTabs button").forEach(b=>{
   b.classList.toggle("active",b.dataset.jtab===t);
-  if(b.dataset.jtab==="inbox")b.classList.toggle("hasMail",unreadInboxCount()>0);
  });
+ syncJournalTabSeals();
  let out="";
  if(t==="calendar"){
    let ev=[...state.visual.discoveredEvents].sort((a,b)=>a.date.localeCompare(b.date));out=ev.length?ev.map(e=>`<div class="journalEntry"><b>${new Date(e.date+"T12:00:00").toLocaleDateString("en-GB",{weekday:"short",day:"numeric",month:"short"})} — ${e.name}</b><div>${e.place}</div><div class="source">Added from ${e.source}</div></div>`).join(""):`<div class="journalEmpty">No future events recorded yet.<br>Public schedules exist in the world; seek them out.</div>`;
@@ -3139,6 +3201,7 @@ function news(text,paper){
   if(state.news.length>48)state.news=state.news.slice(-48);
  }
  if(paper)gazette(paper.h,paper.p);
+ syncJournalTabSeals();
 }
 function mem(n){
  if(!state.memory[n])state.memory[n]={playerWins:0,npcWins:0,draws:0,declines:0,cardsWon:[],cardsLost:[],affinity:0,rivalry:0,respect:0,meetings:0,lastReaction:"",moments:[]};
@@ -10740,9 +10803,10 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   width:100%;
   min-width:0;
   margin:0 0 8px;
-  overflow:hidden;
+  overflow:visible;
 }
 .journalOverlay .journalTabs button{
+  position:relative;
   flex:1 1 calc((100% - 8px) / 3);
   min-width:0;
   min-height:32px;
@@ -10757,6 +10821,10 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   border:1px solid rgba(231,196,123,.45)!important;
   border-radius:4px!important;
   box-shadow:none!important;
+}
+.journalOverlay .journalTabs button.hasNew,
+.journalOverlay .journalTabs button.hasMail{
+  padding-right:14px;
 }
 .journalOverlay .journalTabs button.active{
   color:#1a0c08!important;
@@ -10898,16 +10966,20 @@ body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
   border-radius:4px;
   box-shadow:0 2px 0 #3d2414;
 }
+.journalOverlay .journalTabs button.hasNew:after,
 .journalOverlay .journalTabs button.hasMail:after{
   content:"";
-  display:inline-block;
-  width:7px;
-  height:7px;
-  margin-left:5px;
-  border-radius:50%;
-  background:#8b1e1e;
-  box-shadow:0 0 0 1px #f4d78a;
-  vertical-align:middle;
+  position:absolute;
+  top:2px;
+  right:2px;
+  width:12px;
+  height:12px;
+  margin:0;
+  border-radius:0;
+  background:url("./assets/ui/paper_seal.png") center / contain no-repeat;
+  box-shadow:none;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.4));
+  pointer-events:none;
 }
 .journalOverlay .journalEmpty{
   padding:24px 8px;
