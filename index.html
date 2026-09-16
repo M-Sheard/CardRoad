@@ -1728,6 +1728,7 @@ function returnToJournal(){
  openJournalView(tab);
 }
 function openNewsGazette(from){
+ // Gazette stays in source for later; play now reads Card News in the Journal News tab.
  closeNoticeView();
  if(from==="journal"||window._journalReturn){
   window._gazetteFrom="journal";
