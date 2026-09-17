@@ -1,0 +1,1082 @@
+[
+  {
+    "id": "C001",
+    "display": "Earwig",
+    "budget": 14,
+    "tier": "common",
+    "habitat": "close-up garden leaf, one yellow flower, simple sky",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C002",
+    "display": "Twin Woodlice",
+    "budget": 14,
+    "tier": "common",
+    "habitat": "under a damp log, leaf litter and moss, two woodlice large in frame",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C003",
+    "display": "Garden Newt",
+    "budget": 14,
+    "tier": "common",
+    "habitat": "pond margin with duckweed and pebbles, newt large on a wet stone",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C004",
+    "display": "Needle Wasp",
+    "budget": 14,
+    "tier": "common",
+    "habitat": "close-up foxglove or wildflower, wasp large on the bloom",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C005",
+    "display": "Fieldmouse",
+    "budget": 14,
+    "tier": "common",
+    "habitat": "stubble field close-up, fieldmouse large among grain stalks",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C006",
+    "display": "Hedge Shrew",
+    "budget": 14,
+    "tier": "common",
+    "habitat": "hedgerow roots and dry leaves, shrew large in the foreground",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C007",
+    "display": "Millipede",
+    "budget": 15,
+    "tier": "common",
+    "habitat": "bark and moss close-up, millipede large along a log",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C008",
+    "display": "Harvest Mice",
+    "budget": 15,
+    "tier": "common",
+    "habitat": "corn sheaf and straw, two harvest mice large on a stem",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C009",
+    "display": "Dung Beetle",
+    "budget": 15,
+    "tier": "common",
+    "habitat": "farmyard dung heap and straw, beetle large in the foreground",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C010",
+    "display": "Kingfisher",
+    "budget": 15,
+    "tier": "common",
+    "habitat": "riverbank reeds and flashing water, kingfisher large on a reed",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C011",
+    "display": "Weasel",
+    "budget": 15,
+    "tier": "common",
+    "habitat": "bramble thicket, weasel large weaving through stems",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C012",
+    "display": "Tunnel Mole",
+    "budget": 15,
+    "tier": "common",
+    "habitat": "fresh earth tunnel mouth, mole large emerging from soil",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C013",
+    "display": "Grasshopper",
+    "budget": 15,
+    "tier": "common",
+    "habitat": "tall grass close-up, grasshopper large on a blade",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C014",
+    "display": "Skylark",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "open meadow sky, skylark large in flight against clouds",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C015",
+    "display": "Twin Toads",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "muddy pond edge, two toads large on wet mud",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C016",
+    "display": "Badger Cub",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "woodland sett mouth, badger cub large among ferns",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C017",
+    "display": "Damselfly",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "slow stream and rushes, damselfly large on a reed tip",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C018",
+    "display": "Robin",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "holly hedge in winter, robin large on a berry spray",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C019",
+    "display": "Stickleback",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "clear stream over pebbles, stickleback large in the water",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C020",
+    "display": "Soldier Beetles",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "cow parsley umbel close-up, soldier beetles large on the flower",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C021",
+    "display": "Heron Chick",
+    "budget": 16,
+    "tier": "common",
+    "habitat": "reedbed nest, heron chick large among reeds",
+    "large_subject": true,
+    "done": true
+  },
+  {
+    "id": "C022",
+    "display": "Hedgehog",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "leafy lane bank, hedgehog large in ivy and leaves",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C023",
+    "display": "Hare",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "dew-wet pasture at dawn, hare large sitting up",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C024",
+    "display": "Red Fox",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "English meadow with birch and oak, fox large, no cottage",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C025",
+    "display": "Stoat",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "snowy hedgerow, stoat in ermine large on a branch",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C026",
+    "display": "Kestrel",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "heath and hovering sky, kestrel large against clouds",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C027",
+    "display": "Pike",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "weedy river, pike large in green water",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C028",
+    "display": "Barn Owls",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "barn rafters and straw, two barn owls large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C029",
+    "display": "Polecat",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "moonlit copse, polecat large among bluebells",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C030",
+    "display": "Riverling",
+    "budget": 17,
+    "tier": "uncommon",
+    "habitat": "pebbly brook, small river spirit-otter animal large in water, still an animal not a person",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C031",
+    "display": "Ram",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "rocky hill pasture, ram large on a crag",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C032",
+    "display": "Young Boar",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "beech mast woodland, young boar large among leaves",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C033",
+    "display": "Adder",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "sun-warmed heath, adder large on a rock",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C034",
+    "display": "Stag Beetle",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "oak stump close-up, stag beetle large on bark",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C035",
+    "display": "Hill Goat",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "steep limestone pasture, hill goat large on a ledge",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C036",
+    "display": "Lamprey",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "tidal mud creek, lamprey large in shallow water",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C037",
+    "display": "Raven",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "standing stone moor, raven large on a stone",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C038",
+    "display": "Wildcat",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "gorse hillside, wildcat large among yellow bloom",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C039",
+    "display": "Magpie",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "orchard after rain, magpie large on a wet branch",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C040",
+    "display": "Carp",
+    "budget": 18,
+    "tier": "uncommon",
+    "habitat": "lily pond, carp large just under the surface",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C041",
+    "display": "Hart",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "autumn beech wood, hart large among gold leaves",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C042",
+    "display": "Beaver",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "willow dam and still water, beaver large on the lodge",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C043",
+    "display": "Brock",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "night woodland, badger (Brock) large at the sett",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C044",
+    "display": "Bear Cub",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "berry thicket, bear cub large eating berries",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C045",
+    "display": "Crane",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "flooded meadow, crane large wading",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C046",
+    "display": "Glutton",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "northern pine slope, wolverine (glutton) large in snow",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C047",
+    "display": "Golden Eagle",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "mountain ridge, golden eagle large on a crag",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C048",
+    "display": "Lynx",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "rocky pine forest, lynx large on a boulder",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C049",
+    "display": "Osprey",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "tidal estuary, osprey large over water with fish",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C050",
+    "display": "Elk",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "misty glen, elk large among pines",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C051",
+    "display": "Grey Wolf",
+    "budget": 19,
+    "tier": "uncommon",
+    "habitat": "winter moor, grey wolf large in snow",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C052",
+    "display": "Panther",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "moonlit ruin garden, panther large on broken stone",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C053",
+    "display": "Marsh Hydra Spawn",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "reed swamp, small many-headed hydra spawn large in mud",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C054",
+    "display": "Wild Boar",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "bracken hillside, wild boar large charging through fern",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C055",
+    "display": "Cockatrice Chick",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "sun-baked yard, cockatrice chick large, bird-lizard, no clothes",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C056",
+    "display": "Twin Adders",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "dry stone wall, two adders large coiled together",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C057",
+    "display": "Janus Hounds",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "chapel yard at dusk, two-headed hound large, animal not clothed",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C058",
+    "display": "Mastiff",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "stable yard, mastiff large on cobbles",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C059",
+    "display": "Brown Bear",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "salmon river, brown bear large in the shallows",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C060",
+    "display": "Kelpie Foal",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "moonlit mill pond, kelpie foal as a dark water-horse large, animal",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C061",
+    "display": "Stag",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "rutting glade, stag large with full antlers",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C062",
+    "display": "Hippogriff Fledgling",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "cliff nest, hippogriff fledgling large, eagle-horse chick, animal",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C063",
+    "display": "Twin Bats",
+    "budget": 20,
+    "tier": "rare",
+    "habitat": "cave mouth at dusk, two bats large in flight",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C064",
+    "display": "Young Chimera",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "olive hillside, young chimera large, three animal heads, no clothes",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C065",
+    "display": "Twin Falcons",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "windy ridge, two falcons large stooping",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C066",
+    "display": "Dire Wolf",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "dark pine winter, dire wolf large in snow",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C067",
+    "display": "Unicorn Foal",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "moonlit glade, unicorn foal large among pale flowers, animal no clothes",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C068",
+    "display": "Leopard",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "golden grassland, leopard large in dry grass",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C069",
+    "display": "Firebird Fledgling",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "ember grove, firebird fledgling large with warm plumage, bird not phoenix-person",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C070",
+    "display": "Tiger",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "bamboo is not English \u2014 use ferny river jungle-edge, tiger large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C071",
+    "display": "Lion",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "savannah is too far \u2014 use sunlit quarry grass, lion large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C072",
+    "display": "Manticore Cub",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "desert ruin is ok muted ochre, manticore cub large, lion-scorpion animal",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C073",
+    "display": "Griffin Fledgling",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "high nest cliff, griffin fledgling large, eagle-lion chick",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C074",
+    "display": "Wyvern Whelp",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "rocky eyrie, wyvern whelp large, two-legged dragon animal",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C075",
+    "display": "Sea Serpent Pair",
+    "budget": 21,
+    "tier": "rare",
+    "habitat": "coastal cave water, two small sea serpents large in foam",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C076",
+    "display": "Sphinx",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "ochre stone and cypress, winged lion sphinx large, animal no human face",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C077",
+    "display": "Twin Wyrms",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "hot spring rocks, two small wyrms large coiled",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C078",
+    "display": "Kraken Arm",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "dark harbour, one huge kraken arm large rising from water",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C079",
+    "display": "Goldhorn",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "alpine meadow, goldhorn ibex large, gilded horns, animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C080",
+    "display": "Thunderbird",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "storm ridge, thunderbird large in cloud, bird not person",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C081",
+    "display": "Lightning Roc",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "lightning sky over moor, roc large with storm light",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C082",
+    "display": "Dire Hart",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "misty red-deer forest, huge dire hart large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C083",
+    "display": "Pegasus",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "cloud pasture, pegasus large, horse with wings, animal no tack",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C084",
+    "display": "Griffin",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "mountain keep rocks, griffin large, eagle-lion animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C085",
+    "display": "Gargoyle",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "rain-wet cathedral stone, gargoyle as a stone-colored beast large, animal not a statue person",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C086",
+    "display": "Twin Drakes",
+    "budget": 22,
+    "tier": "rare",
+    "habitat": "volcanic slope muted, two drakes large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C087",
+    "display": "Firebird",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "ember oak wood at dusk, firebird large in flame-colored plumage",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C088",
+    "display": "Leviathan Spawn",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "moonlit cove, leviathan spawn large, young sea serpent",
+    "large_subject": true,
+    "done": false
+  },
+  {
+    "id": "C089",
+    "display": "Chimera",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "limestone dusk crag, chimera large, lion goat snake, no cottage path",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C090",
+    "display": "Dragon Turtle",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "tropical is muted lagoon, dragon turtle large in shallows",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C091",
+    "display": "Unicorn",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "silver birch moon glade, unicorn large, animal no clothes",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C092",
+    "display": "Manticore",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "ruined desert gate ochre, manticore large, lion-scorpion-bat animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C093",
+    "display": "Hydra",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "marsh temple stones, hydra large, many serpent heads",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C094",
+    "display": "Naddred",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "Welsh river cave, naddred adder-dragon large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C095",
+    "display": "Greater Sphinx",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "desert plateau dusk, greater winged-lion sphinx large, animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C096",
+    "display": "Hippogriff",
+    "budget": 23,
+    "tier": "high",
+    "habitat": "windy cliff, hippogriff large, eagle-horse animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C097",
+    "display": "Celestial Stag",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "starry highland, celestial stag large with faint star-dust antlers, still an animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C098",
+    "display": "Janus Drake",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "twin-headed drake on a night ridge, large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C099",
+    "display": "Wyvern",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "storm keep rocks, wyvern large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C100",
+    "display": "Drake",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "cave gold hoard muted, drake large, animal not a rider",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C101",
+    "display": "Marsh Hydra",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "deep fen, marsh hydra large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C102",
+    "display": "Behemoth",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "dry steppe, behemoth large hippo-ox beast",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C103",
+    "display": "Basilisk",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "broken colonnade, basilisk large serpent-rooster beast",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C104",
+    "display": "Gorgon",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "olive ruin, gorgon as a serpent-haired beast still animal-shaped, no clothed woman",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C105",
+    "display": "Cockatrice",
+    "budget": 24,
+    "tier": "high",
+    "habitat": "farmyard wall, cockatrice large bird-lizard",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C106",
+    "display": "Cloudwyrm",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "high cloud sea, cloudwyrm large coiling through clouds",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C107",
+    "display": "Knucker",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "deep English mill pond, knucker large water-dragon",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C108",
+    "display": "Kraken",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "open ocean storm, kraken large among waves",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C109",
+    "display": "Storm Sphinx",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "lightning mesa, storm sphinx large winged lion",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C110",
+    "display": "World Turtle",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "archipelago dawn, world turtle large island-shell",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C111",
+    "display": "Sky Aurochs",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "aurora steppe sky, sky aurochs large flying ox, animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C112",
+    "display": "Pendragon",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "hillfort dusk, pendragon large red dragon animal",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C113",
+    "display": "Black Shuck",
+    "budget": 25,
+    "tier": "top",
+    "habitat": "moor at night, black shuck large black dog with ember eyes",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C114",
+    "display": "Laidly Worm",
+    "budget": 26,
+    "tier": "top",
+    "habitat": "Northumbrian coast, laidly worm large sea-worm",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C115",
+    "display": "Worldwyrm",
+    "budget": 26,
+    "tier": "top",
+    "habitat": "world-tree roots, worldwyrm large coiling earth-serpent",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C116",
+    "display": "Leviathan",
+    "budget": 26,
+    "tier": "top",
+    "habitat": "sunset cliffs and sea, leviathan large S-curve",
+    "large_subject": false,
+    "done": true
+  },
+  {
+    "id": "C117",
+    "display": "Lambton Worm",
+    "budget": 26,
+    "tier": "top",
+    "habitat": "Wear river bank, Lambton worm large",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C118",
+    "display": "Empress Hydra",
+    "budget": 26,
+    "tier": "top",
+    "habitat": "lotus marsh dusk, empress hydra large many-crowned serpent animal, no clothes",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C119",
+    "display": "Moonwyrm",
+    "budget": 26,
+    "tier": "top",
+    "habitat": "night sea and moon, moonwyrm large pale dragon",
+    "large_subject": false,
+    "done": false
+  },
+  {
+    "id": "C120",
+    "display": "Sun Griffin",
+    "budget": 26,
+    "tier": "top",
+    "habitat": "dawn mountain, sun griffin large gold-lit eagle-lion",
+    "large_subject": false,
+    "done": false
+  }
+]
