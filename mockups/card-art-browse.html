@@ -1,0 +1,183 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Card Road — 120 faces</title>
+<style>
+:root{--ink:#2a1c12;--paper:#f4ead3;--rule:#c6a15a;--chip:#efe2c4}
+*{box-sizing:border-box}
+html,body{margin:0;background:#1c1713;color:var(--ink);font-family:Georgia,"Times New Roman",serif}
+header{
+  position:sticky;top:0;z-index:8;
+  background:rgba(244,234,211,.96);
+  border-bottom:2px solid #594333;
+  padding:12px 16px 14px;
+  box-shadow:0 8px 24px #0006;
+}
+h1{margin:0;font-size:22px}
+.sub{margin:4px 0 10px;font-size:13px;color:#614a34}
+.controls{display:flex;flex-wrap:wrap;gap:8px;align-items:center}
+input[type=search]{
+  flex:1 1 180px;min-width:0;max-width:280px;
+  padding:8px 10px;border:1px solid #8a6a45;border-radius:6px;
+  background:#fffaf0;font:16px Georgia,serif;color:var(--ink)
+}
+.chip, .toggle{
+  border:1px solid #8a6a45;background:var(--chip);color:var(--ink);
+  border-radius:999px;padding:6px 11px;font:700 12px Georgia,serif;cursor:pointer
+}
+.chip.on,.toggle.on{background:#3d2a1a;color:#f4ead3;border-color:#3d2a1a}
+main{padding:16px;max-width:1400px;margin:0 auto}
+section h2{margin:18px 0 10px;font-size:18px;color:#f4ead3}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:16px}
+.tile{cursor:pointer;text-align:center;color:#f4ead3}
+.tile .card{
+  position:relative;aspect-ratio:5/7;width:100%;
+  background:#e8d7b0 url("../assets/ui/card_gilt_frame.png") center/100% 100% no-repeat;
+  border-radius:8px;overflow:hidden;box-shadow:0 6px 16px #0008
+}
+.tile.paint .card{background:#cbb892;border-radius:4px}
+.giltWindow{position:absolute;inset:12.43% 18.65% 12.43% 18.55%;background-size:cover;background-position:center}
+.tile.paint .giltWindow{inset:0}
+.n,.e,.s,.w{
+  position:absolute;z-index:3;font-weight:800;color:#2a1c12;
+  text-shadow:0 1px 0 rgba(255,244,214,.75);font-size:clamp(11px,2.4vw,16px);line-height:.95
+}
+.n{top:9.7%;left:50%;transform:translateX(-50%)}
+.s{bottom:9.3%;left:50%;transform:translateX(-50%)}
+.w{left:14.5%;top:50%;transform:translateY(-50%)}
+.e{right:14.6%;top:50%;transform:translateY(-50%)}
+.tile.paint .n,.tile.paint .e,.tile.paint .s,.tile.paint .w{display:none}
+.cap{margin:8px 0 0;font-size:12px;line-height:1.3}
+.cap b{display:block;font-size:13px}
+.tile.hidden{display:none}
+#lightbox{
+  display:none;position:fixed;inset:0;z-index:20;background:rgba(12,9,7,.88);
+  padding:max(16px,env(safe-area-inset-top)) 16px;overflow:auto
+}
+#lightbox.on{display:flex;flex-direction:column;align-items:center}
+#lightbox .card{width:min(72vw,380px);aspect-ratio:5/7;position:relative;
+  background:#e8d7b0 url("../assets/ui/card_gilt_frame.png") center/100% 100% no-repeat;border-radius:10px}
+#lightbox.paint .card{background:#cbb892}
+#lightbox .giltWindow{position:absolute;inset:12.43% 18.65% 12.43% 18.55%;background-size:cover;background-position:center}
+#lightbox.paint .giltWindow{inset:0}
+#lightbox .n,#lightbox .e,#lightbox .s,#lightbox .w{
+  position:absolute;z-index:3;font-weight:800;color:#2a1c12;
+  text-shadow:0 1px 0 rgba(255,244,214,.75);font-size:clamp(18px,6vw,28px)
+}
+#lightbox.paint .n,#lightbox.paint .e,#lightbox.paint .s,#lightbox.paint .w{display:none}
+#lightbox .meta{color:#f4ead3;text-align:center;margin:14px 0 8px;font-size:16px}
+#lightbox button{margin:8px;padding:8px 14px;border-radius:8px;border:1px solid #c6a15a;background:#efe2c4;font:700 14px Georgia,serif}
+</style>
+</head>
+<body>
+<header>
+  <h1>Card Road — 120 faces</h1>
+  <p class="sub">WebP q80 · 720×1280 · click a card to enlarge. Same 120 faces as the zip. Filter, search, click to enlarge.</p>
+  <div class="controls">
+    <input type="search" id="q" placeholder="Search name or C014" aria-label="Search cards">
+    <button class="chip on" data-tier="all" type="button">All</button>
+    <button class="chip" data-tier="Common" type="button">Common</button>
+    <button class="chip" data-tier="Uncommon" type="button">Uncommon</button>
+    <button class="chip" data-tier="Rare" type="button">Rare</button>
+    <button class="chip" data-tier="High" type="button">High</button>
+    <button class="chip" data-tier="Top" type="button">Top</button>
+    <button class="toggle" id="paint" type="button">Paintings only</button>
+  </div>
+</header>
+<main id="main"></main>
+<div id="lightbox" aria-modal="true">
+  <div class="card" id="lbCard">
+    <div class="giltWindow" id="lbArt"></div>
+    <span class="n" id="lbN"></span><span class="e" id="lbE"></span><span class="s" id="lbS"></span><span class="w" id="lbW"></span>
+  </div>
+  <div class="meta" id="lbMeta"></div>
+  <div>
+    <button type="button" id="prev">Previous</button>
+    <button type="button" id="close">Close</button>
+    <button type="button" id="next">Next</button>
+  </div>
+</div>
+<script>
+const CARDS = [{"name":"C001","display":"Earwig","n":3,"e":5,"s":3,"w":3,"budget":14,"geometry":"Balanced","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C002","display":"Twin Woodlice","n":1,"e":1,"s":6,"w":6,"budget":14,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C003","display":"Garden Newt","n":7,"e":1,"s":5,"w":1,"budget":14,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C004","display":"Needle Wasp","n":4,"e":2,"s":1,"w":7,"budget":14,"geometry":"Single-Side Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C005","display":"Fieldmouse","n":2,"e":4,"s":6,"w":2,"budget":14,"geometry":"Asymmetric","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C006","display":"Hedge Shrew","n":1,"e":10,"s":2,"w":1,"budget":14,"geometry":"Extreme Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C007","display":"Millipede","n":3,"e":4,"s":4,"w":4,"budget":15,"geometry":"Balanced","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C008","display":"Harvest Mice","n":6,"e":1,"s":1,"w":7,"budget":15,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C009","display":"Dung Beetle","n":7,"e":1,"s":6,"w":1,"budget":15,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C010","display":"Kingfisher","n":2,"e":3,"s":8,"w":2,"budget":15,"geometry":"Single-Side Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C011","display":"Weasel","n":5,"e":7,"s":1,"w":2,"budget":15,"geometry":"Asymmetric","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C012","display":"Tunnel Mole","n":1,"e":10,"s":3,"w":1,"budget":15,"geometry":"Extreme Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C013","display":"Grasshopper","n":1,"e":1,"s":6,"w":7,"budget":15,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C014","display":"Skylark","n":5,"e":4,"s":4,"w":3,"budget":16,"geometry":"Balanced","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C015","display":"Twin Toads","n":1,"e":1,"s":7,"w":7,"budget":16,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C016","display":"Badger Cub","n":1,"e":7,"s":2,"w":6,"budget":16,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C017","display":"Damselfly","n":4,"e":2,"s":2,"w":8,"budget":16,"geometry":"Single-Side Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C018","display":"Robin","n":2,"e":5,"s":7,"w":2,"budget":16,"geometry":"Asymmetric","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C019","display":"Stickleback","n":10,"e":1,"s":1,"w":4,"budget":16,"geometry":"Extreme Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C020","display":"Soldier Beetles","n":7,"e":7,"s":1,"w":1,"budget":16,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C021","display":"Heron Chick","n":7,"e":1,"s":7,"w":1,"budget":16,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C022","display":"Hedgehog","n":5,"e":4,"s":3,"w":5,"budget":17,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C023","display":"Hare","n":2,"e":7,"s":7,"w":1,"budget":17,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C024","display":"Red Fox","n":7,"e":1,"s":7,"w":2,"budget":17,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C025","display":"Stoat","n":2,"e":2,"s":8,"w":5,"budget":17,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C026","display":"Kestrel","n":4,"e":1,"s":5,"w":7,"budget":17,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C027","display":"Pike","n":2,"e":10,"s":1,"w":4,"budget":17,"geometry":"Extreme Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C028","display":"Barn Owls","n":7,"e":7,"s":2,"w":1,"budget":17,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C029","display":"Polecat","n":2,"e":6,"s":2,"w":7,"budget":17,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C030","display":"Riverling","n":3,"e":5,"s":5,"w":4,"budget":17,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C031","display":"Ram","n":4,"e":6,"s":4,"w":4,"budget":18,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C032","display":"Young Boar","n":8,"e":2,"s":2,"w":6,"budget":18,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C033","display":"Adder","n":6,"e":2,"s":8,"w":2,"budget":18,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C034","display":"Stag Beetle","n":3,"e":3,"s":3,"w":9,"budget":18,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C035","display":"Hill Goat","n":3,"e":3,"s":7,"w":5,"budget":18,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C036","display":"Lamprey","n":1,"e":9,"s":7,"w":1,"budget":18,"geometry":"Extreme Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C037","display":"Raven","n":6,"e":8,"s":2,"w":2,"budget":18,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C038","display":"Wildcat","n":2,"e":8,"s":2,"w":6,"budget":18,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C039","display":"Magpie","n":5,"e":3,"s":5,"w":5,"budget":18,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C040","display":"Carp","n":8,"e":4,"s":4,"w":2,"budget":18,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C041","display":"Hart","n":6,"e":5,"s":4,"w":4,"budget":19,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C042","display":"Beaver","n":2,"e":2,"s":7,"w":8,"budget":19,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C043","display":"Brock","n":2,"e":8,"s":2,"w":7,"budget":19,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C044","display":"Bear Cub","n":3,"e":4,"s":9,"w":3,"budget":19,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C045","display":"Crane","n":4,"e":7,"s":5,"w":3,"budget":19,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C046","display":"Glutton","n":10,"e":1,"s":1,"w":7,"budget":19,"geometry":"Extreme Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C047","display":"Golden Eagle","n":6,"e":2,"s":3,"w":8,"budget":19,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C048","display":"Lynx","n":8,"e":2,"s":7,"w":2,"budget":19,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C049","display":"Osprey","n":4,"e":4,"s":6,"w":5,"budget":19,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C050","display":"Elk","n":3,"e":3,"s":4,"w":9,"budget":19,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C051","display":"Grey Wolf","n":5,"e":5,"s":2,"w":7,"budget":19,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C052","display":"Panther","n":5,"e":5,"s":4,"w":6,"budget":20,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C053","display":"Marsh Hydra Spawn","n":2,"e":8,"s":8,"w":2,"budget":20,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C054","display":"Wild Boar","n":8,"e":3,"s":7,"w":2,"budget":20,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C055","display":"Cockatrice Chick","n":3,"e":3,"s":9,"w":5,"budget":20,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C056","display":"Twin Adders","n":7,"e":5,"s":5,"w":3,"budget":20,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C057","display":"Janus Hounds","n":1,"e":9,"s":1,"w":9,"budget":20,"geometry":"Extreme Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C058","display":"Mastiff","n":8,"e":2,"s":2,"w":8,"budget":20,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C059","display":"Brown Bear","n":1,"e":6,"s":6,"w":7,"budget":20,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C060","display":"Kelpie Foal","n":4,"e":6,"s":6,"w":4,"budget":20,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C061","display":"Stag","n":5,"e":9,"s":3,"w":3,"budget":20,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C062","display":"Hippogriff Fledgling","n":5,"e":7,"s":3,"w":5,"budget":20,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C063","display":"Twin Bats","n":4,"e":2,"s":6,"w":8,"budget":20,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C064","display":"Young Chimera","n":4,"e":6,"s":5,"w":6,"budget":21,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C065","display":"Twin Falcons","n":8,"e":8,"s":3,"w":2,"budget":21,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C066","display":"Dire Wolf","n":7,"e":2,"s":8,"w":4,"budget":21,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C067","display":"Unicorn Foal","n":9,"e":3,"s":3,"w":6,"budget":21,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C068","display":"Leopard","n":7,"e":5,"s":4,"w":5,"budget":21,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C069","display":"Firebird Fledgling","n":1,"e":10,"s":9,"w":1,"budget":21,"geometry":"Extreme Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C070","display":"Tiger","n":2,"e":3,"s":8,"w":8,"budget":21,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C071","display":"Lion","n":2,"e":8,"s":3,"w":8,"budget":21,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C072","display":"Manticore Cub","n":6,"e":6,"s":5,"w":4,"budget":21,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C073","display":"Griffin Fledgling","n":3,"e":9,"s":6,"w":3,"budget":21,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C074","display":"Wyvern Whelp","n":5,"e":7,"s":4,"w":5,"budget":21,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C075","display":"Sea Serpent Pair","n":6,"e":2,"s":5,"w":8,"budget":21,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C076","display":"Sphinx","n":6,"e":6,"s":5,"w":5,"budget":22,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C077","display":"Twin Wyrms","n":3,"e":3,"s":8,"w":8,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C078","display":"Kraken Arm","n":8,"e":3,"s":8,"w":3,"budget":22,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C079","display":"Goldhorn","n":3,"e":9,"s":6,"w":4,"budget":22,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C080","display":"Thunderbird","n":8,"e":4,"s":2,"w":8,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C081","display":"Lightning Roc","n":10,"e":10,"s":1,"w":1,"budget":22,"geometry":"Extreme Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C082","display":"Dire Hart","n":8,"e":8,"s":3,"w":3,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C083","display":"Pegasus","n":3,"e":7,"s":3,"w":9,"budget":22,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C084","display":"Griffin","n":5,"e":5,"s":7,"w":5,"budget":22,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C085","display":"Gargoyle","n":10,"e":4,"s":4,"w":4,"budget":22,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C086","display":"Twin Drakes","n":7,"e":2,"s":6,"w":7,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C087","display":"Firebird","n":5,"e":6,"s":7,"w":5,"budget":23,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C088","display":"Leviathan Spawn","n":8,"e":3,"s":3,"w":9,"budget":23,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C089","display":"Chimera","n":3,"e":9,"s":3,"w":8,"budget":23,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C090","display":"Dragon Turtle","n":10,"e":4,"s":5,"w":4,"budget":23,"geometry":"Single-Side Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C091","display":"Unicorn","n":8,"e":9,"s":3,"w":3,"budget":23,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C092","display":"Manticore","n":1,"e":2,"s":10,"w":10,"budget":23,"geometry":"Extreme Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C093","display":"Hydra","n":5,"e":2,"s":8,"w":8,"budget":23,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C094","display":"Naddred","n":7,"e":3,"s":9,"w":4,"budget":23,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C095","display":"Greater Sphinx","n":6,"e":5,"s":5,"w":7,"budget":23,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C096","display":"Hippogriff","n":4,"e":10,"s":5,"w":4,"budget":23,"geometry":"Single-Side Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C097","display":"Celestial Stag","n":5,"e":7,"s":6,"w":6,"budget":24,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C098","display":"Janus Drake","n":9,"e":3,"s":3,"w":9,"budget":24,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C099","display":"Wyvern","n":8,"e":4,"s":9,"w":3,"budget":24,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C100","display":"Drake","n":10,"e":6,"s":4,"w":4,"budget":24,"geometry":"Single-Side Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C101","display":"Marsh Hydra","n":3,"e":3,"s":9,"w":9,"budget":24,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C102","display":"Behemoth","n":2,"e":10,"s":2,"w":10,"budget":24,"geometry":"Extreme Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C103","display":"Basilisk","n":3,"e":9,"s":9,"w":3,"budget":24,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C104","display":"Gorgon","n":6,"e":8,"s":2,"w":8,"budget":24,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C105","display":"Cockatrice","n":7,"e":5,"s":5,"w":7,"budget":24,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C106","display":"Cloudwyrm","n":6,"e":6,"s":6,"w":7,"budget":25,"geometry":"Balanced","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C107","display":"Knucker","n":3,"e":9,"s":9,"w":4,"budget":25,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C108","display":"Kraken","n":9,"e":4,"s":9,"w":3,"budget":25,"geometry":"Opposite Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C109","display":"Storm Sphinx","n":10,"e":7,"s":4,"w":4,"budget":25,"geometry":"Single-Side Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C110","display":"World Turtle","n":4,"e":3,"s":9,"w":9,"budget":25,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C111","display":"Sky Aurochs","n":1,"e":10,"s":4,"w":10,"budget":25,"geometry":"Extreme Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C112","display":"Pendragon","n":9,"e":4,"s":3,"w":9,"budget":25,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C113","display":"Black Shuck","n":2,"e":8,"s":7,"w":8,"budget":25,"geometry":"Opposite Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C114","display":"Laidly Worm","n":5,"e":7,"s":7,"w":7,"budget":26,"geometry":"Balanced","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C115","display":"Worldwyrm","n":9,"e":9,"s":3,"w":5,"budget":26,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C116","display":"Leviathan","n":9,"e":4,"s":9,"w":4,"budget":26,"geometry":"Opposite Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C117","display":"Lambton Worm","n":7,"e":5,"s":4,"w":10,"budget":26,"geometry":"Single-Side Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C118","display":"Empress Hydra","n":3,"e":9,"s":9,"w":5,"budget":26,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C119","display":"Moonwyrm","n":4,"e":2,"s":10,"w":10,"budget":26,"geometry":"Extreme Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C120","display":"Sun Griffin","n":7,"e":3,"s":8,"w":8,"budget":26,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"}];
+const main = document.getElementById('main');
+const byTier = {};
+CARDS.forEach(c => { (byTier[c.tier] ||= []).push(c); });
+['Common','Uncommon','Rare','High','Top'].forEach(tier => {
+  const sec = document.createElement('section');
+  sec.innerHTML = `<h2>${tier} <small style="font-weight:400;opacity:.7">${byTier[tier].length}</small></h2>`;
+  const grid = document.createElement('div');
+  grid.className = 'grid';
+  byTier[tier].forEach(c => {
+    const tile = document.createElement('article');
+    tile.className = 'tile';
+    tile.dataset.tier = c.tier;
+    tile.dataset.q = (c.name + ' ' + c.display).toLowerCase();
+    tile.dataset.id = c.name;
+    tile.innerHTML = `<div class="card"><div class="giltWindow" style="background-image:url('../assets/cards/${c.name}.webp')"></div>
+      <span class="n">${c.n}</span><span class="e">${c.e}</span><span class="s">${c.s}</span><span class="w">${c.w}</span></div>
+      <p class="cap"><b>${c.display}</b>${c.name} · ${c.tier} · ${c.budget}</p>`;
+    tile.addEventListener('click', () => openLb(c.name));
+    grid.appendChild(tile);
+  });
+  sec.appendChild(grid);
+  main.appendChild(sec);
+});
+let filter = 'all';
+const tiles = [...document.querySelectorAll('.tile')];
+function apply(){
+  const q = document.getElementById('q').value.trim().toLowerCase();
+  tiles.forEach(t => {
+    const okTier = filter === 'all' || t.dataset.tier === filter;
+    const okQ = !q || t.dataset.q.includes(q);
+    t.classList.toggle('hidden', !(okTier && okQ));
+  });
+  document.querySelectorAll('section').forEach(sec => {
+    sec.style.display = [...sec.querySelectorAll('.tile')].some(t => !t.classList.contains('hidden')) ? '' : 'none';
+  });
+}
+document.getElementById('q').addEventListener('input', apply);
+document.querySelectorAll('.chip').forEach(btn => btn.addEventListener('click', () => {
+  document.querySelectorAll('.chip').forEach(b => b.classList.remove('on'));
+  btn.classList.add('on');
+  filter = btn.dataset.tier;
+  apply();
+}));
+const paintBtn = document.getElementById('paint');
+function setPaint(on){
+  document.body.classList.toggle('paint', on);
+  tiles.forEach(t => t.classList.toggle('paint', on));
+  document.getElementById('lightbox').classList.toggle('paint', on);
+  paintBtn.classList.toggle('on', on);
+}
+paintBtn.addEventListener('click', () => setPaint(!paintBtn.classList.contains('on')));
+const lb = document.getElementById('lightbox');
+let current = 0;
+function openLb(id){
+  current = CARDS.findIndex(c => c.name === id);
+  showLb();
+}
+function showLb(){
+  const c = CARDS[current];
+  document.getElementById('lbArt').style.backgroundImage = `url('../assets/cards/${c.name}.webp')`;
+  document.getElementById('lbN').textContent = c.n;
+  document.getElementById('lbE').textContent = c.e;
+  document.getElementById('lbS').textContent = c.s;
+  document.getElementById('lbW').textContent = c.w;
+  document.getElementById('lbMeta').textContent = `${c.name}  ${c.display}  ·  ${c.tier}  ·  ${c.n}/${c.e}/${c.s}/${c.w}  ·  ${c.budget}`;
+  lb.classList.add('on');
+}
+document.getElementById('close').onclick = () => lb.classList.remove('on');
+document.getElementById('prev').onclick = () => { current = (current + CARDS.length - 1) % CARDS.length; showLb(); };
+document.getElementById('next').onclick = () => { current = (current + 1) % CARDS.length; showLb(); };
+document.addEventListener('keydown', e => {
+  if (!lb.classList.contains('on')) return;
+  if (e.key === 'Escape') lb.classList.remove('on');
+  if (e.key === 'ArrowLeft') document.getElementById('prev').click();
+  if (e.key === 'ArrowRight') document.getElementById('next').click();
+});
+lb.addEventListener('click', e => { if (e.target === lb) lb.classList.remove('on'); });
+</script>
+</body>
+</html>
