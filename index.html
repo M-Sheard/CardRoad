@@ -2260,7 +2260,7 @@ function layoutMatchTable(){
 function cardArtTone(name){return (parseInt(String(name).replace(/\D/g,""),10)||0)%6}
 function cardArtSrc(name){
  if(!name)return "";
- return "assets/cards/"+String(name).replace(/[^\w]/g,"")+".png";
+ return "assets/cards/"+String(name).replace(/[^\w]/g,"")+".webp";
 }
 function cardHTML(c,owner="",sel=false){
  if(!c)return "";
