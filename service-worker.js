@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v115-copy-room';
+const CACHE_NAME = 'card-road-pwa-v116-sat-week';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',

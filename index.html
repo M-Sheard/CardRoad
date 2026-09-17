@@ -524,6 +524,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devInbox" type="button" style="margin-top:8px">Preview tin inbox</button>
         <button id="devOvernightGossip" type="button" style="margin-top:8px">Preview overnight gossip</button>
         <button id="devCopyInRoom" type="button" style="margin-top:8px">Preview copy in the room</button>
+        <button id="devThursdayClub" type="button" style="margin-top:8px">Jump to Thursday Club</button>
         <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
@@ -1107,6 +1108,11 @@ function visualDateObj(){
  return Number.isNaN(d.getTime())?new Date("2026-03-02T12:00:00"):d;
 }
 function visualWeekday(){return visualDateObj().toLocaleDateString("en-GB",{weekday:"long"})}
+function daysUntilSaturday(){
+ const iso=nextSaturdayIso(state.visual&&state.visual.date);
+ const sat=new Date(iso+"T12:00:00");
+ return Math.round((sat-visualDateObj())/86400000);
+}
 function visualDateLabel(){let d=visualDateObj();return d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+" · Year "+state.season.year}
 function npcLocationNow(n){ensureVisualState();let r=V6_ROUTINES[n]?.[visualWeekday()]||{};let scheduled=r[state.visual.phase];
  // V6 event response: serious competitors converge on the club for Saturday's event.
@@ -1116,7 +1122,7 @@ function npcLocationNow(n){ensureVisualState();let r=V6_ROUTINES[n]?.[visualWeek
 function npcPriority(n){
  let day=visualWeekday(),d=npcDefs[n];
  // NPCs respond to the real calendar, not to what the player has discovered.
- let daysToOpen=Math.round((new Date("2026-03-07T12:00:00")-visualDateObj())/86400000);
+ let daysToOpen=daysUntilSaturday();
  if(daysToOpen>=0&&daysToOpen<=2&&d.competitive>.6)return "preparing for the Saturday Open";
  if(n==="Nessa"&&["Market","Inn"].includes(npcLocationNow(n)))return "ordinary social play";
  if(n==="Elira"&&npcLocationNow(n)==="Card Club")return "structured practice";
@@ -1191,8 +1197,41 @@ function roomCopyLine(name){
  }
  return "";
 }
+function saturdayTalkLine(name){
+ const days=daysUntilSaturday();
+ if(!name||days<1||days>3)return "";
+ const here=npcLocationNow(name);
+ if(here==="Card Club"){
+  if(days===3)return `${name} is putting in a practice at the Club before Saturday.`;
+  if(days===2)return `${name} has been talking pairings for Saturday.`;
+  return `${name} is at the Club. Saturday Open is tomorrow.`;
+ }
+ if(days<=2&&here==="Inn")return `${name} heard a seating rumour for Saturday.`;
+ return "";
+}
 function challengeTalkLine(name){
- return gossipTalkLine(name)||roomCopyLine(name);
+ return gossipTalkLine(name)||roomCopyLine(name)||saturdayTalkLine(name);
+}
+function openWeekSubtitle(location,base){
+ if(isSaturdayEventNow()&&location==="Card Club"){
+  return "Banners up. Travelling players at the far tables. Saturday Open this afternoon.";
+ }
+ if(visualWeekday()==="Saturday"&&!isSaturdayEventNow()){
+  if(location==="Card Club")return "The Open is this afternoon.";
+  if(location==="Market")return "Stalls first. The Club fills this afternoon.";
+ }
+ const days=daysUntilSaturday();
+ if(days<1||days>3)return base;
+ if(location==="Card Club"){
+  if(days===3)return "Practice tables out. Saturday Open at the weekend.";
+  if(days===2)return "Pairing talk at the far tables. Saturday is close.";
+  return "Banners going up. Saturday Open tomorrow afternoon.";
+ }
+ if(location==="Inn"&&days<=2){
+  return days===1?"They're talking about tomorrow's Open.":"Pairing rumours over the evening tables.";
+ }
+ if(location==="Market"&&days===1)return "Stalls as usual. Tomorrow is the Open.";
+ return base;
 }
 function unreadNoticeIds(){
  let info=publicInfoHere();if(!info)return[];
@@ -1475,6 +1514,9 @@ function wantsGossipPreview(){
 }
 function wantsCopyRoomPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])copyroom=1(?:&|$)/.test(location.search);
+}
+function wantsThursdayPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])thursday=1(?:&|$)/.test(location.search);
 }
 function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
@@ -1868,6 +1910,18 @@ function jumpVisualToSaturdayOpen(){
  state.visual.location="Card Club";
  syncCalendarState();
 }
+function jumpVisualToOpenWeek(weekday){
+ ensureVisualState();
+ state.grandpaTutorial=true;
+ state.tutorialDone=true;
+ const want={Wednesday:3,Thursday:4,Friday:5}[weekday]??4;
+ let d=visualDateObj();
+ while(d.getDay()!==want)d.setDate(d.getDate()+1);
+ state.visual.date=d.toISOString().slice(0,10);
+ state.visual.phase="Afternoon";
+ state.visual.location="Card Club";
+ syncCalendarState();
+}
 function bootOvernightGossip(){
  ensureVisualState();
  state.grandpaTutorial=true;
@@ -1923,6 +1977,7 @@ function bootTownOrTutorial(){
  }
  if(wantsGossipPreview()){bootOvernightGossip();return}
  if(wantsCopyRoomPreview()){bootCopyInRoom();return}
+ if(wantsThursdayPreview()){jumpVisualToOpenWeek("Thursday");save();renderHome();show("home");return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
  if(wantsHouseTinClubPreview()){
   ensureVisualState();
@@ -3080,13 +3135,13 @@ function renderWorldScene(){
  ensureVisualState();syncCalendarState();let loc=V6_LOCATIONS[state.visual.location]||V6_LOCATIONS.Market;$("townScene").dataset.location=state.visual.location;
  const saturdayOpen=isSaturdayEventNow();
  document.body.dataset.saturdayOpen=saturdayOpen?"1":"";
- const dressClub=saturdayOpen&&state.visual.location==="Card Club";
- $("townScene").dataset.saturday=dressClub?"open":"";
+ const daysToOpen=daysUntilSaturday();
+ const eveClub=!saturdayOpen&&daysToOpen===1&&state.visual.location==="Card Club"&&state.visual.phase!=="Morning";
+ const dressClub=(saturdayOpen||eveClub)&&state.visual.location==="Card Club";
+ $("townScene").dataset.saturday=saturdayOpen?"open":(eveClub?"eve":"");
  const dress=$("saturdayDress");
  if(dress){dress.hidden=!dressClub;dress.setAttribute("aria-hidden",dressClub?"false":"true")}
- if(dressClub){
-  loc={title:loc.title,subtitle:"Banners up. Travelling players at the far tables. Saturday Open this afternoon."};
- }
+ loc={title:loc.title,subtitle:openWeekSubtitle(state.visual.location,loc.subtitle)};
  $("visualDate").textContent=plaqueDateLabel();$("visualPhase").textContent=state.visual.phase+" · Year "+state.season.year;$("locationTitle").textContent=loc.title;$("locationSubtitle").textContent=loc.subtitle;
  document.querySelectorAll("#locationStrip button").forEach(b=>{
    let on=b.dataset.loc===state.visual.location;
@@ -5155,6 +5210,7 @@ if($("devInbox"))$("devInbox").onclick=()=>{
 };
 if($("devOvernightGossip"))$("devOvernightGossip").onclick=()=>bootOvernightGossip();
 if($("devCopyInRoom"))$("devCopyInRoom").onclick=()=>bootCopyInRoom();
+if($("devThursdayClub"))$("devThursdayClub").onclick=()=>{jumpVisualToOpenWeek("Thursday");save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
 if($("devTownTalk"))$("devTownTalk").onclick=()=>{
  $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
  show("home");renderHome();
@@ -10010,6 +10066,13 @@ html,body,#visualShell{color-scheme:only light}
   background:linear-gradient(to bottom,rgba(232,196,110,.2),transparent 28%);
 }
 .saturdayDress[hidden]{display:none!important}
+.townScene[data-saturday="eve"] .saturdayDress{
+  background:linear-gradient(to bottom,rgba(232,196,110,.12),transparent 22%);
+}
+.townScene[data-saturday="eve"] .satBunting{
+  height:20px;
+  opacity:.82;
+}
 .satBunting{
   position:absolute;
   top:max(6px,env(safe-area-inset-top));
