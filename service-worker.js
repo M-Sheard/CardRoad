@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v109-adder';
+const CACHE_NAME = 'card-road-pwa-v110-adder';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
