@@ -5,392 +5,164 @@
 <meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <title>Card Road — 120 faces</title>
 <style>
+*{box-sizing:border-box}
 html,body{margin:0;background:#1c1713;color:#f4ead3;font-family:Georgia,serif}
-header{position:sticky;top:0;z-index:2;background:#f4ead3;color:#2a1c12;padding:max(12px,env(safe-area-inset-top)) 14px 12px;border-bottom:2px solid #594333}
+header{
+  position:sticky;top:0;z-index:4;
+  background:#f4ead3;color:#2a1c12;
+  padding:max(12px,env(safe-area-inset-top)) max(14px,env(safe-area-inset-right)) 12px max(14px,env(safe-area-inset-left));
+  border-bottom:2px solid #594333
+}
 h1{margin:0;font-size:22px}
 p{margin:6px 0 0;font-size:14px;color:#614a34}
-main{padding:12px max(12px,env(safe-area-inset-right)) 40px max(12px,env(safe-area-inset-left))}
+main{padding:12px max(12px,env(safe-area-inset-right)) 48px max(12px,env(safe-area-inset-left))}
 h2{margin:18px 0 10px;font-size:18px}
 h2 small{font-weight:400;opacity:.7}
 .grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
 @media(min-width:700px){.grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-figure{margin:0}
-img{display:block;width:100%;height:auto;border-radius:8px;background:#3a3228;box-shadow:0 6px 16px #0008}
+figure{margin:0;min-width:0}
 figcaption{margin:6px 2px 4px;font-size:12px;line-height:1.3}
 figcaption b{display:block;font-size:14px}
+.card.gilt{
+  position:relative;
+  width:100%;
+  aspect-ratio:5/7;
+  container-type:inline-size;
+  background:#e8d7b0 url("assets/ui/card_gilt_frame.png") center/100% 100% no-repeat;
+  color:#2a1c12;
+  border:0;
+  border-radius:8px;
+  box-shadow:0 6px 16px #0008;
+  font-family:Palatino,"Palatino Linotype",Georgia,"Times New Roman",serif;
+  overflow:hidden
+}
+.card.gilt .giltWindow{
+  position:absolute;
+  z-index:1;
+  left:18.55%;
+  right:18.65%;
+  top:12.43%;
+  bottom:12.43%;
+  border:0;
+  border-radius:1px;
+  overflow:hidden
+}
+.card.gilt .giltWindow img{
+  display:block;width:100%;height:100%;object-fit:cover
+}
+.card.gilt .n,
+.card.gilt .e,
+.card.gilt .s,
+.card.gilt .w{
+  position:absolute;
+  z-index:3;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  line-height:.95;
+  font-weight:800;
+  color:#2a1c12;
+  text-shadow:0 1px 0 rgba(255,244,214,.75);
+  font-size:clamp(10px,4.8vw,18px);
+  font-size:max(10px,9.2cqi);
+  pointer-events:none
+}
+.card.gilt .n{top:9.7%;left:50%;transform:translateX(-50%)}
+.card.gilt .s{bottom:9.3%;left:50%;transform:translateX(-50%)}
+.card.gilt .w{left:14.5%;top:50%;transform:translateY(-50%)}
+.card.gilt .e{right:14.6%;top:50%;transform:translateY(-50%)}
+#lightbox{
+  display:none;position:fixed;inset:0;z-index:20;
+  background:rgba(16,12,10,.88);
+  padding:max(16px,env(safe-area-inset-top)) max(12px,env(safe-area-inset-right)) max(16px,env(safe-area-inset-bottom)) max(12px,env(safe-area-inset-left));
+  overflow:auto
+}
+#lightbox.on{display:flex;flex-direction:column;align-items:center;justify-content:center}
+#lightbox .card.gilt{width:min(72vw,320px);max-width:100%}
+#lightbox .meta{color:#f4ead3;text-align:center;margin:14px 0 8px;font-size:16px}
+#lightbox .nav{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+#lightbox button{
+  margin:0;padding:8px 14px;min-height:44px;
+  border-radius:8px;border:1px solid #c6a15a;background:#efe2c4;color:#2a1c12;
+  font:700 14px Georgia,serif
+}
 </style>
 </head>
 <body>
 <header>
 <h1>Card Road — 120 faces</h1>
-<p>Scroll to browse. Tap a picture to open it full-size.</p>
+<p>Same gilt cards as in the game. Tap one to enlarge.</p>
 </header>
-<main>
-<section><h2>Common <small>21</small></h2><div class="grid"><figure>
-<img src="assets/cards/C001.webp" alt="Earwig" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Earwig</b>C001 · Common · 3/5/3/3 · 14</figcaption>
-</figure><figure>
-<img src="assets/cards/C002.webp" alt="Twin Woodlice" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Twin Woodlice</b>C002 · Common · 1/1/6/6 · 14</figcaption>
-</figure><figure>
-<img src="assets/cards/C003.webp" alt="Garden Newt" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Garden Newt</b>C003 · Common · 7/1/5/1 · 14</figcaption>
-</figure><figure>
-<img src="assets/cards/C004.webp" alt="Needle Wasp" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Needle Wasp</b>C004 · Common · 4/2/1/7 · 14</figcaption>
-</figure><figure>
-<img src="assets/cards/C005.webp" alt="Fieldmouse" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Fieldmouse</b>C005 · Common · 2/4/6/2 · 14</figcaption>
-</figure><figure>
-<img src="assets/cards/C006.webp" alt="Hedge Shrew" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hedge Shrew</b>C006 · Common · 1/10/2/1 · 14</figcaption>
-</figure><figure>
-<img src="assets/cards/C007.webp" alt="Millipede" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Millipede</b>C007 · Common · 3/4/4/4 · 15</figcaption>
-</figure><figure>
-<img src="assets/cards/C008.webp" alt="Harvest Mice" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Harvest Mice</b>C008 · Common · 6/1/1/7 · 15</figcaption>
-</figure><figure>
-<img src="assets/cards/C009.webp" alt="Dung Beetle" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Dung Beetle</b>C009 · Common · 7/1/6/1 · 15</figcaption>
-</figure><figure>
-<img src="assets/cards/C010.webp" alt="Kingfisher" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Kingfisher</b>C010 · Common · 2/3/8/2 · 15</figcaption>
-</figure><figure>
-<img src="assets/cards/C011.webp" alt="Weasel" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Weasel</b>C011 · Common · 5/7/1/2 · 15</figcaption>
-</figure><figure>
-<img src="assets/cards/C012.webp" alt="Tunnel Mole" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Tunnel Mole</b>C012 · Common · 1/10/3/1 · 15</figcaption>
-</figure><figure>
-<img src="assets/cards/C013.webp" alt="Grasshopper" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Grasshopper</b>C013 · Common · 1/1/6/7 · 15</figcaption>
-</figure><figure>
-<img src="assets/cards/C014.webp" alt="Skylark" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Skylark</b>C014 · Common · 5/4/4/3 · 16</figcaption>
-</figure><figure>
-<img src="assets/cards/C015.webp" alt="Twin Toads" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Twin Toads</b>C015 · Common · 1/1/7/7 · 16</figcaption>
-</figure><figure>
-<img src="assets/cards/C016.webp" alt="Badger Cub" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Badger Cub</b>C016 · Common · 1/7/2/6 · 16</figcaption>
-</figure><figure>
-<img src="assets/cards/C017.webp" alt="Damselfly" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Damselfly</b>C017 · Common · 4/2/2/8 · 16</figcaption>
-</figure><figure>
-<img src="assets/cards/C018.webp" alt="Robin" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Robin</b>C018 · Common · 2/5/7/2 · 16</figcaption>
-</figure><figure>
-<img src="assets/cards/C019.webp" alt="Stickleback" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Stickleback</b>C019 · Common · 10/1/1/4 · 16</figcaption>
-</figure><figure>
-<img src="assets/cards/C020.webp" alt="Soldier Beetles" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Soldier Beetles</b>C020 · Common · 7/7/1/1 · 16</figcaption>
-</figure><figure>
-<img src="assets/cards/C021.webp" alt="Heron Chick" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Heron Chick</b>C021 · Common · 7/1/7/1 · 16</figcaption>
-</figure></div></section>
-<section><h2>Uncommon <small>30</small></h2><div class="grid"><figure>
-<img src="assets/cards/C022.webp" alt="Hedgehog" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hedgehog</b>C022 · Uncommon · 5/4/3/5 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C023.webp" alt="Hare" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hare</b>C023 · Uncommon · 2/7/7/1 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C024.webp" alt="Red Fox" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Red Fox</b>C024 · Uncommon · 7/1/7/2 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C025.webp" alt="Stoat" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Stoat</b>C025 · Uncommon · 2/2/8/5 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C026.webp" alt="Kestrel" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Kestrel</b>C026 · Uncommon · 4/1/5/7 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C027.webp" alt="Pike" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Pike</b>C027 · Uncommon · 2/10/1/4 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C028.webp" alt="Barn Owls" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Barn Owls</b>C028 · Uncommon · 7/7/2/1 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C029.webp" alt="Polecat" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Polecat</b>C029 · Uncommon · 2/6/2/7 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C030.webp" alt="Otter" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Otter</b>C030 · Uncommon · 3/5/5/4 · 17</figcaption>
-</figure><figure>
-<img src="assets/cards/C031.webp" alt="Ram" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Ram</b>C031 · Uncommon · 4/6/4/4 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C032.webp" alt="Young Boar" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Young Boar</b>C032 · Uncommon · 8/2/2/6 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C033.webp" alt="Adder" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Adder</b>C033 · Uncommon · 6/2/8/2 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C034.webp" alt="Stag Beetle" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Stag Beetle</b>C034 · Uncommon · 3/3/3/9 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C035.webp" alt="Hill Goat" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hill Goat</b>C035 · Uncommon · 3/3/7/5 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C036.webp" alt="Lamprey" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Lamprey</b>C036 · Uncommon · 1/9/7/1 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C037.webp" alt="Raven" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Raven</b>C037 · Uncommon · 6/8/2/2 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C038.webp" alt="Wildcat" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Wildcat</b>C038 · Uncommon · 2/8/2/6 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C039.webp" alt="Magpie" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Magpie</b>C039 · Uncommon · 5/3/5/5 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C040.webp" alt="Carp" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Carp</b>C040 · Uncommon · 8/4/4/2 · 18</figcaption>
-</figure><figure>
-<img src="assets/cards/C041.webp" alt="Hart" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hart</b>C041 · Uncommon · 6/5/4/4 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C042.webp" alt="Beaver" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Beaver</b>C042 · Uncommon · 2/2/7/8 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C043.webp" alt="Badger" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Badger</b>C043 · Uncommon · 2/8/2/7 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C044.webp" alt="Bear Cub" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Bear Cub</b>C044 · Uncommon · 3/4/9/3 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C045.webp" alt="Crane" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Crane</b>C045 · Uncommon · 4/7/5/3 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C046.webp" alt="Wolverine" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Wolverine</b>C046 · Uncommon · 10/1/1/7 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C047.webp" alt="Golden Eagle" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Golden Eagle</b>C047 · Uncommon · 6/2/3/8 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C048.webp" alt="Lynx" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Lynx</b>C048 · Uncommon · 8/2/7/2 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C049.webp" alt="Osprey" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Osprey</b>C049 · Uncommon · 4/4/6/5 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C050.webp" alt="Elk" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Elk</b>C050 · Uncommon · 3/3/4/9 · 19</figcaption>
-</figure><figure>
-<img src="assets/cards/C051.webp" alt="Grey Wolf" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Grey Wolf</b>C051 · Uncommon · 5/5/2/7 · 19</figcaption>
-</figure></div></section>
-<section><h2>Rare <small>35</small></h2><div class="grid"><figure>
-<img src="assets/cards/C052.webp" alt="Panther" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Panther</b>C052 · Rare · 5/5/4/6 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C053.webp" alt="Marsh Hydra Spawn" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Marsh Hydra Spawn</b>C053 · Rare · 2/8/8/2 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C054.webp" alt="Wild Boar" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Wild Boar</b>C054 · Rare · 8/3/7/2 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C055.webp" alt="Cockatrice Chick" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Cockatrice Chick</b>C055 · Rare · 3/3/9/5 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C056.webp" alt="Twin Adders" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Twin Adders</b>C056 · Rare · 7/5/5/3 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C057.webp" alt="Baby Cerberus" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Baby Cerberus</b>C057 · Rare · 1/9/1/9 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C058.webp" alt="Mastiff" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Mastiff</b>C058 · Rare · 8/2/2/8 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C059.webp" alt="Brown Bear" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Brown Bear</b>C059 · Rare · 1/6/6/7 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C060.webp" alt="Kelpie Foal" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Kelpie Foal</b>C060 · Rare · 4/6/6/4 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C061.webp" alt="Stag" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Stag</b>C061 · Rare · 5/9/3/3 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C062.webp" alt="Hippogriff Fledgling" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hippogriff Fledgling</b>C062 · Rare · 5/7/3/5 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C063.webp" alt="Twin Bats" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Twin Bats</b>C063 · Rare · 4/2/6/8 · 20</figcaption>
-</figure><figure>
-<img src="assets/cards/C064.webp" alt="Young Chimera" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Young Chimera</b>C064 · Rare · 4/6/5/6 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C065.webp" alt="Twin Falcons" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Twin Falcons</b>C065 · Rare · 8/8/3/2 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C066.webp" alt="Dire Wolf" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Dire Wolf</b>C066 · Rare · 7/2/8/4 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C067.webp" alt="Unicorn Foal" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Unicorn Foal</b>C067 · Rare · 9/3/3/6 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C068.webp" alt="Leopard" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Leopard</b>C068 · Rare · 7/5/4/5 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C069.webp" alt="Firebird Fledgling" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Firebird Fledgling</b>C069 · Rare · 1/10/9/1 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C070.webp" alt="Tiger" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Tiger</b>C070 · Rare · 2/3/8/8 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C071.webp" alt="Lion" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Lion</b>C071 · Rare · 2/8/3/8 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C072.webp" alt="Manticore Cub" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Manticore Cub</b>C072 · Rare · 6/6/5/4 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C073.webp" alt="Griffin Fledgling" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Griffin Fledgling</b>C073 · Rare · 3/9/6/3 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C074.webp" alt="Wyvern Whelp" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Wyvern Whelp</b>C074 · Rare · 5/7/4/5 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C075.webp" alt="Sea Serpent Pair" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Sea Serpent Pair</b>C075 · Rare · 6/2/5/8 · 21</figcaption>
-</figure><figure>
-<img src="assets/cards/C076.webp" alt="Sphinx" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Sphinx</b>C076 · Rare · 6/6/5/5 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C077.webp" alt="Twin Wyrms" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Twin Wyrms</b>C077 · Rare · 3/3/8/8 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C078.webp" alt="Kraken Arm" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Kraken Arm</b>C078 · Rare · 8/3/8/3 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C079.webp" alt="Goldhorn" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Goldhorn</b>C079 · Rare · 3/9/6/4 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C080.webp" alt="Thunderbird" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Thunderbird</b>C080 · Rare · 8/4/2/8 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C081.webp" alt="Lightning Roc" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Lightning Roc</b>C081 · Rare · 10/10/1/1 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C082.webp" alt="Dire Hart" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Dire Hart</b>C082 · Rare · 8/8/3/3 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C083.webp" alt="Pegasus" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Pegasus</b>C083 · Rare · 3/7/3/9 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C084.webp" alt="Griffin" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Griffin</b>C084 · Rare · 5/5/7/5 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C085.webp" alt="Gargoyle" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Gargoyle</b>C085 · Rare · 10/4/4/4 · 22</figcaption>
-</figure><figure>
-<img src="assets/cards/C086.webp" alt="Twin Drakes" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Twin Drakes</b>C086 · Rare · 7/2/6/7 · 22</figcaption>
-</figure></div></section>
-<section><h2>High <small>19</small></h2><div class="grid"><figure>
-<img src="assets/cards/C087.webp" alt="Firebird" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Firebird</b>C087 · High · 5/6/7/5 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C088.webp" alt="Leviathan Spawn" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Leviathan Spawn</b>C088 · High · 8/3/3/9 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C089.webp" alt="Chimera" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Chimera</b>C089 · High · 3/9/3/8 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C090.webp" alt="Dragon Turtle" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Dragon Turtle</b>C090 · High · 10/4/5/4 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C091.webp" alt="Unicorn" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Unicorn</b>C091 · High · 8/9/3/3 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C092.webp" alt="Manticore" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Manticore</b>C092 · High · 1/2/10/10 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C093.webp" alt="Hydra" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hydra</b>C093 · High · 5/2/8/8 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C094.webp" alt="Naddred" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Naddred</b>C094 · High · 7/3/9/4 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C095.webp" alt="Greater Sphinx" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Greater Sphinx</b>C095 · High · 6/5/5/7 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C096.webp" alt="Hippogriff" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Hippogriff</b>C096 · High · 4/10/5/4 · 23</figcaption>
-</figure><figure>
-<img src="assets/cards/C097.webp" alt="Celestial Stag" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Celestial Stag</b>C097 · High · 5/7/6/6 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C098.webp" alt="Janus Drake" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Janus Drake</b>C098 · High · 9/3/3/9 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C099.webp" alt="Wyvern" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Wyvern</b>C099 · High · 8/4/9/3 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C100.webp" alt="Drake" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Drake</b>C100 · High · 10/6/4/4 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C101.webp" alt="Marsh Hydra" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Marsh Hydra</b>C101 · High · 3/3/9/9 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C102.webp" alt="Behemoth" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Behemoth</b>C102 · High · 2/10/2/10 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C103.webp" alt="Basilisk" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Basilisk</b>C103 · High · 3/9/9/3 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C104.webp" alt="Cerberus" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Cerberus</b>C104 · High · 6/8/2/8 · 24</figcaption>
-</figure><figure>
-<img src="assets/cards/C105.webp" alt="Cockatrice" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Cockatrice</b>C105 · High · 7/5/5/7 · 24</figcaption>
-</figure></div></section>
-<section><h2>Top <small>15</small></h2><div class="grid"><figure>
-<img src="assets/cards/C106.webp" alt="Cloudwyrm" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Cloudwyrm</b>C106 · Top · 6/6/6/7 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C107.webp" alt="Knucker" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Knucker</b>C107 · Top · 3/9/9/4 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C108.webp" alt="Kraken" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Kraken</b>C108 · Top · 9/4/9/3 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C109.webp" alt="Storm Sphinx" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Storm Sphinx</b>C109 · Top · 10/7/4/4 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C110.webp" alt="World Turtle" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>World Turtle</b>C110 · Top · 4/3/9/9 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C111.webp" alt="Sky Aurochs" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Sky Aurochs</b>C111 · Top · 1/10/4/10 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C112.webp" alt="Pendragon" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Pendragon</b>C112 · Top · 9/4/3/9 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C113.webp" alt="Black Shuck" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Black Shuck</b>C113 · Top · 2/8/7/8 · 25</figcaption>
-</figure><figure>
-<img src="assets/cards/C114.webp" alt="Laidly Worm" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Laidly Worm</b>C114 · Top · 5/7/7/7 · 26</figcaption>
-</figure><figure>
-<img src="assets/cards/C115.webp" alt="Worldwyrm" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Worldwyrm</b>C115 · Top · 9/9/3/5 · 26</figcaption>
-</figure><figure>
-<img src="assets/cards/C116.webp" alt="Leviathan" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Leviathan</b>C116 · Top · 9/4/9/4 · 26</figcaption>
-</figure><figure>
-<img src="assets/cards/C117.webp" alt="Lambton Worm" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Lambton Worm</b>C117 · Top · 7/5/4/10 · 26</figcaption>
-</figure><figure>
-<img src="assets/cards/C118.webp" alt="Empress Hydra" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Empress Hydra</b>C118 · Top · 3/9/9/5 · 26</figcaption>
-</figure><figure>
-<img src="assets/cards/C119.webp" alt="Moonwyrm" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Moonwyrm</b>C119 · Top · 4/2/10/10 · 26</figcaption>
-</figure><figure>
-<img src="assets/cards/C120.webp" alt="Sun Griffin" width="720" height="1280" loading="lazy" decoding="async">
-<figcaption><b>Sun Griffin</b>C120 · Top · 7/3/8/8 · 26</figcaption>
-</figure></div></section>
-</main>
+<main id="main"></main>
+<div id="lightbox" aria-modal="true">
+  <div class="card gilt" id="lbCard">
+    <div class="giltWindow"><img id="lbArt" alt="" width="720" height="1280"></div>
+    <span class="n" id="lbN"></span><span class="e" id="lbE"></span><span class="s" id="lbS"></span><span class="w" id="lbW"></span>
+  </div>
+  <div class="meta" id="lbMeta"></div>
+  <div class="nav">
+    <button type="button" id="prev">Previous</button>
+    <button type="button" id="close">Close</button>
+    <button type="button" id="next">Next</button>
+  </div>
+</div>
+<script>
+const CARDS = [{"name":"C001","display":"Earwig","n":3,"e":5,"s":3,"w":3,"budget":14,"geometry":"Balanced","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C002","display":"Twin Woodlice","n":1,"e":1,"s":6,"w":6,"budget":14,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C003","display":"Garden Newt","n":7,"e":1,"s":5,"w":1,"budget":14,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C004","display":"Needle Wasp","n":4,"e":2,"s":1,"w":7,"budget":14,"geometry":"Single-Side Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C005","display":"Fieldmouse","n":2,"e":4,"s":6,"w":2,"budget":14,"geometry":"Asymmetric","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C006","display":"Hedge Shrew","n":1,"e":10,"s":2,"w":1,"budget":14,"geometry":"Extreme Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C007","display":"Millipede","n":3,"e":4,"s":4,"w":4,"budget":15,"geometry":"Balanced","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C008","display":"Harvest Mice","n":6,"e":1,"s":1,"w":7,"budget":15,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C009","display":"Dung Beetle","n":7,"e":1,"s":6,"w":1,"budget":15,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C010","display":"Kingfisher","n":2,"e":3,"s":8,"w":2,"budget":15,"geometry":"Single-Side Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C011","display":"Weasel","n":5,"e":7,"s":1,"w":2,"budget":15,"geometry":"Asymmetric","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C012","display":"Tunnel Mole","n":1,"e":10,"s":3,"w":1,"budget":15,"geometry":"Extreme Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C013","display":"Grasshopper","n":1,"e":1,"s":6,"w":7,"budget":15,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C014","display":"Skylark","n":5,"e":4,"s":4,"w":3,"budget":16,"geometry":"Balanced","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C015","display":"Twin Toads","n":1,"e":1,"s":7,"w":7,"budget":16,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C016","display":"Badger Cub","n":1,"e":7,"s":2,"w":6,"budget":16,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C017","display":"Damselfly","n":4,"e":2,"s":2,"w":8,"budget":16,"geometry":"Single-Side Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C018","display":"Robin","n":2,"e":5,"s":7,"w":2,"budget":16,"geometry":"Asymmetric","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C019","display":"Stickleback","n":10,"e":1,"s":1,"w":4,"budget":16,"geometry":"Extreme Specialist","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C020","display":"Soldier Beetles","n":7,"e":7,"s":1,"w":1,"budget":16,"geometry":"Adjacent Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C021","display":"Heron Chick","n":7,"e":1,"s":7,"w":1,"budget":16,"geometry":"Opposite Pair","role":"Economy / specialist","status":"Baseline V1","tier":"Common"},{"name":"C022","display":"Hedgehog","n":5,"e":4,"s":3,"w":5,"budget":17,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C023","display":"Hare","n":2,"e":7,"s":7,"w":1,"budget":17,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C024","display":"Red Fox","n":7,"e":1,"s":7,"w":2,"budget":17,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C025","display":"Stoat","n":2,"e":2,"s":8,"w":5,"budget":17,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C026","display":"Kestrel","n":4,"e":1,"s":5,"w":7,"budget":17,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C027","display":"Pike","n":2,"e":10,"s":1,"w":4,"budget":17,"geometry":"Extreme Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C028","display":"Barn Owls","n":7,"e":7,"s":2,"w":1,"budget":17,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C029","display":"Polecat","n":2,"e":6,"s":2,"w":7,"budget":17,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C030","display":"Otter","n":3,"e":5,"s":5,"w":4,"budget":17,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C031","display":"Ram","n":4,"e":6,"s":4,"w":4,"budget":18,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C032","display":"Young Boar","n":8,"e":2,"s":2,"w":6,"budget":18,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C033","display":"Adder","n":6,"e":2,"s":8,"w":2,"budget":18,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C034","display":"Stag Beetle","n":3,"e":3,"s":3,"w":9,"budget":18,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C035","display":"Hill Goat","n":3,"e":3,"s":7,"w":5,"budget":18,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C036","display":"Lamprey","n":1,"e":9,"s":7,"w":1,"budget":18,"geometry":"Extreme Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C037","display":"Raven","n":6,"e":8,"s":2,"w":2,"budget":18,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C038","display":"Wildcat","n":2,"e":8,"s":2,"w":6,"budget":18,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C039","display":"Magpie","n":5,"e":3,"s":5,"w":5,"budget":18,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C040","display":"Carp","n":8,"e":4,"s":4,"w":2,"budget":18,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C041","display":"Hart","n":6,"e":5,"s":4,"w":4,"budget":19,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C042","display":"Beaver","n":2,"e":2,"s":7,"w":8,"budget":19,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C043","display":"Badger","n":2,"e":8,"s":2,"w":7,"budget":19,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C044","display":"Bear Cub","n":3,"e":4,"s":9,"w":3,"budget":19,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C045","display":"Crane","n":4,"e":7,"s":5,"w":3,"budget":19,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C046","display":"Wolverine","n":10,"e":1,"s":1,"w":7,"budget":19,"geometry":"Extreme Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C047","display":"Golden Eagle","n":6,"e":2,"s":3,"w":8,"budget":19,"geometry":"Adjacent Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C048","display":"Lynx","n":8,"e":2,"s":7,"w":2,"budget":19,"geometry":"Opposite Pair","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C049","display":"Osprey","n":4,"e":4,"s":6,"w":5,"budget":19,"geometry":"Balanced","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C050","display":"Elk","n":3,"e":3,"s":4,"w":9,"budget":19,"geometry":"Single-Side Specialist","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C051","display":"Grey Wolf","n":5,"e":5,"s":2,"w":7,"budget":19,"geometry":"Asymmetric","role":"Flexible support","status":"Baseline V1","tier":"Uncommon"},{"name":"C052","display":"Panther","n":5,"e":5,"s":4,"w":6,"budget":20,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C053","display":"Marsh Hydra Spawn","n":2,"e":8,"s":8,"w":2,"budget":20,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C054","display":"Wild Boar","n":8,"e":3,"s":7,"w":2,"budget":20,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C055","display":"Cockatrice Chick","n":3,"e":3,"s":9,"w":5,"budget":20,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C056","display":"Twin Adders","n":7,"e":5,"s":5,"w":3,"budget":20,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C057","display":"Baby Cerberus","n":1,"e":9,"s":1,"w":9,"budget":20,"geometry":"Extreme Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C058","display":"Mastiff","n":8,"e":2,"s":2,"w":8,"budget":20,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C059","display":"Brown Bear","n":1,"e":6,"s":6,"w":7,"budget":20,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C060","display":"Kelpie Foal","n":4,"e":6,"s":6,"w":4,"budget":20,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C061","display":"Stag","n":5,"e":9,"s":3,"w":3,"budget":20,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C062","display":"Hippogriff Fledgling","n":5,"e":7,"s":3,"w":5,"budget":20,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C063","display":"Twin Bats","n":4,"e":2,"s":6,"w":8,"budget":20,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C064","display":"Young Chimera","n":4,"e":6,"s":5,"w":6,"budget":21,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C065","display":"Twin Falcons","n":8,"e":8,"s":3,"w":2,"budget":21,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C066","display":"Dire Wolf","n":7,"e":2,"s":8,"w":4,"budget":21,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C067","display":"Unicorn Foal","n":9,"e":3,"s":3,"w":6,"budget":21,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C068","display":"Leopard","n":7,"e":5,"s":4,"w":5,"budget":21,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C069","display":"Firebird Fledgling","n":1,"e":10,"s":9,"w":1,"budget":21,"geometry":"Extreme Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C070","display":"Tiger","n":2,"e":3,"s":8,"w":8,"budget":21,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C071","display":"Lion","n":2,"e":8,"s":3,"w":8,"budget":21,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C072","display":"Manticore Cub","n":6,"e":6,"s":5,"w":4,"budget":21,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C073","display":"Griffin Fledgling","n":3,"e":9,"s":6,"w":3,"budget":21,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C074","display":"Wyvern Whelp","n":5,"e":7,"s":4,"w":5,"budget":21,"geometry":"Asymmetric","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C075","display":"Sea Serpent Pair","n":6,"e":2,"s":5,"w":8,"budget":21,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C076","display":"Sphinx","n":6,"e":6,"s":5,"w":5,"budget":22,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C077","display":"Twin Wyrms","n":3,"e":3,"s":8,"w":8,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C078","display":"Kraken Arm","n":8,"e":3,"s":8,"w":3,"budget":22,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C079","display":"Goldhorn","n":3,"e":9,"s":6,"w":4,"budget":22,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C080","display":"Thunderbird","n":8,"e":4,"s":2,"w":8,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C081","display":"Lightning Roc","n":10,"e":10,"s":1,"w":1,"budget":22,"geometry":"Extreme Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C082","display":"Dire Hart","n":8,"e":8,"s":3,"w":3,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C083","display":"Pegasus","n":3,"e":7,"s":3,"w":9,"budget":22,"geometry":"Opposite Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C084","display":"Griffin","n":5,"e":5,"s":7,"w":5,"budget":22,"geometry":"Balanced","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C085","display":"Gargoyle","n":10,"e":4,"s":4,"w":4,"budget":22,"geometry":"Single-Side Specialist","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C086","display":"Twin Drakes","n":7,"e":2,"s":6,"w":7,"budget":22,"geometry":"Adjacent Pair","role":"Core","status":"Baseline V1","tier":"Rare"},{"name":"C087","display":"Firebird","n":5,"e":6,"s":7,"w":5,"budget":23,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C088","display":"Leviathan Spawn","n":8,"e":3,"s":3,"w":9,"budget":23,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C089","display":"Chimera","n":3,"e":9,"s":3,"w":8,"budget":23,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C090","display":"Dragon Turtle","n":10,"e":4,"s":5,"w":4,"budget":23,"geometry":"Single-Side Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C091","display":"Unicorn","n":8,"e":9,"s":3,"w":3,"budget":23,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C092","display":"Manticore","n":1,"e":2,"s":10,"w":10,"budget":23,"geometry":"Extreme Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C093","display":"Hydra","n":5,"e":2,"s":8,"w":8,"budget":23,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C094","display":"Naddred","n":7,"e":3,"s":9,"w":4,"budget":23,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C095","display":"Greater Sphinx","n":6,"e":5,"s":5,"w":7,"budget":23,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C096","display":"Hippogriff","n":4,"e":10,"s":5,"w":4,"budget":23,"geometry":"Single-Side Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C097","display":"Celestial Stag","n":5,"e":7,"s":6,"w":6,"budget":24,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C098","display":"Janus Drake","n":9,"e":3,"s":3,"w":9,"budget":24,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C099","display":"Wyvern","n":8,"e":4,"s":9,"w":3,"budget":24,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C100","display":"Drake","n":10,"e":6,"s":4,"w":4,"budget":24,"geometry":"Single-Side Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C101","display":"Marsh Hydra","n":3,"e":3,"s":9,"w":9,"budget":24,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C102","display":"Behemoth","n":2,"e":10,"s":2,"w":10,"budget":24,"geometry":"Extreme Specialist","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C103","display":"Basilisk","n":3,"e":9,"s":9,"w":3,"budget":24,"geometry":"Adjacent Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C104","display":"Cerberus","n":6,"e":8,"s":2,"w":8,"budget":24,"geometry":"Opposite Pair","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C105","display":"Cockatrice","n":7,"e":5,"s":5,"w":7,"budget":24,"geometry":"Balanced","role":"Premium","status":"Baseline V1","tier":"High"},{"name":"C106","display":"Cloudwyrm","n":6,"e":6,"s":6,"w":7,"budget":25,"geometry":"Balanced","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C107","display":"Knucker","n":3,"e":9,"s":9,"w":4,"budget":25,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C108","display":"Kraken","n":9,"e":4,"s":9,"w":3,"budget":25,"geometry":"Opposite Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C109","display":"Storm Sphinx","n":10,"e":7,"s":4,"w":4,"budget":25,"geometry":"Single-Side Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C110","display":"World Turtle","n":4,"e":3,"s":9,"w":9,"budget":25,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C111","display":"Sky Aurochs","n":1,"e":10,"s":4,"w":10,"budget":25,"geometry":"Extreme Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C112","display":"Pendragon","n":9,"e":4,"s":3,"w":9,"budget":25,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C113","display":"Black Shuck","n":2,"e":8,"s":7,"w":8,"budget":25,"geometry":"Opposite Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C114","display":"Laidly Worm","n":5,"e":7,"s":7,"w":7,"budget":26,"geometry":"Balanced","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C115","display":"Worldwyrm","n":9,"e":9,"s":3,"w":5,"budget":26,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C116","display":"Leviathan","n":9,"e":4,"s":9,"w":4,"budget":26,"geometry":"Opposite Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C117","display":"Lambton Worm","n":7,"e":5,"s":4,"w":10,"budget":26,"geometry":"Single-Side Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C118","display":"Empress Hydra","n":3,"e":9,"s":9,"w":5,"budget":26,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C119","display":"Moonwyrm","n":4,"e":2,"s":10,"w":10,"budget":26,"geometry":"Extreme Specialist","role":"Marquee","status":"Baseline V1","tier":"Top"},{"name":"C120","display":"Sun Griffin","n":7,"e":3,"s":8,"w":8,"budget":26,"geometry":"Adjacent Pair","role":"Marquee","status":"Baseline V1","tier":"Top"}];
+const ART_VER = "112";
+function artSrc(id){ return "assets/cards/"+id+".webp?v="+ART_VER; }
+function cardHTML(c, lazy){
+  const load = lazy ? ' loading="lazy" decoding="async"' : ' decoding="async"';
+  return `<div class="card gilt" data-card="${c.name}">
+    <div class="giltWindow"><img src="${artSrc(c.name)}" alt="${c.display}" width="720" height="1280"${load}></div>
+    <span class="n">${c.n}</span><span class="e">${c.e}</span><span class="s">${c.s}</span><span class="w">${c.w}</span>
+  </div>`;
+}
+const main = document.getElementById("main");
+const byTier = {};
+CARDS.forEach(c => { (byTier[c.tier] ||= []).push(c); });
+["Common","Uncommon","Rare","High","Top"].forEach(tier => {
+  const list = byTier[tier] || [];
+  const sec = document.createElement("section");
+  sec.innerHTML = `<h2>${tier} <small>${list.length}</small></h2>`;
+  const grid = document.createElement("div");
+  grid.className = "grid";
+  list.forEach(c => {
+    const fig = document.createElement("figure");
+    fig.innerHTML = cardHTML(c, true) + `<figcaption><b>${c.display}</b>${c.name} · ${tier} · ${c.n}/${c.e}/${c.s}/${c.w} · ${c.budget}</figcaption>`;
+    fig.querySelector(".card").addEventListener("click", () => openLb(c.name));
+    grid.appendChild(fig);
+  });
+  sec.appendChild(grid);
+  main.appendChild(sec);
+});
+const lb = document.getElementById("lightbox");
+let current = 0;
+function openLb(id){
+  current = CARDS.findIndex(c => c.name === id);
+  showLb();
+}
+function showLb(){
+  const c = CARDS[current];
+  const img = document.getElementById("lbArt");
+  img.src = artSrc(c.name);
+  img.alt = c.display;
+  document.getElementById("lbN").textContent = c.n;
+  document.getElementById("lbE").textContent = c.e;
+  document.getElementById("lbS").textContent = c.s;
+  document.getElementById("lbW").textContent = c.w;
+  document.getElementById("lbMeta").textContent = c.display+" · "+c.name+" · "+c.tier+" · "+c.n+"/"+c.e+"/"+c.s+"/"+c.w+" · "+c.budget;
+  lb.classList.add("on");
+}
+document.getElementById("close").onclick = () => lb.classList.remove("on");
+document.getElementById("prev").onclick = () => { current = (current + CARDS.length - 1) % CARDS.length; showLb(); };
+document.getElementById("next").onclick = () => { current = (current + 1) % CARDS.length; showLb(); };
+document.addEventListener("keydown", e => {
+  if (!lb.classList.contains("on")) return;
+  if (e.key === "Escape") lb.classList.remove("on");
+  if (e.key === "ArrowLeft") document.getElementById("prev").click();
+  if (e.key === "ArrowRight") document.getElementById("next").click();
+});
+lb.addEventListener("click", e => { if (e.target === lb) lb.classList.remove("on"); });
+</script>
 </body>
 </html>
