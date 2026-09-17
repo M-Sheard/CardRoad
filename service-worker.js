@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v105-journal-seal-news';
+const CACHE_NAME = 'card-road-pwa-v106-card-window';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
