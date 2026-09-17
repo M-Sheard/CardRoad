@@ -525,6 +525,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devOvernightGossip" type="button" style="margin-top:8px">Preview overnight gossip</button>
         <button id="devCopyInRoom" type="button" style="margin-top:8px">Preview copy in the room</button>
         <button id="devThursdayClub" type="button" style="margin-top:8px">Jump to Thursday Club</button>
+        <button id="devFridayClub" type="button" style="margin-top:8px">Jump to Friday Club</button>
         <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
@@ -1233,6 +1234,24 @@ function openWeekSubtitle(location,base){
  if(location==="Market"&&days===1)return "Stalls as usual. Tomorrow is the Open.";
  return base;
 }
+function openWeekPlaqueLine(location){
+ // Short enough for the live date plaque at ~320px. sceneLabel stays hidden.
+ if(isSaturdayEventNow()&&location==="Card Club")return "Open this afternoon";
+ if(visualWeekday()==="Saturday"&&!isSaturdayEventNow()){
+  if(location==="Card Club")return "Open this afternoon";
+  if(location==="Market")return "Club this afternoon";
+ }
+ const days=daysUntilSaturday();
+ if(days<1||days>3)return "";
+ if(location==="Card Club"){
+  if(days===3)return "Practice for Saturday";
+  if(days===2)return "Pairings for Saturday";
+  return "Open tomorrow";
+ }
+ if(location==="Inn"&&days<=2)return days===1?"Tomorrow's Open":"Saturday pairing talk";
+ if(location==="Market"&&days===1)return "Open tomorrow";
+ return "";
+}
 function unreadNoticeIds(){
  let info=publicInfoHere();if(!info)return[];
  let known=new Set((state.visual.discoveredEvents||[]).map(e=>e.id));
@@ -1517,6 +1536,9 @@ function wantsCopyRoomPreview(){
 }
 function wantsThursdayPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])thursday=1(?:&|$)/.test(location.search);
+}
+function wantsFridayPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])friday=1(?:&|$)/.test(location.search);
 }
 function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
@@ -1978,6 +2000,7 @@ function bootTownOrTutorial(){
  if(wantsGossipPreview()){bootOvernightGossip();return}
  if(wantsCopyRoomPreview()){bootCopyInRoom();return}
  if(wantsThursdayPreview()){jumpVisualToOpenWeek("Thursday");save();renderHome();show("home");return}
+ if(wantsFridayPreview()){jumpVisualToOpenWeek("Friday");save();renderHome();show("home");return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
  if(wantsHouseTinClubPreview()){
   ensureVisualState();
@@ -3142,7 +3165,16 @@ function renderWorldScene(){
  const dress=$("saturdayDress");
  if(dress){dress.hidden=!dressClub;dress.setAttribute("aria-hidden",dressClub?"false":"true")}
  loc={title:loc.title,subtitle:openWeekSubtitle(state.visual.location,loc.subtitle)};
- $("visualDate").textContent=plaqueDateLabel();$("visualPhase").textContent=state.visual.phase+" · Year "+state.season.year;$("locationTitle").textContent=loc.title;$("locationSubtitle").textContent=loc.subtitle;
+ const weekPlaque=openWeekPlaqueLine(state.visual.location);
+ $("visualDate").textContent=plaqueDateLabel();
+ $("visualPhase").textContent=weekPlaque||(state.visual.phase+" · Year "+state.season.year);
+ $("locationTitle").textContent=loc.title;$("locationSubtitle").textContent=loc.subtitle;
+ const advance=$("advanceTime");
+ if(advance){
+  advance.classList.toggle("weekLean",!!weekPlaque);
+  advance.setAttribute("aria-label",weekPlaque?`${plaqueDateLabel()}, ${state.visual.phase}. ${weekPlaque}. Pass time`:"Pass time");
+ }
+ document.body.dataset.saturdayWeek=(daysToOpen>=1&&daysToOpen<=3)?"1":"";
  document.querySelectorAll("#locationStrip button").forEach(b=>{
    let on=b.dataset.loc===state.visual.location;
    b.classList.toggle("active",on);
@@ -5211,6 +5243,7 @@ if($("devInbox"))$("devInbox").onclick=()=>{
 if($("devOvernightGossip"))$("devOvernightGossip").onclick=()=>bootOvernightGossip();
 if($("devCopyInRoom"))$("devCopyInRoom").onclick=()=>bootCopyInRoom();
 if($("devThursdayClub"))$("devThursdayClub").onclick=()=>{jumpVisualToOpenWeek("Thursday");save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
+if($("devFridayClub"))$("devFridayClub").onclick=()=>{jumpVisualToOpenWeek("Friday");save();closeNoticeView();if($("journalOverlay"))$("journalOverlay").classList.add("hidden");renderHome();show("home")};
 if($("devTownTalk"))$("devTownTalk").onclick=()=>{
  $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
  show("home");renderHome();
@@ -7005,6 +7038,11 @@ if ('serviceWorker' in navigator) {
   overflow:hidden!important;
   text-overflow:ellipsis!important;
   white-space:nowrap!important;
+  letter-spacing:.02em!important;
+}
+#visualShell #advanceTime.weekLean #visualPhase{
+  letter-spacing:0!important;
+  color:#4a3018!important;
 }
 #visualShell #advanceTime .scrollSun{
   width:22px!important;
@@ -10075,12 +10113,12 @@ html,body,#visualShell{color-scheme:only light}
 }
 .satBunting{
   position:absolute;
-  top:max(6px,env(safe-area-inset-top));
-  left:46%;
-  right:max(8px,env(safe-area-inset-right) + 6px);
+  top:max(70px,calc(env(safe-area-inset-top) + 58px));
+  left:max(16px,calc(env(safe-area-inset-left) + 10px));
+  right:max(16px,calc(env(safe-area-inset-right) + 10px));
   height:26px;
   display:flex;
-  justify-content:flex-end;
+  justify-content:center;
   align-items:flex-start;
   gap:2px;
   overflow:hidden;
@@ -10095,7 +10133,8 @@ html,body,#visualShell{color-scheme:only light}
 }
 .satBunting span:nth-child(3n+2){background:#d4b06a}
 .satBunting span:nth-child(3n){background:#1e4d3c}
-body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"]{
+body[data-saturday-open="1"] .locationStrip [data-loc="Card Club"],
+body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   box-shadow:inset 0 0 0 1px #e7c47b,0 0 0 1px #c9a45a;
 }
 .townScene[data-saturday="open"] #eventHotspot.eventHotspot{
