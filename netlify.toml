@@ -6,3 +6,14 @@
 
 [build.environment]
   NODE_VERSION = "22"
+
+# Phones keep an installed service worker; do not let the CDN hold an old copy.
+[[headers]]
+  for = "/service-worker.js"
+  [headers.values]
+    Cache-Control = "no-cache, no-store, must-revalidate"
+
+[[headers]]
+  for = "/index.html"
+  [headers.values]
+    Cache-Control = "no-cache"
