@@ -195,7 +195,7 @@ The game deliberately avoids:
 - duplicate fusion;
 - duplicate-based power progression.
 
-A Riverling remains a Riverling.
+An Otter remains an Otter.
 
 Its value comes from usefulness, scarcity, ownership history, tournament history, provenance, collector interest, and personal meaning.
 
@@ -212,7 +212,7 @@ This is the **authoritative transfer reference** for Card Road’s current numer
 | Total range | Every integer total **14–26** is represented |
 | Orientation | Part of identity. Rotating or reassigning the same four numbers creates a different tactical profile |
 | Deck cost (current) | Total currently also acts as deck-budget cost |
-| Names | Placeholder only (`Design 001`, etc.). Not final identities |
+| Names | Locked to the 17d paintings (Earwig, Otter, Baby Cerberus, Cerberus, …). IDs **C001–C120** stay fixed |
 | Rarity | **Separate** from numerical strength |
 
 **Operator must preserve**
@@ -228,7 +228,7 @@ This is the **authoritative transfer reference** for Card Road’s current numer
 
 - That old 1–5 mock-up values are current.
 - That a high-total card must be rare, or a low-total card must be common.
-- That placeholder names are final card identities.
+- That a card’s painting can change without keeping the name in step with it.
 - That every profile is permanently balanced merely because it appears in V1.
 - That a stale spreadsheet Summary tab is authoritative. **Roster V1** is the source of truth.
 
@@ -310,9 +310,9 @@ This becomes particularly important once provenance develops.
 
 Two mechanically identical copies could eventually have completely different histories.
 
-**Riverling — Copy A:** ordinary circulation, no tournament history.
+**Otter — Copy A:** ordinary circulation, no tournament history.
 
-**Riverling — Copy B:** previously owned by Tomas, won by the player, later used to win a championship.
+**Otter — Copy B:** previously owned by Tomas, won by the player, later used to win a championship.
 
 Mechanically identical. Historically different.
 
@@ -1101,7 +1101,7 @@ Examples:
 
 > “Tomas won my favourite card from me, then lost it to Mara two weeks later. I finally got it back by beating Mara in the regional qualifier.”
 
-> “That Riverling isn’t rare, but it’s the copy I used when I won my first championship. It has three tournament stamps now.”
+> “That Otter isn’t rare, but it’s the copy I used when I won my first championship. It has three tournament stamps now.”
 
 > “Nessa started as an easy opponent. Years later she’s one of my closest friends and still keeps beating me in finals.”
 
@@ -1209,7 +1209,7 @@ That is the foundation Card Road should now build upon.
 
 - One large HTML file rather than a production architecture.
 - TEST/DEBUG panels still on the home screen (reverse, hand visibility, combo, economy, advance world).
-- Placeholder card names (`Design 001` …).
+- Card names now follow the 17d paintings; numerical profiles stay Baseline V1.
 - No grandfather tutorial sequence yet as a finished opening.
 
 ---
@@ -1233,130 +1233,130 @@ The surviving project record preserves what was selected more reliably than the 
 
 # Appendix A — Definitive Baseline V1 Roster
 
-Authoritative row source: Roster V1 tab. Working names are placeholders only. Total is N+E+S+W and is the current card deck-cost value. Status for every row: **Baseline V1**.
+Authoritative row source: Roster V1 tab. Names match the live 17d paintings. Total is N+E+S+W and is the current card deck-cost value. Status for every row: **Baseline V1**. IDs and N/E/S/W are unchanged.
 
-| ID | Working name | N | E | S | W | Total | Geometry | Spread | Max | Min | Working role |
+| ID | Name | N | E | S | W | Total | Geometry | Spread | Max | Min | Working role |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| C001 | Design 001 (TBD) | 3 | 5 | 3 | 3 | 14 | Balanced | 2 | 5 | 3 | Economy / specialist |
-| C002 | Design 002 (TBD) | 1 | 1 | 6 | 6 | 14 | Adjacent Pair | 5 | 6 | 1 | Economy / specialist |
-| C003 | Design 003 (TBD) | 7 | 1 | 5 | 1 | 14 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
-| C004 | Design 004 (TBD) | 4 | 2 | 1 | 7 | 14 | Single-Side Specialist | 6 | 7 | 1 | Economy / specialist |
-| C005 | Design 005 (TBD) | 2 | 4 | 6 | 2 | 14 | Asymmetric | 4 | 6 | 2 | Economy / specialist |
-| C006 | Design 006 (TBD) | 1 | 10 | 2 | 1 | 14 | Extreme Specialist | 9 | 10 | 1 | Economy / specialist |
-| C007 | Design 007 (TBD) | 3 | 4 | 4 | 4 | 15 | Balanced | 1 | 4 | 3 | Economy / specialist |
-| C008 | Design 008 (TBD) | 6 | 1 | 1 | 7 | 15 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
-| C009 | Design 009 (TBD) | 7 | 1 | 6 | 1 | 15 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
-| C010 | Design 010 (TBD) | 2 | 3 | 8 | 2 | 15 | Single-Side Specialist | 6 | 8 | 2 | Economy / specialist |
-| C011 | Design 011 (TBD) | 5 | 7 | 1 | 2 | 15 | Asymmetric | 6 | 7 | 1 | Economy / specialist |
-| C012 | Design 012 (TBD) | 1 | 10 | 3 | 1 | 15 | Extreme Specialist | 9 | 10 | 1 | Economy / specialist |
-| C013 | Design 013 (TBD) | 1 | 1 | 6 | 7 | 15 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
-| C014 | Design 014 (TBD) | 5 | 4 | 4 | 3 | 16 | Balanced | 2 | 5 | 3 | Economy / specialist |
-| C015 | Design 015 (TBD) | 1 | 1 | 7 | 7 | 16 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
-| C016 | Design 016 (TBD) | 1 | 7 | 2 | 6 | 16 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
-| C017 | Design 017 (TBD) | 4 | 2 | 2 | 8 | 16 | Single-Side Specialist | 6 | 8 | 2 | Economy / specialist |
-| C018 | Design 018 (TBD) | 2 | 5 | 7 | 2 | 16 | Asymmetric | 5 | 7 | 2 | Economy / specialist |
-| C019 | Design 019 (TBD) | 10 | 1 | 1 | 4 | 16 | Extreme Specialist | 9 | 10 | 1 | Economy / specialist |
-| C020 | Design 020 (TBD) | 7 | 7 | 1 | 1 | 16 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
-| C021 | Design 021 (TBD) | 7 | 1 | 7 | 1 | 16 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
-| C022 | Design 022 (TBD) | 5 | 4 | 3 | 5 | 17 | Balanced | 2 | 5 | 3 | Flexible support |
-| C023 | Design 023 (TBD) | 2 | 7 | 7 | 1 | 17 | Adjacent Pair | 6 | 7 | 1 | Flexible support |
-| C024 | Design 024 (TBD) | 7 | 1 | 7 | 2 | 17 | Opposite Pair | 6 | 7 | 1 | Flexible support |
-| C025 | Design 025 (TBD) | 2 | 2 | 8 | 5 | 17 | Single-Side Specialist | 6 | 8 | 2 | Flexible support |
-| C026 | Design 026 (TBD) | 4 | 1 | 5 | 7 | 17 | Asymmetric | 6 | 7 | 1 | Flexible support |
-| C027 | Design 027 (TBD) | 2 | 10 | 1 | 4 | 17 | Extreme Specialist | 9 | 10 | 1 | Flexible support |
-| C028 | Design 028 (TBD) | 7 | 7 | 2 | 1 | 17 | Adjacent Pair | 6 | 7 | 1 | Flexible support |
-| C029 | Design 029 (TBD) | 2 | 6 | 2 | 7 | 17 | Opposite Pair | 5 | 7 | 2 | Flexible support |
-| C030 | Design 030 (TBD) | 3 | 5 | 5 | 4 | 17 | Balanced | 2 | 5 | 3 | Flexible support |
-| C031 | Design 031 (TBD) | 4 | 6 | 4 | 4 | 18 | Balanced | 2 | 6 | 4 | Flexible support |
-| C032 | Design 032 (TBD) | 8 | 2 | 2 | 6 | 18 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
-| C033 | Design 033 (TBD) | 6 | 2 | 8 | 2 | 18 | Opposite Pair | 6 | 8 | 2 | Flexible support |
-| C034 | Design 034 (TBD) | 3 | 3 | 3 | 9 | 18 | Single-Side Specialist | 6 | 9 | 3 | Flexible support |
-| C035 | Design 035 (TBD) | 3 | 3 | 7 | 5 | 18 | Asymmetric | 4 | 7 | 3 | Flexible support |
-| C036 | Design 036 (TBD) | 1 | 9 | 7 | 1 | 18 | Extreme Specialist | 8 | 9 | 1 | Flexible support |
-| C037 | Design 037 (TBD) | 6 | 8 | 2 | 2 | 18 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
-| C038 | Design 038 (TBD) | 2 | 8 | 2 | 6 | 18 | Opposite Pair | 6 | 8 | 2 | Flexible support |
-| C039 | Design 039 (TBD) | 5 | 3 | 5 | 5 | 18 | Balanced | 2 | 5 | 3 | Flexible support |
-| C040 | Design 040 (TBD) | 8 | 4 | 4 | 2 | 18 | Single-Side Specialist | 6 | 8 | 2 | Flexible support |
-| C041 | Design 041 (TBD) | 6 | 5 | 4 | 4 | 19 | Balanced | 2 | 6 | 4 | Flexible support |
-| C042 | Design 042 (TBD) | 2 | 2 | 7 | 8 | 19 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
-| C043 | Design 043 (TBD) | 2 | 8 | 2 | 7 | 19 | Opposite Pair | 6 | 8 | 2 | Flexible support |
-| C044 | Design 044 (TBD) | 3 | 4 | 9 | 3 | 19 | Single-Side Specialist | 6 | 9 | 3 | Flexible support |
-| C045 | Design 045 (TBD) | 4 | 7 | 5 | 3 | 19 | Asymmetric | 4 | 7 | 3 | Flexible support |
-| C046 | Design 046 (TBD) | 10 | 1 | 1 | 7 | 19 | Extreme Specialist | 9 | 10 | 1 | Flexible support |
-| C047 | Design 047 (TBD) | 6 | 2 | 3 | 8 | 19 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
-| C048 | Design 048 (TBD) | 8 | 2 | 7 | 2 | 19 | Opposite Pair | 6 | 8 | 2 | Flexible support |
-| C049 | Design 049 (TBD) | 4 | 4 | 6 | 5 | 19 | Balanced | 2 | 6 | 4 | Flexible support |
-| C050 | Design 050 (TBD) | 3 | 3 | 4 | 9 | 19 | Single-Side Specialist | 6 | 9 | 3 | Flexible support |
-| C051 | Design 051 (TBD) | 5 | 5 | 2 | 7 | 19 | Asymmetric | 5 | 7 | 2 | Flexible support |
-| C052 | Design 052 (TBD) | 5 | 5 | 4 | 6 | 20 | Balanced | 2 | 6 | 4 | Core |
-| C053 | Design 053 (TBD) | 2 | 8 | 8 | 2 | 20 | Adjacent Pair | 6 | 8 | 2 | Core |
-| C054 | Design 054 (TBD) | 8 | 3 | 7 | 2 | 20 | Opposite Pair | 6 | 8 | 2 | Core |
-| C055 | Design 055 (TBD) | 3 | 3 | 9 | 5 | 20 | Single-Side Specialist | 6 | 9 | 3 | Core |
-| C056 | Design 056 (TBD) | 7 | 5 | 5 | 3 | 20 | Asymmetric | 4 | 7 | 3 | Core |
-| C057 | Design 057 (TBD) | 1 | 9 | 1 | 9 | 20 | Extreme Specialist | 8 | 9 | 1 | Core |
-| C058 | Design 058 (TBD) | 8 | 2 | 2 | 8 | 20 | Adjacent Pair | 6 | 8 | 2 | Core |
-| C059 | Design 059 (TBD) | 1 | 6 | 6 | 7 | 20 | Opposite Pair | 6 | 7 | 1 | Core |
-| C060 | Design 060 (TBD) | 4 | 6 | 6 | 4 | 20 | Balanced | 2 | 6 | 4 | Core |
-| C061 | Design 061 (TBD) | 5 | 9 | 3 | 3 | 20 | Single-Side Specialist | 6 | 9 | 3 | Core |
-| C062 | Design 062 (TBD) | 5 | 7 | 3 | 5 | 20 | Asymmetric | 4 | 7 | 3 | Core |
-| C063 | Design 063 (TBD) | 4 | 2 | 6 | 8 | 20 | Adjacent Pair | 6 | 8 | 2 | Core |
-| C064 | Design 064 (TBD) | 4 | 6 | 5 | 6 | 21 | Balanced | 2 | 6 | 4 | Core |
-| C065 | Design 065 (TBD) | 8 | 8 | 3 | 2 | 21 | Adjacent Pair | 6 | 8 | 2 | Core |
-| C066 | Design 066 (TBD) | 7 | 2 | 8 | 4 | 21 | Opposite Pair | 6 | 8 | 2 | Core |
-| C067 | Design 067 (TBD) | 9 | 3 | 3 | 6 | 21 | Single-Side Specialist | 6 | 9 | 3 | Core |
-| C068 | Design 068 (TBD) | 7 | 5 | 4 | 5 | 21 | Asymmetric | 3 | 7 | 4 | Core |
-| C069 | Design 069 (TBD) | 1 | 10 | 9 | 1 | 21 | Extreme Specialist | 9 | 10 | 1 | Core |
-| C070 | Design 070 (TBD) | 2 | 3 | 8 | 8 | 21 | Adjacent Pair | 6 | 8 | 2 | Core |
-| C071 | Design 071 (TBD) | 2 | 8 | 3 | 8 | 21 | Opposite Pair | 6 | 8 | 2 | Core |
-| C072 | Design 072 (TBD) | 6 | 6 | 5 | 4 | 21 | Balanced | 2 | 6 | 4 | Core |
-| C073 | Design 073 (TBD) | 3 | 9 | 6 | 3 | 21 | Single-Side Specialist | 6 | 9 | 3 | Core |
-| C074 | Design 074 (TBD) | 5 | 7 | 4 | 5 | 21 | Asymmetric | 3 | 7 | 4 | Core |
-| C075 | Design 075 (TBD) | 6 | 2 | 5 | 8 | 21 | Adjacent Pair | 6 | 8 | 2 | Core |
-| C076 | Design 076 (TBD) | 6 | 6 | 5 | 5 | 22 | Balanced | 1 | 6 | 5 | Core |
-| C077 | Design 077 (TBD) | 3 | 3 | 8 | 8 | 22 | Adjacent Pair | 5 | 8 | 3 | Core |
-| C078 | Design 078 (TBD) | 8 | 3 | 8 | 3 | 22 | Opposite Pair | 5 | 8 | 3 | Core |
-| C079 | Design 079 (TBD) | 3 | 9 | 6 | 4 | 22 | Single-Side Specialist | 6 | 9 | 3 | Core |
-| C080 | Design 080 (TBD) | 8 | 4 | 2 | 8 | 22 | Adjacent Pair | 6 | 8 | 2 | Core |
-| C081 | Design 081 (TBD) | 10 | 10 | 1 | 1 | 22 | Extreme Specialist | 9 | 10 | 1 | Core |
-| C082 | Design 082 (TBD) | 8 | 8 | 3 | 3 | 22 | Adjacent Pair | 5 | 8 | 3 | Core |
-| C083 | Design 083 (TBD) | 3 | 7 | 3 | 9 | 22 | Opposite Pair | 6 | 9 | 3 | Core |
-| C084 | Design 084 (TBD) | 5 | 5 | 7 | 5 | 22 | Balanced | 2 | 7 | 5 | Core |
-| C085 | Design 085 (TBD) | 10 | 4 | 4 | 4 | 22 | Single-Side Specialist | 6 | 10 | 4 | Core |
-| C086 | Design 086 (TBD) | 7 | 2 | 6 | 7 | 22 | Adjacent Pair | 5 | 7 | 2 | Core |
-| C087 | Design 087 (TBD) | 5 | 6 | 7 | 5 | 23 | Balanced | 2 | 7 | 5 | Premium |
-| C088 | Design 088 (TBD) | 8 | 3 | 3 | 9 | 23 | Adjacent Pair | 6 | 9 | 3 | Premium |
-| C089 | Design 089 (TBD) | 3 | 9 | 3 | 8 | 23 | Opposite Pair | 6 | 9 | 3 | Premium |
-| C090 | Design 090 (TBD) | 10 | 4 | 5 | 4 | 23 | Single-Side Specialist | 6 | 10 | 4 | Premium |
-| C091 | Design 091 (TBD) | 8 | 9 | 3 | 3 | 23 | Adjacent Pair | 6 | 9 | 3 | Premium |
-| C092 | Design 092 (TBD) | 1 | 2 | 10 | 10 | 23 | Extreme Specialist | 9 | 10 | 1 | Premium |
-| C093 | Design 093 (TBD) | 5 | 2 | 8 | 8 | 23 | Adjacent Pair | 6 | 8 | 2 | Premium |
-| C094 | Design 094 (TBD) | 7 | 3 | 9 | 4 | 23 | Opposite Pair | 6 | 9 | 3 | Premium |
-| C095 | Design 095 (TBD) | 6 | 5 | 5 | 7 | 23 | Balanced | 2 | 7 | 5 | Premium |
-| C096 | Design 096 (TBD) | 4 | 10 | 5 | 4 | 23 | Single-Side Specialist | 6 | 10 | 4 | Premium |
-| C097 | Design 097 (TBD) | 5 | 7 | 6 | 6 | 24 | Balanced | 2 | 7 | 5 | Premium |
-| C098 | Design 098 (TBD) | 9 | 3 | 3 | 9 | 24 | Adjacent Pair | 6 | 9 | 3 | Premium |
-| C099 | Design 099 (TBD) | 8 | 4 | 9 | 3 | 24 | Opposite Pair | 6 | 9 | 3 | Premium |
-| C100 | Design 100 (TBD) | 10 | 6 | 4 | 4 | 24 | Single-Side Specialist | 6 | 10 | 4 | Premium |
-| C101 | Design 101 (TBD) | 3 | 3 | 9 | 9 | 24 | Adjacent Pair | 6 | 9 | 3 | Premium |
-| C102 | Design 102 (TBD) | 2 | 10 | 2 | 10 | 24 | Extreme Specialist | 8 | 10 | 2 | Premium |
-| C103 | Design 103 (TBD) | 3 | 9 | 9 | 3 | 24 | Adjacent Pair | 6 | 9 | 3 | Premium |
-| C104 | Design 104 (TBD) | 6 | 8 | 2 | 8 | 24 | Opposite Pair | 6 | 8 | 2 | Premium |
-| C105 | Design 105 (TBD) | 7 | 5 | 5 | 7 | 24 | Balanced | 2 | 7 | 5 | Premium |
-| C106 | Design 106 (TBD) | 6 | 6 | 6 | 7 | 25 | Balanced | 1 | 7 | 6 | Marquee |
-| C107 | Design 107 (TBD) | 3 | 9 | 9 | 4 | 25 | Adjacent Pair | 6 | 9 | 3 | Marquee |
-| C108 | Design 108 (TBD) | 9 | 4 | 9 | 3 | 25 | Opposite Pair | 6 | 9 | 3 | Marquee |
-| C109 | Design 109 (TBD) | 10 | 7 | 4 | 4 | 25 | Single-Side Specialist | 6 | 10 | 4 | Marquee |
-| C110 | Design 110 (TBD) | 4 | 3 | 9 | 9 | 25 | Adjacent Pair | 6 | 9 | 3 | Marquee |
-| C111 | Design 111 (TBD) | 1 | 10 | 4 | 10 | 25 | Extreme Specialist | 9 | 10 | 1 | Marquee |
-| C112 | Design 112 (TBD) | 9 | 4 | 3 | 9 | 25 | Adjacent Pair | 6 | 9 | 3 | Marquee |
-| C113 | Design 113 (TBD) | 2 | 8 | 7 | 8 | 25 | Opposite Pair | 6 | 8 | 2 | Marquee |
-| C114 | Design 114 (TBD) | 5 | 7 | 7 | 7 | 26 | Balanced | 2 | 7 | 5 | Marquee |
-| C115 | Design 115 (TBD) | 9 | 9 | 3 | 5 | 26 | Adjacent Pair | 6 | 9 | 3 | Marquee |
-| C116 | Design 116 (TBD) | 9 | 4 | 9 | 4 | 26 | Opposite Pair | 5 | 9 | 4 | Marquee |
-| C117 | Design 117 (TBD) | 7 | 5 | 4 | 10 | 26 | Single-Side Specialist | 6 | 10 | 4 | Marquee |
-| C118 | Design 118 (TBD) | 3 | 9 | 9 | 5 | 26 | Adjacent Pair | 6 | 9 | 3 | Marquee |
-| C119 | Design 119 (TBD) | 4 | 2 | 10 | 10 | 26 | Extreme Specialist | 8 | 10 | 2 | Marquee |
-| C120 | Design 120 (TBD) | 7 | 3 | 8 | 8 | 26 | Adjacent Pair | 5 | 8 | 3 | Marquee |
+| C001 | Earwig | 3 | 5 | 3 | 3 | 14 | Balanced | 2 | 5 | 3 | Economy / specialist |
+| C002 | Twin Woodlice | 1 | 1 | 6 | 6 | 14 | Adjacent Pair | 5 | 6 | 1 | Economy / specialist |
+| C003 | Garden Newt | 7 | 1 | 5 | 1 | 14 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
+| C004 | Needle Wasp | 4 | 2 | 1 | 7 | 14 | Single-Side Specialist | 6 | 7 | 1 | Economy / specialist |
+| C005 | Fieldmouse | 2 | 4 | 6 | 2 | 14 | Asymmetric | 4 | 6 | 2 | Economy / specialist |
+| C006 | Hedge Shrew | 1 | 10 | 2 | 1 | 14 | Extreme Specialist | 9 | 10 | 1 | Economy / specialist |
+| C007 | Millipede | 3 | 4 | 4 | 4 | 15 | Balanced | 1 | 4 | 3 | Economy / specialist |
+| C008 | Harvest Mice | 6 | 1 | 1 | 7 | 15 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
+| C009 | Dung Beetle | 7 | 1 | 6 | 1 | 15 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
+| C010 | Kingfisher | 2 | 3 | 8 | 2 | 15 | Single-Side Specialist | 6 | 8 | 2 | Economy / specialist |
+| C011 | Weasel | 5 | 7 | 1 | 2 | 15 | Asymmetric | 6 | 7 | 1 | Economy / specialist |
+| C012 | Tunnel Mole | 1 | 10 | 3 | 1 | 15 | Extreme Specialist | 9 | 10 | 1 | Economy / specialist |
+| C013 | Grasshopper | 1 | 1 | 6 | 7 | 15 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
+| C014 | Skylark | 5 | 4 | 4 | 3 | 16 | Balanced | 2 | 5 | 3 | Economy / specialist |
+| C015 | Twin Toads | 1 | 1 | 7 | 7 | 16 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
+| C016 | Badger Cub | 1 | 7 | 2 | 6 | 16 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
+| C017 | Damselfly | 4 | 2 | 2 | 8 | 16 | Single-Side Specialist | 6 | 8 | 2 | Economy / specialist |
+| C018 | Robin | 2 | 5 | 7 | 2 | 16 | Asymmetric | 5 | 7 | 2 | Economy / specialist |
+| C019 | Stickleback | 10 | 1 | 1 | 4 | 16 | Extreme Specialist | 9 | 10 | 1 | Economy / specialist |
+| C020 | Soldier Beetles | 7 | 7 | 1 | 1 | 16 | Adjacent Pair | 6 | 7 | 1 | Economy / specialist |
+| C021 | Heron Chick | 7 | 1 | 7 | 1 | 16 | Opposite Pair | 6 | 7 | 1 | Economy / specialist |
+| C022 | Hedgehog | 5 | 4 | 3 | 5 | 17 | Balanced | 2 | 5 | 3 | Flexible support |
+| C023 | Hare | 2 | 7 | 7 | 1 | 17 | Adjacent Pair | 6 | 7 | 1 | Flexible support |
+| C024 | Red Fox | 7 | 1 | 7 | 2 | 17 | Opposite Pair | 6 | 7 | 1 | Flexible support |
+| C025 | Stoat | 2 | 2 | 8 | 5 | 17 | Single-Side Specialist | 6 | 8 | 2 | Flexible support |
+| C026 | Kestrel | 4 | 1 | 5 | 7 | 17 | Asymmetric | 6 | 7 | 1 | Flexible support |
+| C027 | Pike | 2 | 10 | 1 | 4 | 17 | Extreme Specialist | 9 | 10 | 1 | Flexible support |
+| C028 | Barn Owls | 7 | 7 | 2 | 1 | 17 | Adjacent Pair | 6 | 7 | 1 | Flexible support |
+| C029 | Polecat | 2 | 6 | 2 | 7 | 17 | Opposite Pair | 5 | 7 | 2 | Flexible support |
+| C030 | Otter | 3 | 5 | 5 | 4 | 17 | Balanced | 2 | 5 | 3 | Flexible support |
+| C031 | Ram | 4 | 6 | 4 | 4 | 18 | Balanced | 2 | 6 | 4 | Flexible support |
+| C032 | Young Boar | 8 | 2 | 2 | 6 | 18 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
+| C033 | Adder | 6 | 2 | 8 | 2 | 18 | Opposite Pair | 6 | 8 | 2 | Flexible support |
+| C034 | Stag Beetle | 3 | 3 | 3 | 9 | 18 | Single-Side Specialist | 6 | 9 | 3 | Flexible support |
+| C035 | Hill Goat | 3 | 3 | 7 | 5 | 18 | Asymmetric | 4 | 7 | 3 | Flexible support |
+| C036 | Lamprey | 1 | 9 | 7 | 1 | 18 | Extreme Specialist | 8 | 9 | 1 | Flexible support |
+| C037 | Raven | 6 | 8 | 2 | 2 | 18 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
+| C038 | Wildcat | 2 | 8 | 2 | 6 | 18 | Opposite Pair | 6 | 8 | 2 | Flexible support |
+| C039 | Magpie | 5 | 3 | 5 | 5 | 18 | Balanced | 2 | 5 | 3 | Flexible support |
+| C040 | Carp | 8 | 4 | 4 | 2 | 18 | Single-Side Specialist | 6 | 8 | 2 | Flexible support |
+| C041 | Hart | 6 | 5 | 4 | 4 | 19 | Balanced | 2 | 6 | 4 | Flexible support |
+| C042 | Beaver | 2 | 2 | 7 | 8 | 19 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
+| C043 | Badger | 2 | 8 | 2 | 7 | 19 | Opposite Pair | 6 | 8 | 2 | Flexible support |
+| C044 | Bear Cub | 3 | 4 | 9 | 3 | 19 | Single-Side Specialist | 6 | 9 | 3 | Flexible support |
+| C045 | Crane | 4 | 7 | 5 | 3 | 19 | Asymmetric | 4 | 7 | 3 | Flexible support |
+| C046 | Wolverine | 10 | 1 | 1 | 7 | 19 | Extreme Specialist | 9 | 10 | 1 | Flexible support |
+| C047 | Golden Eagle | 6 | 2 | 3 | 8 | 19 | Adjacent Pair | 6 | 8 | 2 | Flexible support |
+| C048 | Lynx | 8 | 2 | 7 | 2 | 19 | Opposite Pair | 6 | 8 | 2 | Flexible support |
+| C049 | Osprey | 4 | 4 | 6 | 5 | 19 | Balanced | 2 | 6 | 4 | Flexible support |
+| C050 | Elk | 3 | 3 | 4 | 9 | 19 | Single-Side Specialist | 6 | 9 | 3 | Flexible support |
+| C051 | Grey Wolf | 5 | 5 | 2 | 7 | 19 | Asymmetric | 5 | 7 | 2 | Flexible support |
+| C052 | Panther | 5 | 5 | 4 | 6 | 20 | Balanced | 2 | 6 | 4 | Core |
+| C053 | Marsh Hydra Spawn | 2 | 8 | 8 | 2 | 20 | Adjacent Pair | 6 | 8 | 2 | Core |
+| C054 | Wild Boar | 8 | 3 | 7 | 2 | 20 | Opposite Pair | 6 | 8 | 2 | Core |
+| C055 | Cockatrice Chick | 3 | 3 | 9 | 5 | 20 | Single-Side Specialist | 6 | 9 | 3 | Core |
+| C056 | Twin Adders | 7 | 5 | 5 | 3 | 20 | Asymmetric | 4 | 7 | 3 | Core |
+| C057 | Baby Cerberus | 1 | 9 | 1 | 9 | 20 | Extreme Specialist | 8 | 9 | 1 | Core |
+| C058 | Mastiff | 8 | 2 | 2 | 8 | 20 | Adjacent Pair | 6 | 8 | 2 | Core |
+| C059 | Brown Bear | 1 | 6 | 6 | 7 | 20 | Opposite Pair | 6 | 7 | 1 | Core |
+| C060 | Kelpie Foal | 4 | 6 | 6 | 4 | 20 | Balanced | 2 | 6 | 4 | Core |
+| C061 | Stag | 5 | 9 | 3 | 3 | 20 | Single-Side Specialist | 6 | 9 | 3 | Core |
+| C062 | Hippogriff Fledgling | 5 | 7 | 3 | 5 | 20 | Asymmetric | 4 | 7 | 3 | Core |
+| C063 | Twin Bats | 4 | 2 | 6 | 8 | 20 | Adjacent Pair | 6 | 8 | 2 | Core |
+| C064 | Young Chimera | 4 | 6 | 5 | 6 | 21 | Balanced | 2 | 6 | 4 | Core |
+| C065 | Twin Falcons | 8 | 8 | 3 | 2 | 21 | Adjacent Pair | 6 | 8 | 2 | Core |
+| C066 | Dire Wolf | 7 | 2 | 8 | 4 | 21 | Opposite Pair | 6 | 8 | 2 | Core |
+| C067 | Unicorn Foal | 9 | 3 | 3 | 6 | 21 | Single-Side Specialist | 6 | 9 | 3 | Core |
+| C068 | Leopard | 7 | 5 | 4 | 5 | 21 | Asymmetric | 3 | 7 | 4 | Core |
+| C069 | Firebird Fledgling | 1 | 10 | 9 | 1 | 21 | Extreme Specialist | 9 | 10 | 1 | Core |
+| C070 | Tiger | 2 | 3 | 8 | 8 | 21 | Adjacent Pair | 6 | 8 | 2 | Core |
+| C071 | Lion | 2 | 8 | 3 | 8 | 21 | Opposite Pair | 6 | 8 | 2 | Core |
+| C072 | Manticore Cub | 6 | 6 | 5 | 4 | 21 | Balanced | 2 | 6 | 4 | Core |
+| C073 | Griffin Fledgling | 3 | 9 | 6 | 3 | 21 | Single-Side Specialist | 6 | 9 | 3 | Core |
+| C074 | Wyvern Whelp | 5 | 7 | 4 | 5 | 21 | Asymmetric | 3 | 7 | 4 | Core |
+| C075 | Sea Serpent Pair | 6 | 2 | 5 | 8 | 21 | Adjacent Pair | 6 | 8 | 2 | Core |
+| C076 | Sphinx | 6 | 6 | 5 | 5 | 22 | Balanced | 1 | 6 | 5 | Core |
+| C077 | Twin Wyrms | 3 | 3 | 8 | 8 | 22 | Adjacent Pair | 5 | 8 | 3 | Core |
+| C078 | Kraken Arm | 8 | 3 | 8 | 3 | 22 | Opposite Pair | 5 | 8 | 3 | Core |
+| C079 | Goldhorn | 3 | 9 | 6 | 4 | 22 | Single-Side Specialist | 6 | 9 | 3 | Core |
+| C080 | Thunderbird | 8 | 4 | 2 | 8 | 22 | Adjacent Pair | 6 | 8 | 2 | Core |
+| C081 | Lightning Roc | 10 | 10 | 1 | 1 | 22 | Extreme Specialist | 9 | 10 | 1 | Core |
+| C082 | Dire Hart | 8 | 8 | 3 | 3 | 22 | Adjacent Pair | 5 | 8 | 3 | Core |
+| C083 | Pegasus | 3 | 7 | 3 | 9 | 22 | Opposite Pair | 6 | 9 | 3 | Core |
+| C084 | Griffin | 5 | 5 | 7 | 5 | 22 | Balanced | 2 | 7 | 5 | Core |
+| C085 | Gargoyle | 10 | 4 | 4 | 4 | 22 | Single-Side Specialist | 6 | 10 | 4 | Core |
+| C086 | Twin Drakes | 7 | 2 | 6 | 7 | 22 | Adjacent Pair | 5 | 7 | 2 | Core |
+| C087 | Firebird | 5 | 6 | 7 | 5 | 23 | Balanced | 2 | 7 | 5 | Premium |
+| C088 | Leviathan Spawn | 8 | 3 | 3 | 9 | 23 | Adjacent Pair | 6 | 9 | 3 | Premium |
+| C089 | Chimera | 3 | 9 | 3 | 8 | 23 | Opposite Pair | 6 | 9 | 3 | Premium |
+| C090 | Dragon Turtle | 10 | 4 | 5 | 4 | 23 | Single-Side Specialist | 6 | 10 | 4 | Premium |
+| C091 | Unicorn | 8 | 9 | 3 | 3 | 23 | Adjacent Pair | 6 | 9 | 3 | Premium |
+| C092 | Manticore | 1 | 2 | 10 | 10 | 23 | Extreme Specialist | 9 | 10 | 1 | Premium |
+| C093 | Hydra | 5 | 2 | 8 | 8 | 23 | Adjacent Pair | 6 | 8 | 2 | Premium |
+| C094 | Naddred | 7 | 3 | 9 | 4 | 23 | Opposite Pair | 6 | 9 | 3 | Premium |
+| C095 | Greater Sphinx | 6 | 5 | 5 | 7 | 23 | Balanced | 2 | 7 | 5 | Premium |
+| C096 | Hippogriff | 4 | 10 | 5 | 4 | 23 | Single-Side Specialist | 6 | 10 | 4 | Premium |
+| C097 | Celestial Stag | 5 | 7 | 6 | 6 | 24 | Balanced | 2 | 7 | 5 | Premium |
+| C098 | Janus Drake | 9 | 3 | 3 | 9 | 24 | Adjacent Pair | 6 | 9 | 3 | Premium |
+| C099 | Wyvern | 8 | 4 | 9 | 3 | 24 | Opposite Pair | 6 | 9 | 3 | Premium |
+| C100 | Drake | 10 | 6 | 4 | 4 | 24 | Single-Side Specialist | 6 | 10 | 4 | Premium |
+| C101 | Marsh Hydra | 3 | 3 | 9 | 9 | 24 | Adjacent Pair | 6 | 9 | 3 | Premium |
+| C102 | Behemoth | 2 | 10 | 2 | 10 | 24 | Extreme Specialist | 8 | 10 | 2 | Premium |
+| C103 | Basilisk | 3 | 9 | 9 | 3 | 24 | Adjacent Pair | 6 | 9 | 3 | Premium |
+| C104 | Cerberus | 6 | 8 | 2 | 8 | 24 | Opposite Pair | 6 | 8 | 2 | Premium |
+| C105 | Cockatrice | 7 | 5 | 5 | 7 | 24 | Balanced | 2 | 7 | 5 | Premium |
+| C106 | Cloudwyrm | 6 | 6 | 6 | 7 | 25 | Balanced | 1 | 7 | 6 | Marquee |
+| C107 | Knucker | 3 | 9 | 9 | 4 | 25 | Adjacent Pair | 6 | 9 | 3 | Marquee |
+| C108 | Kraken | 9 | 4 | 9 | 3 | 25 | Opposite Pair | 6 | 9 | 3 | Marquee |
+| C109 | Storm Sphinx | 10 | 7 | 4 | 4 | 25 | Single-Side Specialist | 6 | 10 | 4 | Marquee |
+| C110 | World Turtle | 4 | 3 | 9 | 9 | 25 | Adjacent Pair | 6 | 9 | 3 | Marquee |
+| C111 | Sky Aurochs | 1 | 10 | 4 | 10 | 25 | Extreme Specialist | 9 | 10 | 1 | Marquee |
+| C112 | Pendragon | 9 | 4 | 3 | 9 | 25 | Adjacent Pair | 6 | 9 | 3 | Marquee |
+| C113 | Black Shuck | 2 | 8 | 7 | 8 | 25 | Opposite Pair | 6 | 8 | 2 | Marquee |
+| C114 | Laidly Worm | 5 | 7 | 7 | 7 | 26 | Balanced | 2 | 7 | 5 | Marquee |
+| C115 | Worldwyrm | 9 | 9 | 3 | 5 | 26 | Adjacent Pair | 6 | 9 | 3 | Marquee |
+| C116 | Leviathan | 9 | 4 | 9 | 4 | 26 | Opposite Pair | 5 | 9 | 4 | Marquee |
+| C117 | Lambton Worm | 7 | 5 | 4 | 10 | 26 | Single-Side Specialist | 6 | 10 | 4 | Marquee |
+| C118 | Empress Hydra | 3 | 9 | 9 | 5 | 26 | Adjacent Pair | 6 | 9 | 3 | Marquee |
+| C119 | Moonwyrm | 4 | 2 | 10 | 10 | 26 | Extreme Specialist | 8 | 10 | 2 | Marquee |
+| C120 | Sun Griffin | 7 | 3 | 8 | 8 | 26 | Adjacent Pair | 5 | 8 | 3 | Marquee |
 
 ---
 
