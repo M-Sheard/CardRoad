@@ -523,6 +523,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (5 cards)</button>
         <button id="devInbox" type="button" style="margin-top:8px">Preview tin inbox</button>
         <button id="devOvernightGossip" type="button" style="margin-top:8px">Preview overnight gossip</button>
+        <button id="devCopyInRoom" type="button" style="margin-top:8px">Preview copy in the room</button>
         <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
@@ -1158,6 +1159,41 @@ function gossipTalkLine(name){
  if(name===g.lose)return `${name} lost ${g.name} to ${g.win}${g.place&&g.place!=="Lythmere"?" at the "+g.place:""}.`;
  return "";
 }
+function npcHeldCopies(name){
+ if(!name)return [];
+ ensureCopies();
+ return (state.npcs[name]||[]).map(d=>getCopy(name,d)).filter(Boolean);
+}
+function copyYouUsedToOwn(cp){
+ return !!(cp&&(cp.signatures||[]).some(s=>s.owner==="You"));
+}
+function copyForeignSignature(cp,holder){
+ if(!cp)return null;
+ const locals=new Set(["You",holder,...localNpcNames()]);
+ return (cp.signatures||[]).find(s=>s.owner&&!locals.has(s.owner))||null;
+}
+function roomCopyLine(name){
+ const copies=npcHeldCopies(name);
+ const yours=copies.find(copyYouUsedToOwn);
+ if(yours){
+  const label=cardLabel(yours.design);
+  const fromTin=/Grandfather/i.test(yours.origin||"")||yours.origin==="Starter collection";
+  markSeen(name,yours.design);
+  return fromTin
+   ? `${name} is holding the ${label} from your grandfather's tin.`
+   : `${name} is holding the ${label} you used to own.`;
+ }
+ for(const cp of copies){
+  const sig=copyForeignSignature(cp,name);
+  if(!sig)continue;
+  markSeen(name,cp.design);
+  return `${name} is holding ${cardLabel(cp.design)} with ${sig.owner}'s name on it.`;
+ }
+ return "";
+}
+function challengeTalkLine(name){
+ return gossipTalkLine(name)||roomCopyLine(name);
+}
 function unreadNoticeIds(){
  let info=publicInfoHere();if(!info)return[];
  let known=new Set((state.visual.discoveredEvents||[]).map(e=>e.id));
@@ -1436,6 +1472,9 @@ function wantsInboxPreview(){
 }
 function wantsGossipPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])gossip=1(?:&|$)/.test(location.search);
+}
+function wantsCopyRoomPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])copyroom=1(?:&|$)/.test(location.search);
 }
 function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
@@ -1854,6 +1893,24 @@ function bootOvernightGossip(){
  save();
  renderHome();show("home");
 }
+function bootCopyInRoom(){
+ ensureVisualState();
+ state.grandpaTutorial=true;
+ state.tutorialDone=true;
+ state.visual.date="2026-03-04";
+ state.visual.phase="Morning";
+ state.visual.location="Market";
+ syncCalendarState();
+ ensureCopies();
+ seedProvenance();
+ const design=(state.player||[]).includes("C087")?"C087":(state.player||[])[0];
+ if(design&&(state.player||[]).includes(design)){
+  transfer(design,"You","Tomas",`You lost ${design} to Tomas in a local match.`);
+ }
+ save();
+ renderHome();
+ openChallenge("Tomas");
+}
 function bootTownOrTutorial(){
  if(newsMockKind()){renderHome();openNewsGazette();return}
  if(wantsNoticesPreview()){
@@ -1865,6 +1922,7 @@ function bootTownOrTutorial(){
   return;
  }
  if(wantsGossipPreview()){bootOvernightGossip();return}
+ if(wantsCopyRoomPreview()){bootCopyInRoom();return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
  if(wantsHouseTinClubPreview()){
   ensureVisualState();
@@ -3091,7 +3149,7 @@ function renderHome(){
  // Legacy dashboard remains hidden in the DOM only so stable match/economy code can reference it safely.
  if($("playerStats"))$("playerStats").textContent=`${state.player.length} cards · ${state.matches} completed matches`;
  if(state.incoming){
-  $("incomingPanel").classList.remove("hidden");let n=state.incoming.npc;$("incomingText").innerHTML=`<b>${n} challenges you.</b><br><span class="small">Reason: ${state.incoming.reason}</span>`;$("incomingKnown").innerHTML="";
+  $("incomingPanel").classList.remove("hidden");let n=state.incoming.npc;const talk=challengeTalkLine(n);$("incomingText").innerHTML=`<b>${n} challenges you.</b><br><span class="small">Reason: ${state.incoming.reason}</span>${talk?`<br><span class="small">${talk}</span>`:""}`;$("incomingKnown").innerHTML="";
   (state.npcs[n]||[]).forEach(c=>{let d=document.createElement("div");d.className="npc";let known=(state.seenByNpc[n]||[]).includes(c);d.innerHTML=known?`<b>${c}</b><div class="small">N ${C[c].n} · E ${C[c].e} · S ${C[c].s} · W ${C[c].w}</div>`:`<b>Unknown</b>`;$("incomingKnown").appendChild(d)});
  }else $("incomingPanel").classList.add("hidden");
 }
@@ -3498,7 +3556,7 @@ function openChallenge(name){
  currentNpc=name;state.seasonStats.playerChallenges++;challengeDirection="outgoing";seriesTarget=1;seriesWins={p:0,ai:0};seriesGame=0;namedWagers=null;currentTerms={...npcDefs[name].terms};
  setChallengePlaque(name, name);
  fillChallengeTerms();
- const talk=gossipTalkLine(name);
+ const talk=challengeTalkLine(name);
  $("challengeMsg").textContent=talk?`${talk} You challenged ${name}, so ${name} sets the rules.`:`You challenged ${name}, so ${name} sets the rules.`;$("seriesSetup").textContent="Series: single game. Wager settles after the match.";
  renderKnownCollection(name);
  $("deckPanel").classList.add("hidden");show("challenge");
@@ -5096,6 +5154,7 @@ if($("devInbox"))$("devInbox").onclick=()=>{
  show("home");renderHome();
 };
 if($("devOvernightGossip"))$("devOvernightGossip").onclick=()=>bootOvernightGossip();
+if($("devCopyInRoom"))$("devCopyInRoom").onclick=()=>bootCopyInRoom();
 if($("devTownTalk"))$("devTownTalk").onclick=()=>{
  $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
  show("home");renderHome();
