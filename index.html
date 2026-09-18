@@ -1228,7 +1228,7 @@ function saturdayTalkLine(name){
  return "";
 }
 function challengeTalkLine(name){
- return gossipTalkLine(name)||roomCopyLine(name)||saturdayTalkLine(name);
+ return doorstepAskedLine(name)||gossipTalkLine(name)||roomCopyLine(name)||saturdayTalkLine(name);
 }
 function ensureAskedToday(){
  if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}};
