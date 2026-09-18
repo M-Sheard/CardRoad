@@ -478,14 +478,12 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div id="npcHotspots"></div>
     <div id="doorstepTalk" class="doorstepTalk hidden" hidden role="dialog" aria-labelledby="doorstepLine">
       <div class="doorstepCard">
-        <p id="doorstepLine">Bram has been talking pairings for Saturday.</p>
-        <div class="doorstepActions">
-          <button type="button" id="doorstepAsk">Ask</button>
-          <span aria-hidden="true">·</span>
-          <button type="button" id="doorstepChallenge">Challenge</button>
-          <span aria-hidden="true">·</span>
+        <p id="doorstepLine">Been looking at Saturday's pairings.</p>
+        <p class="doorstepActions">
+          <button type="button" id="doorstepAsk">Heard anything?</button>
+          <button type="button" id="doorstepChallenge">Shall we play?</button>
           <button type="button" id="doorstepLeave">Not now</button>
-        </div>
+        </p>
       </div>
     </div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
@@ -1224,7 +1222,11 @@ function saturdayTalkLine(name){
  return "";
 }
 function challengeTalkLine(name){
- return doorstepAskedLine(name)||gossipTalkLine(name)||roomCopyLine(name)||saturdayTalkLine(name);
+ if(doorstepAskedLine(name)){
+  const fact=doorstepAskFact(name);
+  if(fact)return fact;
+ }
+ return gossipTalkLine(name)||roomCopyLine(name)||saturdayTalkLine(name);
 }
 function ensureAskedToday(){
  if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}};
@@ -1235,18 +1237,53 @@ function doorstepAskedLine(name){
  const asked=ensureAskedToday();
  return (name&&asked[name])||"";
 }
-function doorstepIdleLine(name){
- if(name==="Tomas")return "Tomas is looking for a table.";
- if(name==="Nessa")return "Nessa has time for a match if you do.";
- if(name==="Bram")return "Bram is willing if the terms are fair.";
- if(name==="Elira")return "Elira waits for the board to speak.";
+function doorstepGossipSpeak(name){
+ const g=latestGossip();
+ if(!g||!name)return "";
+ const held=(state.npcs[name]||[]).includes(g.design);
+ if(name===g.win&&held)return `Still got ${g.lose}'s ${g.name}.`;
+ if(name===g.lose)return `Lost ${g.name} to ${g.win}${g.place&&g.place!=="Lythmere"?" at the "+g.place:""}.`;
+ return "";
+}
+function doorstepRoomSpeak(name){
+ const copies=npcHeldCopies(name);
+ const yours=copies.find(copyYouUsedToOwn);
+ if(yours){
+  const label=cardLabel(yours.design);
+  const fromTin=/Grandfather/i.test(yours.origin||"")||yours.origin==="Starter collection";
+  return fromTin
+   ? `This ${label} came from your grandfather's tin.`
+   : `This ${label} used to be yours.`;
+ }
+ for(const cp of copies){
+  const sig=copyForeignSignature(cp,name);
+  if(sig)return `This ${cardLabel(cp.design)} still has ${sig.owner}'s name on it.`;
+ }
+ return "";
+}
+function doorstepSaturdaySpeak(name){
+ const days=daysUntilSaturday();
+ if(!name||days<1||days>3)return "";
  const here=npcLocationNow(name);
- return here?`${name} is at the ${here}.`:`${name} is here.`;
+ if(here==="Card Club"){
+  if(days===3)return "Practice. Saturday's coming.";
+  if(days===2)return "Been looking at Saturday's pairings.";
+  return "Open's tomorrow.";
+ }
+ if(days<=2&&here==="Inn")return "Heard a seating rumour for Saturday.";
+ return "";
 }
-function doorstepOpenLine(name){
- return challengeTalkLine(name)||doorstepIdleLine(name);
+function doorstepIdleSpeak(name){
+ if(name==="Tomas")return "I'm after a table.";
+ if(name==="Nessa")return "I've time, if you do.";
+ if(name==="Bram")return "Fair terms and I'll sit.";
+ if(name==="Elira")return "The board can speak.";
+ return "Go on then.";
 }
-function doorstepAskLine(name){
+function doorstepOpenSpeak(name){
+ return doorstepGossipSpeak(name)||doorstepRoomSpeak(name)||doorstepSaturdaySpeak(name)||doorstepIdleSpeak(name);
+}
+function doorstepAskFact(name){
  const g=latestGossip();
  if(g&&name!==g.win&&name!==g.lose)return `${name} heard ${g.win} took ${g.lose}'s ${g.name}.`;
  const here=state.visual&&state.visual.location;
@@ -1268,17 +1305,40 @@ function doorstepAskLine(name){
  if(days===3)return `${name} heard Saturday still has empty seats.`;
  return "";
 }
+function doorstepAskSpeak(name){
+ const g=latestGossip();
+ if(g&&name!==g.win&&name!==g.lose)return `I heard ${g.win} took ${g.lose}'s ${g.name}.`;
+ const here=state.visual&&state.visual.location;
+ const others=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
+ const days=daysUntilSaturday();
+ if(days>=1&&days<=3&&others.length){
+  const other=others[0];
+  if(days===1)return `${other}'s already talking about tomorrow's Open.`;
+  if(days===2)return `${other}'s name is on a pairing sheet.`;
+  return `${other}'s been putting in practice.`;
+ }
+ const copies=npcHeldCopies(name);
+ for(const cp of copies){
+  const sig=copyForeignSignature(cp,name);
+  if(sig)return `See this ${cardLabel(cp.design)}? ${sig.owner}'s name is still on it.`;
+ }
+ if(days===1)return "Heard the Open draws a travelling table.";
+ if(days===2)return "They post pairings on the Club wall by Friday.";
+ if(days===3)return "Saturday still has empty seats.";
+ return "";
+}
 let doorstepTalkName=null;
 function fillDoorstepTalk(name){
  const el=$("doorstepTalk"),line=$("doorstepLine"),ask=$("doorstepAsk");
  if(!el||!name)return;
  const heard=doorstepAskedLine(name);
- if(line)line.textContent=heard||doorstepOpenLine(name);
+ if(line)line.textContent=heard||doorstepOpenSpeak(name);
  if(ask){
-  ask.disabled=!!heard;
-  ask.textContent=heard?"Asked":"Ask";
+  const canAsk=!heard&&!!doorstepAskFact(name);
+  ask.hidden=!canAsk;
+  ask.disabled=!canAsk;
  }
- el.setAttribute("aria-label",name);
+ el.setAttribute("aria-label",name+" speaking");
  positionDoorstepTalk();
 }
 function positionDoorstepTalk(){
@@ -1301,21 +1361,46 @@ function positionDoorstepTalk(){
   journal?journal.getBoundingClientRect().bottom:sr.top
  )+pad;
  const botBar=(strip?strip.getBoundingClientRect().top:sr.bottom)-pad;
- const maxW=Math.min(248,Math.max(168,sr.width-pad*2));
- card.style.maxWidth=maxW+"px";
- const w=Math.min(maxW,card.getBoundingClientRect().width||maxW);
- const h=card.getBoundingClientRect().height||88;
- let left=ir.right-sr.left+10;
- let top=ir.top-sr.top+ir.height*0.1;
- let side="left";
- if(left+w>sr.width-pad){
-  left=ir.left-sr.left-w-10;
+ const headX=ir.left-sr.left+ir.width*0.52;
+ const headY=ir.top-sr.top+Math.max(10,ir.height*0.07);
+ const roomRight=sr.width-pad-(ir.right-sr.left+6);
+ const roomLeft=ir.left-sr.left-pad;
+ card.style.maxWidth=Math.min(200,Math.max(128,sr.width-pad*2))+"px";
+ let w=Math.min(200,card.getBoundingClientRect().width||176);
+ let h=card.getBoundingClientRect().height||72;
+ let left,top,side;
+ const above=headY-h-10;
+ if(above>=topBar-sr.top){
+  left=headX-Math.min(w*0.38,56);
+  top=above;
+  side="bottom";
+ }else if(roomRight>=118){
+  card.style.maxWidth=Math.min(200,roomRight)+"px";
+  w=Math.min(200,card.getBoundingClientRect().width||176);
+  h=card.getBoundingClientRect().height||h;
+  left=ir.right-sr.left+6;
+  top=Math.max(topBar-sr.top,headY-10);
+  side="left";
+ }else if(roomLeft>=118){
+  card.style.maxWidth=Math.min(200,roomLeft)+"px";
+  w=Math.min(200,card.getBoundingClientRect().width||176);
+  h=card.getBoundingClientRect().height||h;
+  left=ir.left-sr.left-w-6;
+  top=Math.max(topBar-sr.top,headY-10);
   side="right";
+ }else{
+  left=Math.max(pad,headX-w*0.5);
+  top=Math.min(headY+14,botBar-sr.top-h);
+  side="bottom";
  }
+ w=Math.min(200,card.getBoundingClientRect().width||w);
+ h=card.getBoundingClientRect().height||h;
  left=Math.max(pad,Math.min(left,sr.width-w-pad));
  top=Math.max(topBar-sr.top,Math.min(top,botBar-sr.top-h));
  if(top<pad)top=pad;
  card.dataset.side=side;
+ card.style.setProperty("--tail-x",Math.max(16,Math.min(w-16,headX-left))+"px");
+ card.style.setProperty("--tail-y",Math.max(14,Math.min(h-14,headY-top))+"px");
  wrap.style.left=left+"px";
  wrap.style.top=top+"px";
 }
@@ -1329,6 +1414,7 @@ function closeDoorstepTalk(){
 }
 function openDoorstepTalk(name){
  if(!name)return;
+ if(doorstepTalkName===name){closeDoorstepTalk();return}
  closeBephStall();
  closeNoticeView();
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
@@ -1345,15 +1431,10 @@ function askDoorstepTalk(){
  if(!doorstepTalkName)return;
  const asked=ensureAskedToday();
  if(asked[doorstepTalkName])return;
- const fact=doorstepAskLine(doorstepTalkName);
- if(!fact){
-  asked[doorstepTalkName]=doorstepOpenLine(doorstepTalkName);
-  fillDoorstepTalk(doorstepTalkName);
-  save();
-  return;
- }
- asked[doorstepTalkName]=fact;
- news(fact);
+ const fact=doorstepAskFact(doorstepTalkName);
+ const speak=doorstepAskSpeak(doorstepTalkName)||doorstepOpenSpeak(doorstepTalkName);
+ asked[doorstepTalkName]=speak;
+ if(fact)news(fact);
  fillDoorstepTalk(doorstepTalkName);
  save();
  updateWorldRecordButton();
@@ -5423,6 +5504,12 @@ if($("devDoorstepTalk"))$("devDoorstepTalk").onclick=()=>{
 if($("doorstepAsk"))$("doorstepAsk").onclick=askDoorstepTalk;
 if($("doorstepChallenge"))$("doorstepChallenge").onclick=challengeDoorstepTalk;
 if($("doorstepLeave"))$("doorstepLeave").onclick=closeDoorstepTalk;
+if($("townScene"))$("townScene").addEventListener("pointerdown",e=>{
+ if(!doorstepTalkName)return;
+ if(e.target.closest&&e.target.closest("#doorstepTalk,#eventHotspot,#houseTinHotspot"))return;
+ if(e.target.closest&&e.target.closest("img.tomasCutout,img.nessaCutout,img.bramCutout,img.eliraCutout,img.bephCutout"))return;
+ closeDoorstepTalk();
+});
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
 if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
 if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:houseTinTownPreview});
@@ -11674,8 +11761,7 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 }
 </style>
 <style>
-/* Doorstep talk is a spoken aside next to the person, not a second nav bar.
-   Table-talk cream, italic line, written choices. */
+/* Doorstep talk: a spoken bubble from the person, not town chrome. */
 #visualShell .townScene .doorstepTalk{
   position:absolute;
   z-index:36;
@@ -11684,7 +11770,7 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   right:auto;
   bottom:auto;
   width:auto;
-  max-width:min(248px,calc(100% - 16px));
+  max-width:min(210px,calc(100% - 16px));
   display:block;
   padding:0;
   background:transparent;
@@ -11696,48 +11782,65 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 #visualShell .townScene .doorstepCard{
   position:relative;
   width:max-content;
-  max-width:min(248px,calc(100vw - 32px));
+  max-width:min(200px,calc(100vw - 32px));
   min-width:0;
-  padding:10px 12px 8px;
+  padding:8px 12px 7px;
   display:flex;
   flex-direction:column;
-  gap:6px;
+  gap:5px;
   pointer-events:auto;
   height:auto!important;
   min-height:0!important;
   box-sizing:border-box;
-  background:#efe3c8;
-  border:2px solid #513b2c;
-  border-radius:6px;
-  box-shadow:0 6px 14px #0007;
-  transform:rotate(-.4deg);
+  background:#f6ead3;
+  border:1.5px solid #3f2c1e;
+  border-radius:18px;
+  box-shadow:0 3px 10px #0005;
+  transform:none;
+  animation:doorstepIn .16s ease-out;
+}
+@keyframes doorstepIn{
+  from{opacity:0;transform:translateY(5px)}
+  to{opacity:1;transform:none}
 }
 #visualShell .townScene .doorstepCard:after{
   content:"";
   position:absolute;
-  top:18px;
   width:0;
   height:0;
   border-style:solid;
 }
 #visualShell .townScene .doorstepCard[data-side="left"]:after{
-  left:-9px;
-  border-width:7px 9px 7px 0;
-  border-color:transparent #efe3c8 transparent transparent;
-  filter:drop-shadow(-2px 0 0 #513b2c);
+  left:-8px;
+  top:var(--tail-y,16px);
+  transform:translateY(-50%);
+  border-width:7px 8px 7px 0;
+  border-color:transparent #f6ead3 transparent transparent;
+  filter:drop-shadow(-1.5px 0 0 #3f2c1e);
 }
 #visualShell .townScene .doorstepCard[data-side="right"]:after{
-  right:-9px;
+  right:-8px;
   left:auto;
-  border-width:7px 0 7px 9px;
-  border-color:transparent transparent transparent #efe3c8;
-  filter:drop-shadow(2px 0 0 #513b2c);
+  top:var(--tail-y,16px);
+  transform:translateY(-50%);
+  border-width:7px 0 7px 8px;
+  border-color:transparent transparent transparent #f6ead3;
+  filter:drop-shadow(1.5px 0 0 #3f2c1e);
+}
+#visualShell .townScene .doorstepCard[data-side="bottom"]:after{
+  top:auto;
+  bottom:-8px;
+  left:var(--tail-x,28px);
+  transform:translateX(-50%);
+  border-width:8px 7px 0 7px;
+  border-color:#f6ead3 transparent transparent transparent;
+  filter:drop-shadow(0 1.5px 0 #3f2c1e);
 }
 #visualShell .townScene .doorstepCard #doorstepLine{
   margin:0;
   min-width:0;
-  font:italic 600 14px/1.35 Georgia,serif;
-  color:#2a1c12;
+  font:400 14px/1.35 Georgia,"Times New Roman",serif;
+  color:#24170f;
   text-align:left;
 }
 #visualShell .townScene .doorstepActions{
@@ -11745,44 +11848,32 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   flex-wrap:wrap;
   align-items:center;
   justify-content:flex-start;
-  gap:2px 0;
+  gap:0 10px;
   min-width:0;
+  margin:1px 0 0;
   border:0;
-}
-#visualShell .townScene .doorstepActions span{
-  padding:0 5px;
-  color:#7a5a3e;
-  font:600 13px Georgia,serif;
-  pointer-events:none;
 }
 #visualShell .townScene .doorstepActions button{
   min-width:0;
   min-height:32px;
   margin:0;
-  padding:4px 6px;
-  font:600 13px/1.1 Georgia,serif;
+  padding:3px 0;
+  font:500 12.5px/1.2 Georgia,"Times New Roman",serif;
   letter-spacing:0;
   text-transform:none;
-  color:#4a3018;
+  white-space:nowrap;
+  color:#6a4a32;
   background:transparent;
   border:0;
   border-radius:0;
   box-shadow:none;
-  text-decoration:underline;
-  text-decoration-color:rgba(74,48,24,.35);
-  text-underline-offset:3px;
-}
-#visualShell .townScene .doorstepActions #doorstepChallenge{
-  font-weight:800;
-  color:#1a120c;
-  text-decoration-color:rgba(26,18,12,.45);
-}
-#visualShell .townScene .doorstepActions #doorstepAsk:disabled{
-  opacity:.5;
-  font-style:italic;
-  font-weight:500;
   text-decoration:none;
 }
+#visualShell .townScene .doorstepActions #doorstepChallenge{
+  font-weight:650;
+  color:#2a1c12;
+}
+#visualShell .townScene .doorstepActions #doorstepAsk[hidden]{display:none!important}
 #visualShell .townScene .doorstepActions button:active{
   color:#1a120c;
 }
