@@ -1237,104 +1237,341 @@ function doorstepAskedLine(name){
  const asked=ensureAskedToday();
  return (name&&asked[name])||"";
 }
-function doorstepGossipSpeak(name){
- const g=latestGossip();
- if(!g||!name)return "";
- const held=(state.npcs[name]||[]).includes(g.design);
- if(name===g.win&&held)return `Still got ${g.lose}'s ${g.name}.`;
- if(name===g.lose)return `Lost ${g.name} to ${g.win}${g.place&&g.place!=="Lythmere"?" at the "+g.place:""}.`;
- return "";
+function doorstepHash(s){
+ let h=2166136261;
+ s=String(s||"");
+ for(let i=0;i<s.length;i++){h^=s.charCodeAt(i);h=Math.imul(h,16777619)}
+ return h>>>0;
 }
-function doorstepRoomSpeak(name){
+function doorstepPick(list,salt,avoid){
+ const raw=(list||[]).filter(Boolean);
+ if(!raw.length)return "";
+ const pool=avoid?raw.filter(x=>x!==avoid):raw;
+ const use=pool.length?pool:raw;
+ return use[doorstepHash(salt)%use.length];
+}
+const DOORSTEP_VOICE={
+ Tomas:[
+  "I'm after a table.",
+  "Don't wander off if you've got a hand in you.",
+  "I still want that last one back.",
+  "Market's slow. A match would wake it up.",
+  "Play fast. I hate a dithering board.",
+  "If you're sitting, sit.",
+  "Someone's been lucky. Won't be me standing about.",
+  "I'll take a risk if you will.",
+  "Inn later. Table now.",
+  "Come on then. I'm not here to watch.",
+  "My boots are wet. Market puddle. Don't ask.",
+  "If I lose, we play again. That's the rule.",
+  "I can hear a claim from three stalls away.",
+  "Don't look at my tin like that.",
+  "Standing around is worse than losing."
+ ],
+ Nessa:[
+  "I've time, if you do.",
+  "Pull up. The tea's still hot.",
+  "I'd rather a friendly Match than a lecture.",
+  "Heard a good story at the Inn last night.",
+  "You look like you could use a hand of cards.",
+  "Don't look so serious. It's only a board.",
+  "Market's noisy today. I don't mind.",
+  "Sit if you like. I won't bite.",
+  "I've been showing a traveller the Match rule.",
+  "Lovely afternoon for not doing much.",
+  "I keep meaning to write home. I won't.",
+  "That far table's laughing too loud. Good.",
+  "If we play, let's not make it grim.",
+  "I saved you a bit of cake. Then I ate it.",
+  "The river path's pretty this week."
+ ],
+ Bram:[
+  "Fair terms and I'll sit.",
+  "A proper handshake after, whatever happens.",
+  "I've been looking at how that corner plays.",
+  "Craft before luck. That's the hope.",
+  "Riverside was quiet this morning.",
+  "If we play, we play it clean.",
+  "I mean the terms I set.",
+  "Good to see you on your feet in town.",
+  "The Club's boards want using.",
+  "I mended this coat rather than buy another.",
+  "Patience wins more than noise.",
+  "Someone asked me for a lucky card. I haven't got one.",
+  "I walked the river twice. Helps the head.",
+  "A match should feel earned.",
+  "Don't rush the shuffle. It notices."
+ ],
+ Elira:[
+  "The board can speak.",
+  "I was watching that far table.",
+  "Silence is fine. Cards aren't.",
+  "Practice, if you have the patience.",
+  "I don't gossip. I notice.",
+  "The Club keeps its own hours.",
+  "Sit, if you came to play.",
+  "I prefer a quiet corner.",
+  "You'll get more from the pieces than from me.",
+  "Someone hummed. It stopped.",
+  "I counted the lamps. Habit.",
+  "Tomorrow can wait.",
+  "I came to look, not to chatter.",
+  "The gilt's been polished. Distracting.",
+  "A worthwhile board is enough conversation."
+ ]
+};
+const DOORSTEP_PLACE={
+ "Card Club":[
+  "Someone's already claimed the good lamp.",
+  "Far table's playing slow on purpose.",
+  "Smells like old oak and ink in here.",
+  "They've moved the spare chairs again.",
+  "That pairing wall gets more looks than the boards."
+ ],
+ Market:[
+  "Beph's stall's still shut.",
+  "Fruit's dear this week. Cards aren't.",
+  "Carts keep blocking the good light.",
+  "Someone's shouting prices like they're claims.",
+  "The noticeboard's got a new scrap on it."
+ ],
+ Riverside:[
+  "River's high. Makes people talk softer.",
+  "A couple of travellers came off the coach.",
+  "Fog this morning. Cleared now.",
+  "Good spot if you don't want a crowd.",
+  "The water's louder than the talk. Fine by me."
+ ],
+ Inn:[
+  "The fire's doing more work than the players.",
+  "Heard them arguing a corner call last night.",
+  "Stew's better than the play at that table.",
+  "Someone left a tin on the mantel.",
+  "Inn's full of almost-matches."
+ ]
+};
+function doorstepGossipPool(name){
+ const g=latestGossip();
+ if(!g||!name)return [];
+ const held=(state.npcs[name]||[]).includes(g.design);
+ if(name===g.win&&held)return [
+  `Still got ${g.lose}'s ${g.name}.`,
+  `This ${g.name} hasn't cooled off yet.`,
+  `${g.lose} keeps looking at my tin.`
+ ];
+ if(name===g.lose)return [
+  `Lost ${g.name} to ${g.win}${g.place&&g.place!=="Lythmere"?" at the "+g.place:""}.`,
+  `I want that ${g.name} back.`,
+  `${g.win} can keep it warm. Not for long.`
+ ];
+ return [];
+}
+function doorstepRoomPool(name){
+ const out=[];
  const copies=npcHeldCopies(name);
  const yours=copies.find(copyYouUsedToOwn);
  if(yours){
   const label=cardLabel(yours.design);
   const fromTin=/Grandfather/i.test(yours.origin||"")||yours.origin==="Starter collection";
-  return fromTin
-   ? `This ${label} came from your grandfather's tin.`
-   : `This ${label} used to be yours.`;
+  if(fromTin){
+   out.push(`This ${label} came from your grandfather's tin.`);
+   out.push(`I know whose tin this ${label} started in.`);
+  }else{
+   out.push(`This ${label} used to be yours.`);
+   out.push(`Funny, seeing your ${label} on my side of the table.`);
+  }
  }
  for(const cp of copies){
   const sig=copyForeignSignature(cp,name);
-  if(sig)return `This ${cardLabel(cp.design)} still has ${sig.owner}'s name on it.`;
+  if(!sig)continue;
+  out.push(`This ${cardLabel(cp.design)} still has ${sig.owner}'s name on it.`);
+  out.push(`${sig.owner} left a mark on this ${cardLabel(cp.design)}.`);
+  break;
  }
- return "";
+ return out;
 }
-function doorstepSaturdaySpeak(name){
+function doorstepSaturdayPool(name){
  const days=daysUntilSaturday();
- if(!name||days<1||days>3)return "";
+ if(!name||days<1||days>3)return [];
  const here=npcLocationNow(name);
+ const out=[];
  if(here==="Card Club"){
-  if(days===3)return "Practice. Saturday's coming.";
-  if(days===2)return "Been looking at Saturday's pairings.";
-  return "Open's tomorrow.";
+  if(days===3)out.push("Practice. Saturday's coming.","Empty seats still, if you ask me.","I'm not thinking about pairings yet. That's a lie.");
+  else if(days===2)out.push("Been looking at Saturday's pairings.","Names going up. Some I expected.","Friday they'll post the wall. Always do.");
+  else out.push("Open's tomorrow.","Sleep if you can. I won't.","Travelling table's rumoured. Might be talk.");
  }
- if(days<=2&&here==="Inn")return "Heard a seating rumour for Saturday.";
- return "";
+ if(days<=2&&here==="Inn")out.push("Heard a seating rumour for Saturday.","Inn talk says Saturday's already spoken for.");
+ if(days===1&&here==="Market")out.push("Market's full of Saturday nerves already.");
+ return out;
 }
-function doorstepIdleSpeak(name){
- if(name==="Tomas")return "I'm after a table.";
- if(name==="Nessa")return "I've time, if you do.";
- if(name==="Bram")return "Fair terms and I'll sit.";
- if(name==="Elira")return "The board can speak.";
- return "Go on then.";
+function doorstepTimePool(){
+ const day=visualWeekday();
+ const phase=state.visual&&state.visual.phase||"";
+ const out=[];
+ if(phase==="Morning")out.push("Early yet.","Morning's for looking, not rushing.");
+ if(phase==="Afternoon")out.push("Afternoon's for sitting.","Good light on the boards just now.");
+ if(phase==="Evening")out.push("Evening play hits different.","People get honest after supper.");
+ if(day==="Monday")out.push("Week's just started.");
+ if(day==="Friday")out.push("Friday. People get sloppy.");
+ if(day==="Sunday")out.push("Sunday. Even the Club's softer.");
+ return out;
+}
+function doorstepMemoryPool(name){
+ if(typeof mem!=="function")return [];
+ const m=mem(name);
+ if(!m||!m.meetings)return [];
+ const out=[];
+ if(name==="Tomas"){
+  if(m.playerWins>m.npcWins)out.push("I still owe you one.");
+  if(m.npcWins>m.playerWins)out.push("Told you I had you.");
+  if(m.meetings>=2)out.push("You again. Good.");
+ }
+ if(name==="Nessa"){
+  if(m.meetings>=2)out.push("I was hoping you'd wander through.");
+  if(m.playerWins||m.npcWins)out.push("We should do that again sometime.");
+ }
+ if(name==="Bram"){
+  if(m.playerWins>m.npcWins)out.push("You earned that last one.");
+  if(m.meetings>=2)out.push("Always a pleasure to sit opposite you.");
+ }
+ if(name==="Elira"){
+  if(m.meetings>=2)out.push("You came back. The board noticed.");
+  if(m.playerWins||m.npcWins)out.push("Last time was instructive.");
+ }
+ return out;
+}
+function doorstepCompanyPool(name){
+ const here=npcLocationNow(name);
+ const others=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
+ const out=[];
+ others.forEach(other=>{
+  if(other==="Tomas"){
+   if(name==="Nessa")out.push("Tomas looks like he wants a rematch already.");
+   else if(name==="Bram")out.push("Tomas will sit anyone. Fair warning.");
+   else if(name==="Elira")out.push("Tomas is loud. The board isn't.");
+  }else if(other==="Nessa"){
+   if(name==="Tomas")out.push("Nessa's being kind. Suspicious.");
+   else if(name==="Bram")out.push("Nessa would rather talk than grind.");
+   else if(name==="Elira")out.push("Nessa fills a room. I don't.");
+  }else if(other==="Bram"){
+   if(name==="Tomas")out.push("Bram's already thinking about terms.");
+   else if(name==="Nessa")out.push("Bram will handshake you into next week.");
+   else if(name==="Elira")out.push("Bram's measuring the far table. Typical.");
+  }else if(other==="Elira"){
+   if(name==="Tomas")out.push("Elira's pretending I'm not here.");
+   else if(name==="Nessa")out.push("Elira will talk if the board does first.");
+   else if(name==="Bram")out.push("Elira's working a quiet corner. As usual.");
+  }
+ });
+ return out;
+}
+function doorstepSpeakPool(name){
+ const here=npcLocationNow(name)||(state.visual&&state.visual.location)||"";
+ const out=[];
+ const add=xs=>{(xs||[]).forEach(x=>{if(x)out.push(x)})};
+ add(DOORSTEP_VOICE[name]||["Go on then."]);
+ add(DOORSTEP_PLACE[here]||[]);
+ add(doorstepTimePool());
+ add(doorstepSaturdayPool(name));
+ add(doorstepGossipPool(name));
+ add(doorstepRoomPool(name));
+ add(doorstepMemoryPool(name));
+ add(doorstepCompanyPool(name));
+ return [...new Set(out)];
+}
+const doorstepTalkCount={};
+const doorstepLastLine={};
+let doorstepTalkLine=null;
+function doorstepFreshSpeak(name){
+ const pool=doorstepSpeakPool(name);
+ const n=doorstepTalkCount[name]||0;
+ doorstepTalkCount[name]=n+1;
+ const salt=[name,state.visual&&state.visual.date,state.visual&&state.visual.phase,n].join("|");
+ const line=doorstepPick(pool,salt,doorstepLastLine[name])||"Go on then.";
+ doorstepLastLine[name]=line;
+ return line;
 }
 function doorstepOpenSpeak(name){
- return doorstepGossipSpeak(name)||doorstepRoomSpeak(name)||doorstepSaturdaySpeak(name)||doorstepIdleSpeak(name);
+ return doorstepTalkLine||doorstepLastLine[name]||"";
+}
+function doorstepAskChoices(name){
+ const rows=[];
+ const add=(speak,fact)=>{if(speak)rows.push({speak,fact:fact||""})};
+ const g=latestGossip();
+ if(g&&name!==g.win&&name!==g.lose){
+  add(`I heard ${g.win} took ${g.lose}'s ${g.name}.`,`${name} heard ${g.win} took ${g.lose}'s ${g.name}.`);
+  add(`${g.win}'s still showing that ${g.name} about.`,`${name} says ${g.win} is still carrying ${g.lose}'s ${g.name}.`);
+ }
+ const here=state.visual&&state.visual.location;
+ const present=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
+ const elsewhere=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)&&npcLocationNow(n)!==here);
+ const days=daysUntilSaturday();
+ present.forEach(other=>{
+  if(days===1)add(`${other}'s already talking about tomorrow's Open.`,`${name} says ${other} is already talking about tomorrow's Open.`);
+  else if(days===2)add(`${other}'s name is on a pairing sheet.`,`${name} says ${other}'s name is on a pairing sheet.`);
+  else if(days===3)add(`${other}'s been putting in practice.`,`${name} says ${other} has been putting in practice.`);
+  if(other==="Tomas")add("Tomas has been asking for rematches all week.",`${name} says Tomas has been asking for rematches all week.`);
+  if(other==="Nessa")add("Nessa would rather a Match than a grind.",`${name} says Nessa would rather a friendly Match than a grind.`);
+  if(other==="Bram")add("Bram's handshake gets slower when the terms are ugly.",`${name} says Bram's handshake gets slower when the terms are ugly.`);
+  if(other==="Elira")add("Elira doesn't look up when he practices.",`${name} says Elira doesn't look up when he practices.`);
+ });
+ elsewhere.forEach(other=>{
+  const loc=npcLocationNow(other);
+  if(loc)add(`${other}'s over at the ${loc}.`,`${name} says ${other} is at the ${loc}.`);
+ });
+ const copies=npcHeldCopies(name);
+ for(const cp of copies){
+  const sig=copyForeignSignature(cp,name);
+  if(sig){
+   add(`See this ${cardLabel(cp.design)}? ${sig.owner}'s name is still on it.`,`${name} turns ${cardLabel(cp.design)} — ${sig.owner}'s name is on it.`);
+   break;
+  }
+ }
+ const held=(state.npcs[name]||[]).filter(Boolean);
+ if(held.length){
+  const design=held[doorstepHash(name+"|card|"+(state.visual&&state.visual.date||""))%held.length];
+  add(`I've been carrying this ${cardLabel(design)} about.`,`${name} is still carrying ${cardLabel(design)}.`);
+ }
+ if(days===1){
+  add("Heard the Open draws a travelling table.",`${name} heard the Open draws a travelling table.`);
+  add("Tomorrow's going to smell like ink and nerves.",`${name} says tomorrow's Open will draw a crowd.`);
+ }
+ if(days===2){
+  add("They post pairings on the Club wall by Friday.",`${name} heard they post pairings on the Club wall by Friday.`);
+  add("Friday's wall is the one that matters.",`${name} says Friday's Club wall is the one that matters.`);
+ }
+ if(days===3){
+  add("Saturday still has empty seats.",`${name} heard Saturday still has empty seats.`);
+  add("Plenty of time to get a practice in.",`${name} says there is still time to practice before Saturday.`);
+ }
+ if(state.daily&&state.daily.lastNpcMatch)add(`Heard ${state.daily.lastNpcMatch}.`,`${name} mentioned ${state.daily.lastNpcMatch}.`);
+ add("Beph's stall's still empty. Pilgrimage, they said.",`${name} says Beph's market stall is still shut while she is on pilgrimage.`);
+ add("The noticeboard's busier than the tables.",`${name} says the noticeboard is busier than the tables.`);
+ const seen=[...new Set(rows.map(r=>r.speak))];
+ return seen.map(speak=>rows.find(r=>r.speak===speak));
+}
+function doorstepAskChoice(name){
+ const rows=doorstepAskChoices(name);
+ if(!rows.length)return null;
+ const salt=name+"|ask|"+(state.visual&&state.visual.date||"")+"|"+(state.visual&&state.visual.phase||"");
+ return rows[doorstepHash(salt)%rows.length];
 }
 function doorstepAskFact(name){
- const g=latestGossip();
- if(g&&name!==g.win&&name!==g.lose)return `${name} heard ${g.win} took ${g.lose}'s ${g.name}.`;
- const here=state.visual&&state.visual.location;
- const others=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
- const days=daysUntilSaturday();
- if(days>=1&&days<=3&&others.length){
-  const other=others[0];
-  if(days===1)return `${name} says ${other} is already talking about tomorrow's Open.`;
-  if(days===2)return `${name} says ${other}'s name is on a pairing sheet.`;
-  return `${name} says ${other} has been putting in practice.`;
- }
- const copies=npcHeldCopies(name);
- for(const cp of copies){
-  const sig=copyForeignSignature(cp,name);
-  if(sig)return `${name} turns ${cardLabel(cp.design)} — ${sig.owner}'s name is on it.`;
- }
- if(days===1)return `${name} heard the Open draws a travelling table.`;
- if(days===2)return `${name} heard they post pairings on the Club wall by Friday.`;
- if(days===3)return `${name} heard Saturday still has empty seats.`;
- return "";
+ const row=doorstepAskChoice(name);
+ return (row&&row.fact)||"";
 }
 function doorstepAskSpeak(name){
- const g=latestGossip();
- if(g&&name!==g.win&&name!==g.lose)return `I heard ${g.win} took ${g.lose}'s ${g.name}.`;
- const here=state.visual&&state.visual.location;
- const others=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
- const days=daysUntilSaturday();
- if(days>=1&&days<=3&&others.length){
-  const other=others[0];
-  if(days===1)return `${other}'s already talking about tomorrow's Open.`;
-  if(days===2)return `${other}'s name is on a pairing sheet.`;
-  return `${other}'s been putting in practice.`;
- }
- const copies=npcHeldCopies(name);
- for(const cp of copies){
-  const sig=copyForeignSignature(cp,name);
-  if(sig)return `See this ${cardLabel(cp.design)}? ${sig.owner}'s name is still on it.`;
- }
- if(days===1)return "Heard the Open draws a travelling table.";
- if(days===2)return "They post pairings on the Club wall by Friday.";
- if(days===3)return "Saturday still has empty seats.";
- return "";
+ const row=doorstepAskChoice(name);
+ return (row&&row.speak)||"";
 }
 let doorstepTalkName=null;
 function fillDoorstepTalk(name){
  const el=$("doorstepTalk"),line=$("doorstepLine"),ask=$("doorstepAsk");
  if(!el||!name)return;
  const heard=doorstepAskedLine(name);
- if(line)line.textContent=heard||doorstepOpenSpeak(name);
+ if(line)line.textContent=heard||doorstepTalkLine||"";
  if(ask){
-  const canAsk=!heard&&!!doorstepAskFact(name);
+  const canAsk=!heard&&!!doorstepAskChoice(name);
   ask.hidden=!canAsk;
   ask.disabled=!canAsk;
  }
@@ -1406,6 +1643,7 @@ function positionDoorstepTalk(){
 }
 function closeDoorstepTalk(){
  doorstepTalkName=null;
+ doorstepTalkLine=null;
  const el=$("doorstepTalk");
  if(el){el.classList.add("hidden");el.hidden=true}
  const scene=$("townScene");
@@ -1419,6 +1657,7 @@ function openDoorstepTalk(name){
  closeNoticeView();
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  doorstepTalkName=name;
+ doorstepTalkLine=doorstepAskedLine(name)||doorstepFreshSpeak(name);
  fillDoorstepTalk(name);
  const el=$("doorstepTalk");
  if(el){el.classList.remove("hidden");el.hidden=false}
@@ -1431,10 +1670,11 @@ function askDoorstepTalk(){
  if(!doorstepTalkName)return;
  const asked=ensureAskedToday();
  if(asked[doorstepTalkName])return;
- const fact=doorstepAskFact(doorstepTalkName);
- const speak=doorstepAskSpeak(doorstepTalkName)||doorstepOpenSpeak(doorstepTalkName);
+ const row=doorstepAskChoice(doorstepTalkName);
+ const speak=(row&&row.speak)||doorstepTalkLine||doorstepAskSpeak(doorstepTalkName);
  asked[doorstepTalkName]=speak;
- if(fact)news(fact);
+ doorstepTalkLine=speak;
+ if(row&&row.fact)news(row.fact);
  fillDoorstepTalk(doorstepTalkName);
  save();
  updateWorldRecordButton();
