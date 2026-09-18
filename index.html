@@ -1889,30 +1889,28 @@ function nextLocalOpenEvent(){
 }
 function discoverOpenFromWall(){
  const ev=nextLocalOpenEvent();
- if(!ev||playerKnowsEvent(ev.id))return;
- ensureVisualState();
- state.visual.discoveredEvents.push(ev);
- state.visual.history.push(`Discovered ${ev.name} from the Club pairing wall.`);
- news(`${ev.name} added to your journal calendar.`);
- save();
- syncJournalTabSeals();
+ if(!ev)return;
+ discoverEvent({...ev,source:"the Club pairing wall"});
 }
 function clubWallSheet(){
  const blank=[["—","—"],["—","—"],["—","—"],["—","—"]];
  const posted=[["You","Tomas"],["Bram","Nessa"],["Elira","Merrin"],["Willa","Fen"]];
  const going=[["You","—"],["Bram","Nessa"],["Elira","—"],["—","—"]];
- if(isSaturdayEventNow())return {kicker:"This afternoon",pairs:posted,note:"First round at the Club tables."};
- if(visualWeekday()==="Saturday")return {kicker:"First round",pairs:posted,note:"The Open is this afternoon."};
+ if(isSaturdayEventNow())return {kicker:"",pairs:posted,note:"This afternoon. First round at the Club tables."};
+ if(visualWeekday()==="Saturday")return {kicker:"",pairs:posted,note:"The Open is this afternoon."};
  const days=daysUntilSaturday();
- if(days===1)return {kicker:"First round posted",pairs:posted,note:"Saturday Open tomorrow afternoon."};
- if(days===2)return {kicker:"Names going up",pairs:going,note:"Pencil's still out. Friday they post the wall."};
- if(days===3)return {kicker:"Empty seats",pairs:blank,note:"Names go up Thursday."};
- return {kicker:"Sheet's down",pairs:blank,note:"Next Open is Saturday."};
+ if(days===1)return {kicker:"",pairs:posted,note:"Saturday Open tomorrow afternoon."};
+ if(days===2)return {kicker:"",pairs:going,note:"Names going up. Pencil's still out. Friday they post the wall."};
+ if(days===3)return {kicker:"",pairs:blank,note:"Empty seats. Names go up Thursday."};
+ return {kicker:"",pairs:blank,note:"Sheet's down. Next Open is Saturday."};
 }
 function fillClubWall(){
  const sheet=clubWallSheet();
  const kick=$("clubWallKicker"),note=$("clubWallNote"),list=$("clubWallPairs");
- if(kick)kick.textContent=sheet.kicker;
+ if(kick){
+  kick.textContent=sheet.kicker||"";
+  kick.hidden=!sheet.kicker;
+ }
  if(note)note.textContent=sheet.note;
  if(list){
   list.innerHTML=sheet.pairs.map((pair,i)=>{
@@ -7871,10 +7869,10 @@ if ('serviceWorker' in navigator) {
 #visualShell .townScene #clubWallHotspot{
   position:absolute!important;
   z-index:12;
-  left:auto!important;
-  right:max(12px,calc(env(safe-area-inset-right) + 8px))!important;
-  top:30%!important;
-  width:min(28vw,118px)!important;
+  left:max(10px,calc(env(safe-area-inset-left) + 8px))!important;
+  right:auto!important;
+  top:max(88px,calc(env(safe-area-inset-top) + 72px))!important;
+  width:min(22vw,92px)!important;
   min-width:0!important;
   height:auto!important;
   margin:0!important;
@@ -7883,8 +7881,8 @@ if ('serviceWorker' in navigator) {
   border-radius:0!important;
   background:transparent!important;
   box-shadow:none!important;
-  transform:rotate(-2deg);
-  filter:drop-shadow(0 6px 10px rgba(18,12,8,.45));
+  transform:rotate(-1.5deg);
+  filter:drop-shadow(0 5px 8px rgba(18,12,8,.4));
   cursor:pointer;
 }
 #visualShell .townScene #clubWallHotspot.hidden{display:none!important}
@@ -7895,13 +7893,9 @@ if ('serviceWorker' in navigator) {
   height:auto;
   pointer-events:none;
 }
-#visualShell .townScene #clubWallHotspot:active{transform:rotate(-2deg) scale(.97)}
-.townScene[data-saturday="open"] #clubWallHotspot{
-  top:42%!important;
-  right:max(12px,calc(env(safe-area-inset-right) + 8px))!important;
-}
+#visualShell .townScene #clubWallHotspot:active{transform:rotate(-1.5deg) scale(.97)}
 @media(max-width:360px){
-  #visualShell .townScene #clubWallHotspot{width:min(30vw,104px)!important;top:28%!important}
+  #visualShell .townScene #clubWallHotspot{width:min(24vw,84px)!important}
 }
 @media(max-width:620px){
   #visualShell #advanceTime.scrollPlaque{
@@ -11816,7 +11810,7 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   position:absolute;
   left:20%;
   right:20%;
-  top:24%;
+  top:28%;
   bottom:13%;
   display:flex;
   flex-direction:column;
@@ -11829,10 +11823,14 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 }
 #clubWall .clubWallKicker{
   flex:0 0 auto;
+  align-self:stretch;
   margin:0 0 6px;
+  padding:1px 4px 3px;
+  background:#efe6d2;
   font:italic 650 clamp(13px,3.8vw,18px)/1.15 Georgia,"Times New Roman",serif;
   color:#5a3a22;
 }
+#clubWall .clubWallKicker[hidden]{display:none!important}
 #clubWall .clubWallPairs{
   flex:1 1 auto;
   min-height:0;
