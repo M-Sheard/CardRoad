@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v123-talk-variety';
+const CACHE_NAME = 'card-road-pwa-v124-talk-history';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',

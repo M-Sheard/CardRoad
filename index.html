@@ -1419,8 +1419,9 @@ function doorstepTimePool(){
 function doorstepMemoryPool(name){
  if(typeof mem!=="function")return [];
  const m=mem(name);
- if(!m||!m.meetings)return [];
+ if(!m)return [];
  const out=[];
+ const games=(m.playerWins||0)+(m.npcWins||0)+(m.draws||0);
  if(name==="Tomas"){
   if(m.playerWins>m.npcWins)out.push("I still owe you one.");
   if(m.npcWins>m.playerWins)out.push("Told you I had you.");
@@ -1428,7 +1429,7 @@ function doorstepMemoryPool(name){
  }
  if(name==="Nessa"){
   if(m.meetings>=2)out.push("I was hoping you'd wander through.");
-  if(m.playerWins||m.npcWins)out.push("We should do that again sometime.");
+  if(games)out.push("We should do that again sometime.");
  }
  if(name==="Bram"){
   if(m.playerWins>m.npcWins)out.push("You earned that last one.");
@@ -1436,8 +1437,108 @@ function doorstepMemoryPool(name){
  }
  if(name==="Elira"){
   if(m.meetings>=2)out.push("You came back. The board noticed.");
-  if(m.playerWins||m.npcWins)out.push("Last time was instructive.");
+  if(games)out.push("Last time was instructive.");
  }
+ out.push(...doorstepMatchTalk(name,m),...doorstepCardTalk(name,m));
+ return out;
+}
+function doorstepMatchTalk(name,m){
+ const lm=m&&m.lastMatch;
+ const out=[];
+ if(!lm||!lm.result)return out;
+ const pBeats=(lm.beats||[]).filter(b=>b.by==="p");
+ const aBeats=(lm.beats||[]).filter(b=>b.by==="ai");
+ const close=Math.abs((lm.p||0)-(lm.a||0))<=1;
+ if(lm.result==="player"){
+  if(name==="Tomas")out.push("You played really well last time. I hate that.");
+  else if(name==="Nessa")out.push("You played really well last time we sat.");
+  else if(name==="Bram")out.push("You played well last time. You earned it.");
+  else out.push("Last board was well read. Yours.");
+  if(close)out.push("That was a tight one. Still thinking about it.");
+ }
+ if(lm.result==="npc"){
+  if(name==="Tomas")out.push("Knew I had you last time.");
+  else if(name==="Nessa")out.push("Good one last time. I'd happily play that again.");
+  else if(name==="Bram")out.push("You made me work for that last board.");
+  else out.push("Last time was a worthwhile match.");
+  if(close)out.push("Close, though. You nearly had it.");
+ }
+ if(lm.result==="draw"){
+  if(name==="Nessa")out.push("That draw still feels like unfinished business.");
+  else out.push("Last time we left it sitting on a draw.");
+ }
+ if(pBeats[1]&&pBeats[1].captures){
+  if(name==="Tomas")out.push("That second move of yours was cheeky.");
+  else if(name==="Nessa")out.push("That was a great second move by you.");
+  else if(name==="Bram")out.push("Your second placement last time was the one that mattered.");
+  else out.push("Your second card last time did the real work.");
+ }
+ if(pBeats.some(b=>b.combo))out.push("That chain of yours was rude.");
+ const beats=lm.beats||[];
+ if(beats[0]&&beats[0].by==="p"&&beats[1]&&beats[1].by==="ai"&&beats[1].captures){
+  if(name==="Tomas")out.push("My answer to your opening caught you, I think.");
+  else if(name==="Nessa")out.push("My counter to your opening caught you off guard, I think.");
+  else if(name==="Bram")out.push("I answered your opening. It seemed to surprise you.");
+  else out.push("I answered the opening. The board agreed.");
+ }
+ if(beats[0]&&beats[0].by==="ai"&&beats[1]&&beats[1].by==="p"&&beats[1].captures){
+  out.push("Your answer to my opening was sharp.");
+ }
+ const open=beats[0]&&beats[0].card?cardLabel(beats[0].card):"";
+ if(open&&beats[0].by==="p")out.push("You opened with the "+open+" last time.");
+ if(open&&beats[0].by==="ai"&&beats[0].captures)out.push("I put my "+open+" down first. It worked.");
+ return out;
+}
+function doorstepCardTalk(name,m){
+ const out=[];
+ const won=[...(m.cardsWon||[])].filter(Boolean);
+ const lost=[...(m.cardsLost||[])].filter(Boolean);
+ const youHold=d=>(state.player||[]).includes(d);
+ const theyHold=d=>(state.npcs[name]||[]).includes(d);
+ const theirs=won.filter(youHold);
+ const mineNow=lost.filter(theyHold);
+ const lastTheirs=theirs[theirs.length-1];
+ const lastMine=mineNow[mineNow.length-1];
+ if(lastTheirs){
+  const label=cardLabel(lastTheirs);
+  if(name==="Tomas"){
+   out.push("You looking after my "+label+"? Temporary, that.");
+   out.push("I'll be taking back my "+label+" soon!");
+  }else if(name==="Nessa"){
+   out.push("I hope you're taking care of my "+label+".");
+   out.push("Don't get too attached to my "+label+".");
+  }else if(name==="Bram"){
+   out.push("Look after that "+label+". I want it back in good order.");
+   out.push("I'll be asking for my "+label+" again before long.");
+  }else{
+   out.push("See that my "+label+" is not neglected.");
+   out.push("That "+label+" will come back to me.");
+  }
+ }else if(won.length){
+  out.push("You took my "+cardLabel(won[won.length-1])+". I've not forgotten.");
+ }
+ if(lastMine){
+  const label=cardLabel(lastMine);
+  if(name==="Tomas")out.push("Your "+label+"'s settling in. Suits me.");
+  else if(name==="Nessa")out.push("I'm taking care of your "+label+". Promise.");
+  else if(name==="Bram")out.push("Your "+label+" is in good hands.");
+  else out.push("This "+label+" of yours is quieter than you were.");
+ }
+ const g=latestGossip();
+ if(g&&g.win==="You"&&g.lose!==name){
+  out.push("Did you really win a "+g.name+"?");
+  out.push("People are talking about you taking that "+g.name+".");
+ }
+ if(g&&g.lose==="You"&&g.win!==name)out.push("Heard you let a "+g.name+" go.");
+ try{
+  ensureCopies();
+  (state.player||[]).forEach(d=>{
+   const cp=getCopy("You",d);
+   if(cp&&(cp.signatures||[]).some(s=>s.owner===name)&&!theirs.includes(d)){
+    out.push("That's my name still on your "+cardLabel(d)+".");
+   }
+  });
+ }catch(err){}
  return out;
 }
 function doorstepCompanyPool(name){
@@ -1479,15 +1580,22 @@ function doorstepSpeakPool(name){
  add(doorstepCompanyPool(name));
  return [...new Set(out)];
 }
+function doorstepHistoryPool(name){
+ const m=typeof mem==="function"?mem(name):null;
+ if(!m)return [];
+ return [...new Set([...doorstepMatchTalk(name,m),...doorstepCardTalk(name,m)])];
+}
 const doorstepTalkCount={};
 const doorstepLastLine={};
 let doorstepTalkLine=null;
 function doorstepFreshSpeak(name){
  const pool=doorstepSpeakPool(name);
+ const history=doorstepHistoryPool(name);
  const n=doorstepTalkCount[name]||0;
  doorstepTalkCount[name]=n+1;
  const salt=[name,state.visual&&state.visual.date,state.visual&&state.visual.phase,n].join("|");
- const line=doorstepPick(pool,salt,doorstepLastLine[name])||"Go on then.";
+ const prefer=history.length&&(doorstepHash(salt+"|h")%5)<2;
+ const line=doorstepPick(prefer?history:pool,salt,doorstepLastLine[name])||"Go on then.";
  doorstepLastLine[name]=line;
  return line;
 }
@@ -1547,6 +1655,23 @@ function doorstepAskChoices(name){
  if(state.daily&&state.daily.lastNpcMatch)add(`Heard ${state.daily.lastNpcMatch}.`,`${name} mentioned ${state.daily.lastNpcMatch}.`);
  add("Beph's stall's still empty. Pilgrimage, they said.",`${name} says Beph's market stall is still shut while she is on pilgrimage.`);
  add("The noticeboard's busier than the tables.",`${name} says the noticeboard is busier than the tables.`);
+ const m=typeof mem==="function"?mem(name):null;
+ if(m&&m.lastMatch){
+  if(m.lastMatch.result==="player")add("You played really well last time we sat.",`${name} is still thinking about how well you played last time.`);
+  if(m.lastMatch.result==="npc")add("I keep replaying that last board.",`${name} is still replaying your last match.`);
+  const pBeats=(m.lastMatch.beats||[]).filter(b=>b.by==="p");
+  if(pBeats[1]&&pBeats[1].captures)add("That was a great second move by you.",`${name} mentioned your second move from last time.`);
+  const beats=m.lastMatch.beats||[];
+  if(beats[0]&&beats[0].by==="p"&&beats[1]&&beats[1].by==="ai"&&beats[1].captures)add("My counter to your opening caught you off guard, I think.",`${name} thinks their counter to your opening caught you last time.`);
+ }
+ const taken=(m&&m.cardsWon||[]).filter(d=>(state.player||[]).includes(d));
+ if(taken.length){
+  const label=cardLabel(taken[taken.length-1]);
+  add("I hope you're taking care of my "+label+".",`${name} hopes you are taking care of their ${label}.`);
+  add("I'll be taking back my "+label+" soon!",`${name} says they will take back their ${label} soon.`);
+ }
+ const gYou=latestGossip();
+ if(gYou&&gYou.win==="You"&&gYou.lose!==name)add("Did you really win a "+gYou.name+"?",`${name} asked whether you really won a ${gYou.name}.`);
  const seen=[...new Set(rows.map(r=>r.speak))];
  return seen.map(speak=>rows.find(r=>r.speak===speak));
 }
@@ -1684,8 +1809,35 @@ function challengeDoorstepTalk(){
  closeDoorstepTalk();
  if(name)openChallenge(name);
 }
+function seedDoorstepHistoryPreview(){
+ const bram=mem("Bram");
+ bram.meetings=Math.max(bram.meetings||0,2);
+ bram.playerWins=Math.max(bram.playerWins||0,2);
+ bram.npcWins=Math.max(bram.npcWins||0,1);
+ if(!(bram.cardsWon||[]).includes("C016"))bram.cardsWon.push("C016");
+ if(!(state.player||[]).includes("C016"))state.player.push("C016");
+ bram.lastMatch={result:"player",p:6,a:3,starter:"p",beats:[
+  {by:"p",card:"C015",captures:0,combo:0},
+  {by:"ai",card:"C028",captures:0,combo:0},
+  {by:"p",card:"C022",captures:1,combo:0},
+  {by:"ai",card:"C039",captures:1,combo:0}
+ ],date:(state.visual&&state.visual.date)||""};
+ const elira=mem("Elira");
+ elira.meetings=Math.max(elira.meetings||0,2);
+ elira.npcWins=Math.max(elira.npcWins||0,1);
+ elira.lastMatch={result:"npc",p:4,a:5,starter:"p",beats:[
+  {by:"p",card:"C008",captures:0,combo:0},
+  {by:"ai",card:"C026",captures:1,combo:0},
+  {by:"p",card:"C014",captures:0,combo:0}
+ ],date:(state.visual&&state.visual.date)||""};
+ if(!latestGossip()){
+  state.daily=state.daily||{};
+  state.daily.gossip={win:"You",lose:"Tomas",design:"C030",name:cardLabel("C030"),place:"Lythmere",date:(state.visual&&state.visual.date)||"",read:true};
+ }
+}
 function bootDoorstepTalk(){
  jumpVisualToOpenWeek("Thursday");
+ if(typeof wantsTalkPreview==="function"&&wantsTalkPreview())seedDoorstepHistoryPreview();
  save();
  renderHome();
  show("home");
@@ -1884,7 +2036,7 @@ function advanceVisualTime(){
 function localNpcNames(){return Object.keys(npcDefs).filter(n=>!npcDefs[n].visitor)}
 function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
-let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
+let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null,matchBeats=[];
 function fresh(){
  let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
@@ -4637,7 +4789,7 @@ function dealMatchHands(){
  aiPlayed=[];
  board=Array(9).fill(null);
  turn=0;chosen=null;lastCapture=null;pendingLossCard=null;lastComboCount=0;
- finishScheduled=false;matchAnimating=false;
+ finishScheduled=false;matchAnimating=false;matchBeats=[];
  setupAiHandVisibility();
  return playerHand.length>=5&&aiHand.length>=5&&board.length===9;
 }
@@ -5301,6 +5453,16 @@ function renderGame(opts){
    setTimeout(()=>{if(turn===watchTurn&&!matchAnimating){console.warn("AI thinking watchdog fired",watchTurn);aiMove()}},450);
  }
 }
+function noteMatchBeat(by,design,captured){
+ if(typeof inHomeTutorial==="function"&&inHomeTutorial())return;
+ if(!Array.isArray(matchBeats))matchBeats=[];
+ matchBeats.push({by,card:design,captures:(captured&&captured.length)||0,combo:lastComboCount||0});
+}
+function rememberLastMatch(result,p,a){
+ if(!currentNpc||npcDefs[currentNpc]?.visitor)return;
+ const m=mem(currentNpc);
+ m.lastMatch={result,p,a,starter:startingPlayer||"p",beats:(matchBeats||[]).slice(0,9),date:(state.visual&&state.visual.date)||""};
+}
 function place(pos){
  if(tutorialTalkLocked())return;
  if(!chosen||board[pos]||matchAnimating)return;
@@ -5315,6 +5477,7 @@ function place(pos){
  board[pos]={card:C[n],owner:"p"};
  resolve(pos,"p");
  let captured=ownerFlips(before,"p");
+ noteMatchBeat("p",n,captured);
  chosen=null;turn++;
  runPlaceMotion(fromRect,html,pos,"p",captured);
 }
@@ -5368,7 +5531,9 @@ function aiOpeningMove(){
  markSeen(currentNpc,n);
  let before=boardOwners();
  board[pos]={card:C[n],owner:"ai"};resolve(pos,"ai");turn++;
- runPlaceMotion(fromRect,html,pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
+ const captured=ownerFlips(before,"ai");
+ noteMatchBeat("ai",n,captured);
+ runPlaceMotion(fromRect,html,pos,"ai",captured,{revealFromBack});
  return true;
 }
 function aiMove(){
@@ -5407,7 +5572,9 @@ function aiMove(){
  markSeen(currentNpc,best.n);
  let before=boardOwners();
  board[best.pos]={card:best.c,owner:"ai"};resolve(best.pos,"ai");turn++;
- runPlaceMotion(fromRect,html,best.pos,"ai",ownerFlips(before,"ai"),{revealFromBack});
+ const captured=ownerFlips(before,"ai");
+ noteMatchBeat("ai",best.n,captured);
+ runPlaceMotion(fromRect,html,best.pos,"ai",captured,{revealFromBack});
 }
 let resultFlipTimer=null;
 function prefersReducedMotion(){
@@ -5606,6 +5773,7 @@ function finish(){
  show("result");
  $("resultScore").textContent=`${p} \u2014 ${a}`;
  seriesResults.push({game:seriesGame+1,p,a,starter:startingPlayer});
+ rememberLastMatch(winner==="p"?"player":winner==="ai"?"npc":"draw",p,a);
  let extra="";
  if(p===a&&currentTerms.tie==="final")extra=`Final Capture: ${winner==="p"?"you":winner==="ai"?currentNpc:"nobody"} held the tiebreak.`;
  $("resultText").textContent=extra;
