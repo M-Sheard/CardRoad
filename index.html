@@ -476,6 +476,18 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <div class="satBunting" aria-hidden="true"><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span><span></span></div>
     </div>
     <div id="npcHotspots"></div>
+    <div id="doorstepTalk" class="doorstepTalk hidden" hidden role="dialog" aria-labelledby="doorstepLine">
+      <div class="doorstepCard">
+        <p id="doorstepLine">Bram has been talking pairings for Saturday.</p>
+        <div class="doorstepActions">
+          <button type="button" id="doorstepAsk">Ask</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" id="doorstepChallenge">Challenge</button>
+          <span aria-hidden="true">·</span>
+          <button type="button" id="doorstepLeave">Not now</button>
+        </div>
+      </div>
+    </div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide paperPlaque" id="locationStrip" aria-label="Lythmere locations">
@@ -493,22 +505,6 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <button type="button" data-loc="Card Club" title="Card Club">Club</button>
     </div>
   </nav>
-  <div id="doorstepTalk" class="doorstepTalk hidden" hidden role="dialog" aria-modal="true" aria-labelledby="doorstepLine">
-    <div class="doorstepCard paperPlaque">
-      <span class="paperCorners" aria-hidden="true">
-        <img class="paperCorner paperCorner-tl" src="./assets/ui/paper_corner.png" alt="">
-        <img class="paperCorner paperCorner-tr" src="./assets/ui/paper_corner.png" alt="">
-        <img class="paperCorner paperCorner-bl" src="./assets/ui/paper_corner.png" alt="">
-        <img class="paperCorner paperCorner-br" src="./assets/ui/paper_corner.png" alt="">
-      </span>
-      <p id="doorstepLine">Bram has been talking pairings for Saturday.</p>
-      <div class="doorstepActions">
-        <button type="button" id="doorstepAsk">Ask</button>
-        <button type="button" id="doorstepChallenge" class="doorstepPrimary">Challenge</button>
-        <button type="button" id="doorstepLeave">Leave</button>
-      </div>
-    </div>
-  </div>
   <div id="worldStatus" class="worldStatus"></div>
 <div id="noticeOverlay" class="noticeOverlay hidden">
   <button type="button" id="closeNotice" class="noticeDismiss">Close</button>
@@ -1283,6 +1279,45 @@ function fillDoorstepTalk(name){
   ask.textContent=heard?"Asked":"Ask";
  }
  el.setAttribute("aria-label",name);
+ positionDoorstepTalk();
+}
+function positionDoorstepTalk(){
+ const wrap=$("doorstepTalk"),scene=$("townScene");
+ if(!wrap||!doorstepTalkName||wrap.hidden||!scene)return;
+ const spec=TOWN_STAMP[doorstepTalkName];
+ const img=spec&&scene.querySelector("."+spec.cls);
+ const card=wrap.querySelector(".doorstepCard");
+ if(!img||!card)return;
+ wrap.style.transform="none";
+ wrap.style.right="auto";
+ wrap.style.bottom="auto";
+ wrap.style.width="auto";
+ const sr=scene.getBoundingClientRect();
+ const ir=img.getBoundingClientRect();
+ const strip=$("locationStrip"),date=$("advanceTime"),journal=$("worldRecord");
+ const pad=8;
+ const topBar=Math.max(
+  date?date.getBoundingClientRect().bottom:sr.top,
+  journal?journal.getBoundingClientRect().bottom:sr.top
+ )+pad;
+ const botBar=(strip?strip.getBoundingClientRect().top:sr.bottom)-pad;
+ const maxW=Math.min(248,Math.max(168,sr.width-pad*2));
+ card.style.maxWidth=maxW+"px";
+ const w=Math.min(maxW,card.getBoundingClientRect().width||maxW);
+ const h=card.getBoundingClientRect().height||88;
+ let left=ir.right-sr.left+10;
+ let top=ir.top-sr.top+ir.height*0.1;
+ let side="left";
+ if(left+w>sr.width-pad){
+  left=ir.left-sr.left-w-10;
+  side="right";
+ }
+ left=Math.max(pad,Math.min(left,sr.width-w-pad));
+ top=Math.max(topBar-sr.top,Math.min(top,botBar-sr.top-h));
+ if(top<pad)top=pad;
+ card.dataset.side=side;
+ wrap.style.left=left+"px";
+ wrap.style.top=top+"px";
 }
 function closeDoorstepTalk(){
  doorstepTalkName=null;
@@ -1304,6 +1339,7 @@ function openDoorstepTalk(name){
  const scene=$("townScene");
  if(scene)scene.dataset.talkNpc=name;
  document.body.classList.add("isTalking");
+ requestAnimationFrame(()=>requestAnimationFrame(positionDoorstepTalk));
 }
 function askDoorstepTalk(){
  if(!doorstepTalkName)return;
@@ -2391,6 +2427,7 @@ function scheduleScreenLayout(id){
 }
 function scheduleMatchLayout(){scheduleScreenLayout("game")}
 function onViewportLayout(){
+ positionDoorstepTalk();
  if(viewportLayoutTimer)clearTimeout(viewportLayoutTimer);
  viewportLayoutTimer=setTimeout(()=>{
   viewportLayoutTimer=0;
@@ -3327,6 +3364,7 @@ function renderWorldScene(){
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
  syncTownStandees();
+ if(doorstepTalkName)requestAnimationFrame(positionDoorstepTalk);
 }
 function renderJournal(tab){
  if(!$("journalContent"))return;ensureVisualState();ensureJournalSeen();if(tab)state.visual.journalTab=tab;let t=state.visual.journalTab||"calendar";
@@ -11636,81 +11674,116 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 }
 </style>
 <style>
-/* Doorstep talk sits in the town parchment family, not the match-table gold.
-   Spoken italic line, then written choices. The painting stays bright;
-   other people stay visible; the location strip stays usable. */
-#visualShell .doorstepTalk{
+/* Doorstep talk is a spoken aside next to the person, not a second nav bar.
+   Table-talk cream, italic line, written choices. */
+#visualShell .townScene .doorstepTalk{
   position:absolute;
-  left:50%;
-  right:auto;
-  width:min(620px,calc(100% - 24px));
-  bottom:calc(52px + max(10px, env(safe-area-inset-bottom)) + 8px);
-  top:auto;
   z-index:36;
-  display:flex;
-  align-items:flex-end;
-  justify-content:center;
+  left:8px;
+  top:120px;
+  right:auto;
+  bottom:auto;
+  width:auto;
+  max-width:min(248px,calc(100% - 16px));
+  display:block;
   padding:0;
-  box-sizing:border-box;
   background:transparent;
   pointer-events:none;
-  transform:translateX(-50%);
+  transform:none;
 }
-#visualShell .doorstepTalk.hidden,
-#visualShell .doorstepTalk[hidden]{display:none!important}
-#visualShell .doorstepCard{
-  width:100%;
-  max-width:none;
+#visualShell .townScene .doorstepTalk.hidden,
+#visualShell .townScene .doorstepTalk[hidden]{display:none!important}
+#visualShell .townScene .doorstepCard{
+  position:relative;
+  width:max-content;
+  max-width:min(248px,calc(100vw - 32px));
   min-width:0;
-  padding:8px 18px 8px 22px;
+  padding:10px 12px 8px;
   display:flex;
   flex-direction:column;
-  gap:4px;
+  gap:6px;
   pointer-events:auto;
   height:auto!important;
   min-height:0!important;
   box-sizing:border-box;
+  background:#efe3c8;
+  border:2px solid #513b2c;
+  border-radius:6px;
+  box-shadow:0 6px 14px #0007;
+  transform:rotate(-.4deg);
 }
-#visualShell .doorstepCard #doorstepLine{
+#visualShell .townScene .doorstepCard:after{
+  content:"";
+  position:absolute;
+  top:18px;
+  width:0;
+  height:0;
+  border-style:solid;
+}
+#visualShell .townScene .doorstepCard[data-side="left"]:after{
+  left:-9px;
+  border-width:7px 9px 7px 0;
+  border-color:transparent #efe3c8 transparent transparent;
+  filter:drop-shadow(-2px 0 0 #513b2c);
+}
+#visualShell .townScene .doorstepCard[data-side="right"]:after{
+  right:-9px;
+  left:auto;
+  border-width:7px 0 7px 9px;
+  border-color:transparent transparent transparent #efe3c8;
+  filter:drop-shadow(2px 0 0 #513b2c);
+}
+#visualShell .townScene .doorstepCard #doorstepLine{
   margin:0;
   min-width:0;
   font:italic 600 14px/1.35 Georgia,serif;
   color:#2a1c12;
-  text-align:center;
+  text-align:left;
 }
-#visualShell .doorstepActions{
-  display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);
-  gap:0;
+#visualShell .townScene .doorstepActions{
+  display:flex;
+  flex-wrap:wrap;
+  align-items:center;
+  justify-content:flex-start;
+  gap:2px 0;
   min-width:0;
-  border-top:1px solid rgba(90,62,38,.22);
+  border:0;
 }
-#visualShell .doorstepActions button{
+#visualShell .townScene .doorstepActions span{
+  padding:0 5px;
+  color:#7a5a3e;
+  font:600 13px Georgia,serif;
+  pointer-events:none;
+}
+#visualShell .townScene .doorstepActions button{
   min-width:0;
-  min-height:34px;
+  min-height:32px;
   margin:0;
-  padding:6px 4px 4px;
+  padding:4px 6px;
   font:600 13px/1.1 Georgia,serif;
-  letter-spacing:.01em;
+  letter-spacing:0;
   text-transform:none;
   color:#4a3018;
   background:transparent;
   border:0;
-  border-right:1px solid rgba(90,62,38,.22);
   border-radius:0;
   box-shadow:none;
+  text-decoration:underline;
+  text-decoration-color:rgba(74,48,24,.35);
+  text-underline-offset:3px;
 }
-#visualShell .doorstepActions button:last-child{border-right:0}
-#visualShell .doorstepActions #doorstepChallenge.doorstepPrimary{
+#visualShell .townScene .doorstepActions #doorstepChallenge{
   font-weight:800;
   color:#1a120c;
+  text-decoration-color:rgba(26,18,12,.45);
 }
-#visualShell .doorstepActions #doorstepAsk:disabled{
+#visualShell .townScene .doorstepActions #doorstepAsk:disabled{
   opacity:.5;
   font-style:italic;
   font-weight:500;
+  text-decoration:none;
 }
-#visualShell .doorstepActions button:active{
+#visualShell .townScene .doorstepActions button:active{
   color:#1a120c;
 }
 .townScene[data-talk-npc="Tomas"] .tomasCutout,
@@ -11718,18 +11791,10 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 .townScene[data-talk-npc="Bram"] .bramCutout,
 .townScene[data-talk-npc="Elira"] .eliraCutout{
   z-index:34!important;
-  filter:drop-shadow(0 8px 12px rgba(0,0,0,.4));
 }
 @media(max-width:620px){
-  #visualShell .doorstepTalk{
-    width:min(620px,calc(100% - 16px));
-    bottom:calc(48px + max(8px, env(safe-area-inset-bottom)) + 6px);
-  }
-  #visualShell .doorstepCard{
-    padding:7px 14px 6px 18px;
-  }
-  #visualShell .doorstepCard #doorstepLine{font-size:13px}
-  #visualShell .doorstepActions button{font-size:12px;min-height:32px}
+  #visualShell .townScene .doorstepCard #doorstepLine{font-size:13px}
+  #visualShell .townScene .doorstepActions button{font-size:12px;min-height:34px}
 }
 </style>
 
