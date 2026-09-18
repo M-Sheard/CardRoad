@@ -493,6 +493,22 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <button type="button" data-loc="Card Club" title="Card Club">Club</button>
     </div>
   </nav>
+  <div id="doorstepTalk" class="doorstepTalk hidden" hidden role="dialog" aria-modal="true" aria-labelledby="doorstepLine">
+    <div class="doorstepCard paperPlaque">
+      <span class="paperCorners" aria-hidden="true">
+        <img class="paperCorner paperCorner-tl" src="./assets/ui/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-tr" src="./assets/ui/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-bl" src="./assets/ui/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-br" src="./assets/ui/paper_corner.png" alt="">
+      </span>
+      <p id="doorstepLine">Bram has been talking pairings for Saturday.</p>
+      <div class="doorstepActions">
+        <button type="button" id="doorstepAsk">Ask</button>
+        <button type="button" id="doorstepChallenge">Challenge</button>
+        <button type="button" id="doorstepLeave">Leave</button>
+      </div>
+    </div>
+  </div>
   <div id="worldStatus" class="worldStatus"></div>
 <div id="noticeOverlay" class="noticeOverlay hidden">
   <button type="button" id="closeNotice" class="noticeDismiss">Close</button>
@@ -527,6 +543,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devThursdayClub" type="button" style="margin-top:8px">Jump to Thursday Club</button>
         <button id="devFridayClub" type="button" style="margin-top:8px">Jump to Friday Club</button>
         <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
+        <button id="devDoorstepTalk" type="button" style="margin-top:8px">Preview doorstep talk</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -1213,6 +1230,111 @@ function saturdayTalkLine(name){
 function challengeTalkLine(name){
  return gossipTalkLine(name)||roomCopyLine(name)||saturdayTalkLine(name);
 }
+function ensureAskedToday(){
+ if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}};
+ if(!state.daily.asked||typeof state.daily.asked!=="object")state.daily.asked={};
+ return state.daily.asked;
+}
+function doorstepAskedLine(name){
+ const asked=ensureAskedToday();
+ return (name&&asked[name])||"";
+}
+function doorstepIdleLine(name){
+ if(name==="Tomas")return "Tomas is looking for a table.";
+ if(name==="Nessa")return "Nessa has time for a match if you do.";
+ if(name==="Bram")return "Bram is willing if the terms are fair.";
+ if(name==="Elira")return "Elira waits for the board to speak.";
+ const here=npcLocationNow(name);
+ return here?`${name} is at the ${here}.`:`${name} is here.`;
+}
+function doorstepOpenLine(name){
+ return challengeTalkLine(name)||doorstepIdleLine(name);
+}
+function doorstepAskLine(name){
+ const g=latestGossip();
+ if(g&&name!==g.win&&name!==g.lose)return `${name} heard ${g.win} took ${g.lose}'s ${g.name}.`;
+ const here=state.visual&&state.visual.location;
+ const others=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
+ const days=daysUntilSaturday();
+ if(days>=1&&days<=3&&others.length){
+  const other=others[0];
+  if(days===1)return `${name} says ${other} is already talking about tomorrow's Open.`;
+  if(days===2)return `${name} says ${other}'s name is on a pairing sheet.`;
+  return `${name} says ${other} has been putting in practice.`;
+ }
+ const copies=npcHeldCopies(name);
+ for(const cp of copies){
+  const sig=copyForeignSignature(cp,name);
+  if(sig)return `${name} turns ${cardLabel(cp.design)} — ${sig.owner}'s name is on it.`;
+ }
+ if(days===1)return `${name} heard the Open draws a travelling table.`;
+ if(days===2)return `${name} heard they post pairings on the Club wall by Friday.`;
+ if(days===3)return `${name} heard Saturday still has empty seats.`;
+ return "";
+}
+let doorstepTalkName=null;
+function fillDoorstepTalk(name){
+ const el=$("doorstepTalk"),line=$("doorstepLine"),ask=$("doorstepAsk");
+ if(!el||!name)return;
+ const heard=doorstepAskedLine(name);
+ if(line)line.textContent=heard||doorstepOpenLine(name);
+ if(ask){
+  ask.disabled=!!heard;
+  ask.textContent=heard?"Asked":"Ask";
+ }
+ el.setAttribute("aria-label",name);
+}
+function closeDoorstepTalk(){
+ doorstepTalkName=null;
+ const el=$("doorstepTalk");
+ if(el){el.classList.add("hidden");el.hidden=true}
+ const scene=$("townScene");
+ if(scene)scene.removeAttribute("data-talk-npc");
+ document.body.classList.remove("isTalking");
+}
+function openDoorstepTalk(name){
+ if(!name)return;
+ closeBephStall();
+ closeNoticeView();
+ if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
+ doorstepTalkName=name;
+ fillDoorstepTalk(name);
+ const el=$("doorstepTalk");
+ if(el){el.classList.remove("hidden");el.hidden=false}
+ const scene=$("townScene");
+ if(scene)scene.dataset.talkNpc=name;
+ document.body.classList.add("isTalking");
+}
+function askDoorstepTalk(){
+ if(!doorstepTalkName)return;
+ const asked=ensureAskedToday();
+ if(asked[doorstepTalkName])return;
+ const fact=doorstepAskLine(doorstepTalkName);
+ if(!fact){
+  asked[doorstepTalkName]=doorstepOpenLine(doorstepTalkName);
+  fillDoorstepTalk(doorstepTalkName);
+  save();
+  return;
+ }
+ asked[doorstepTalkName]=fact;
+ news(fact);
+ fillDoorstepTalk(doorstepTalkName);
+ save();
+ updateWorldRecordButton();
+}
+function challengeDoorstepTalk(){
+ const name=doorstepTalkName;
+ closeDoorstepTalk();
+ if(name)openChallenge(name);
+}
+function bootDoorstepTalk(){
+ jumpVisualToOpenWeek("Thursday");
+ save();
+ renderHome();
+ show("home");
+ const who=(localNpcNames().filter(n=>npcLocationNow(n)==="Card Club")[0])||"Bram";
+ openDoorstepTalk(who);
+}
 function openWeekSubtitle(location,base){
  if(isSaturdayEventNow()&&location==="Card Club"){
   return "Banners up. Travelling players at the far tables. Saturday Open this afternoon.";
@@ -1407,7 +1529,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null;
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -1454,8 +1576,9 @@ function ensureWorldDefaults(){
  if(!state.season)state.season={day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]};
  if(!state.season.tournamentHistory)state.season.tournamentHistory=[];
  if(state.activeTournament===undefined)state.activeTournament=null;
- if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null};
+ if(!state.daily)state.daily={lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}};
  if(state.daily.gossip===undefined)state.daily.gossip=null;
+ if(!state.daily.asked||typeof state.daily.asked!=="object")state.daily.asked={};
  if(!state.seasonStats)state.seasonStats={playerChallenges:0,incomingAccepted:0,incomingDeclined:0};
  if(!Array.isArray(state.inbox))state.inbox=[];
  if(state.houseTinNoted==null)state.houseTinNoted=false;
@@ -1539,6 +1662,9 @@ function wantsThursdayPreview(){
 }
 function wantsFridayPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])friday=1(?:&|$)/.test(location.search);
+}
+function wantsTalkPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])talk=1(?:&|$)/.test(location.search);
 }
 function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
@@ -1999,6 +2125,7 @@ function bootTownOrTutorial(){
  }
  if(wantsGossipPreview()){bootOvernightGossip();return}
  if(wantsCopyRoomPreview()){bootCopyInRoom();return}
+ if(wantsTalkPreview()){bootDoorstepTalk();return}
  if(wantsThursdayPreview()){jumpVisualToOpenWeek("Thursday");save();renderHome();show("home");return}
  if(wantsFridayPreview()){jumpVisualToOpenWeek("Friday");save();renderHome();show("home");return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
@@ -3183,7 +3310,9 @@ function renderWorldScene(){
  let spots=$("npcHotspots");spots.innerHTML="";let present=localNpcNames().filter(n=>npcLocationNow(n)===state.visual.location);
  let sceneEl=$("townScene");if(sceneEl)sceneEl.dataset.crowd=String(present.length);
  let positions=[[51,43],[72,64],[30,62],[80,70]];
- present.forEach((n,i)=>{let b=document.createElement("button");b.className="npcHotspot"+(n==="Tomas"?" tomas-production":"");b.dataset.npc=n;b.dataset.slot=String(i);b.style.left=positions[i%positions.length][0]+"%";b.style.top=positions[i%positions.length][1]+"%";b.innerHTML=`<span class="figure"></span><span class="tag">${n}</span>`;b.title=npcPriority(n);b.onclick=()=>openChallenge(n);spots.appendChild(b)});
+ present.forEach((n,i)=>{let b=document.createElement("button");b.className="npcHotspot"+(n==="Tomas"?" tomas-production":"");b.dataset.npc=n;b.dataset.slot=String(i);b.style.left=positions[i%positions.length][0]+"%";b.style.top=positions[i%positions.length][1]+"%";b.innerHTML=`<span class="figure"></span><span class="tag">${n}</span>`;b.title=npcPriority(n);b.onclick=()=>openDoorstepTalk(n);spots.appendChild(b)});
+ if(doorstepTalkName&&!present.includes(doorstepTalkName))closeDoorstepTalk();
+ else if(doorstepTalkName)fillDoorstepTalk(doorstepTalkName);
  let info=publicInfoHere();
  if(info||latestGossip())fillNoticeBoard(info);
  if($("noticeOverlay")&&!noticePreview)$("noticeOverlay").classList.add("hidden");
@@ -5249,6 +5378,14 @@ if($("devTownTalk"))$("devTownTalk").onclick=()=>{
  show("home");renderHome();
  openNoticeView();
 };
+if($("devDoorstepTalk"))$("devDoorstepTalk").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootDoorstepTalk();
+};
+if($("doorstepAsk"))$("doorstepAsk").onclick=askDoorstepTalk;
+if($("doorstepChallenge"))$("doorstepChallenge").onclick=challengeDoorstepTalk;
+if($("doorstepLeave"))$("doorstepLeave").onclick=closeDoorstepTalk;
+if($("doorstepTalk"))$("doorstepTalk").addEventListener("click",e=>{if(e.target===$("doorstepTalk"))closeDoorstepTalk()});
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
 if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
 if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:houseTinTownPreview});
@@ -11497,6 +11634,94 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   #visualShell #worldRecord.paperPlaque{height:42px!important;min-height:42px!important;min-width:108px!important}
   #visualShell .paperCorner{width:16px;height:19px}
   #visualShell .locationStrip .paperSeal-left{width:26px!important;height:26px!important;left:-6px}
+}
+</style>
+<style>
+/* Doorstep talk — stay in the room. One line, then Ask / Challenge / Leave.
+   Ask is once per person per day and can stamp Card News. Not a dialogue tree. */
+#visualShell .doorstepTalk{
+  position:absolute;
+  inset:0;
+  z-index:36;
+  display:flex;
+  align-items:flex-end;
+  justify-content:center;
+  padding:0 max(16px,calc(env(safe-area-inset-right) + 10px)) calc(56px + max(16px,env(safe-area-inset-bottom) + 10px)) max(16px,calc(env(safe-area-inset-left) + 10px));
+  box-sizing:border-box;
+  background:transparent;
+  pointer-events:auto;
+}
+#visualShell .doorstepTalk.hidden,
+#visualShell .doorstepTalk[hidden]{display:none!important}
+#visualShell .doorstepCard{
+  width:100%;
+  max-width:min(100%,420px);
+  min-width:0;
+  padding:12px 14px 12px;
+  display:flex;
+  flex-direction:column;
+  gap:10px;
+  pointer-events:auto;
+  height:auto!important;
+  min-height:0!important;
+}
+#visualShell .doorstepCard #doorstepLine{
+  margin:0;
+  min-width:0;
+  font:600 15px/1.35 Georgia,serif;
+  color:#1a120c;
+  text-align:center;
+}
+#visualShell .doorstepActions{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);
+  gap:6px;
+  min-width:0;
+}
+#visualShell .doorstepActions button{
+  min-width:0;
+  min-height:44px;
+  padding:8px 4px;
+  font:800 11px/1.05 Georgia,serif;
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#1a0c08;
+  background:linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%);
+  border:3px solid #3d2414;
+  border-radius:6px;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006;
+}
+#visualShell .doorstepActions #doorstepChallenge{
+  letter-spacing:.04em;
+}
+#visualShell .doorstepActions #doorstepLeave{
+  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%);
+}
+#visualShell .doorstepActions #doorstepAsk:disabled{
+  opacity:.55;
+  filter:grayscale(.15);
+}
+body.isTalking #visualShell .locationStrip{
+  pointer-events:none;
+  opacity:.72;
+}
+.townScene[data-talk-npc] .tomasCutout,
+.townScene[data-talk-npc] .nessaCutout,
+.townScene[data-talk-npc] .bramCutout,
+.townScene[data-talk-npc] .eliraCutout{
+  opacity:.42;
+  transition:opacity .2s ease;
+}
+.townScene[data-talk-npc="Tomas"] .tomasCutout,
+.townScene[data-talk-npc="Nessa"] .nessaCutout,
+.townScene[data-talk-npc="Bram"] .bramCutout,
+.townScene[data-talk-npc="Elira"] .eliraCutout{
+  opacity:1;
+  z-index:34!important;
+}
+@media(max-width:620px){
+  #visualShell .doorstepCard #doorstepLine{font-size:14px}
+  #visualShell .doorstepActions button{font-size:10px;min-height:42px}
 }
 </style>
 
