@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v124-talk-history';
+const CACHE_NAME = 'card-road-pwa-v125-club-wall';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -11,6 +11,7 @@ const CORE_ASSETS = [
   './assets/ui/date_time_frame.png',
   './assets/ui/location_title_frame.png',
   './assets/ui/noticeboard_frame.png',
+  './assets/ui/club_pairing_board.png',
   './assets/ui/presence_message_frame.png',
   './assets/ui/match_home_table.png'];
 
