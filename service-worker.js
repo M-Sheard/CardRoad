@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v118-doorstep';
+const CACHE_NAME = 'card-road-pwa-v119-doorstep-ink';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
