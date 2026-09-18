@@ -1237,6 +1237,11 @@ function doorstepAskedLine(name){
  const asked=ensureAskedToday();
  return (name&&asked[name])||"";
 }
+function doorstepA(word){
+ const w=String(word||"").replace(/^(the|a|an)\s+/i,"");
+ if(!w)return "a";
+ return (/^[aeiou]/i.test(w)?"an ":"a ")+w;
+}
 function doorstepHash(s){
  let h=2166136261;
  s=String(s||"");
@@ -1452,8 +1457,8 @@ function doorstepMatchTalk(name,m){
  if(lm.result==="player"){
   if(name==="Tomas")out.push("You played really well last time. I hate that.");
   else if(name==="Nessa")out.push("You played really well last time we sat.");
-  else if(name==="Bram")out.push("You played well last time. You earned it.");
-  else out.push("Last board was well read. Yours.");
+  else if(name==="Bram")out.push("You played really well last time. You earned it.");
+  else out.push("You played well last time. The board noticed.");
   if(close)out.push("That was a tight one. Still thinking about it.");
  }
  if(lm.result==="npc"){
@@ -1468,18 +1473,18 @@ function doorstepMatchTalk(name,m){
   else out.push("Last time we left it sitting on a draw.");
  }
  if(pBeats[1]&&pBeats[1].captures){
+  out.push("That was a great second move by you.");
   if(name==="Tomas")out.push("That second move of yours was cheeky.");
-  else if(name==="Nessa")out.push("That was a great second move by you.");
   else if(name==="Bram")out.push("Your second placement last time was the one that mattered.");
-  else out.push("Your second card last time did the real work.");
+  else if(name==="Elira")out.push("Your second card last time did the real work.");
  }
  if(pBeats.some(b=>b.combo))out.push("That chain of yours was rude.");
  const beats=lm.beats||[];
  if(beats[0]&&beats[0].by==="p"&&beats[1]&&beats[1].by==="ai"&&beats[1].captures){
+  out.push("My counter to your opening caught you off guard, I think.");
   if(name==="Tomas")out.push("My answer to your opening caught you, I think.");
-  else if(name==="Nessa")out.push("My counter to your opening caught you off guard, I think.");
   else if(name==="Bram")out.push("I answered your opening. It seemed to surprise you.");
-  else out.push("I answered the opening. The board agreed.");
+  else if(name==="Elira")out.push("I answered the opening. The board agreed.");
  }
  if(beats[0]&&beats[0].by==="ai"&&beats[1]&&beats[1].by==="p"&&beats[1].captures){
   out.push("Your answer to my opening was sharp.");
@@ -1526,10 +1531,10 @@ function doorstepCardTalk(name,m){
  }
  const g=latestGossip();
  if(g&&g.win==="You"&&g.lose!==name){
-  out.push("Did you really win a "+g.name+"?");
+  out.push("Did you really win "+doorstepA(g.name)+"?");
   out.push("People are talking about you taking that "+g.name+".");
  }
- if(g&&g.lose==="You"&&g.win!==name)out.push("Heard you let a "+g.name+" go.");
+ if(g&&g.lose==="You"&&g.win!==name)out.push("Heard you let "+doorstepA(g.name)+" go.");
  try{
   ensureCopies();
   (state.player||[]).forEach(d=>{
@@ -1607,8 +1612,12 @@ function doorstepAskChoices(name){
  const add=(speak,fact)=>{if(speak)rows.push({speak,fact:fact||""})};
  const g=latestGossip();
  if(g&&name!==g.win&&name!==g.lose){
-  add(`I heard ${g.win} took ${g.lose}'s ${g.name}.`,`${name} heard ${g.win} took ${g.lose}'s ${g.name}.`);
-  add(`${g.win}'s still showing that ${g.name} about.`,`${name} says ${g.win} is still carrying ${g.lose}'s ${g.name}.`);
+  if(g.win==="You"){
+   add("I heard you took "+g.lose+"'s "+g.name+".",`${name} heard you took ${g.lose}'s ${g.name}.`);
+  }else{
+   add(`I heard ${g.win} took ${g.lose}'s ${g.name}.`,`${name} heard ${g.win} took ${g.lose}'s ${g.name}.`);
+   add(`${g.win}'s still showing that ${g.name} about.`,`${name} says ${g.win} is still carrying ${g.lose}'s ${g.name}.`);
+  }
  }
  const here=state.visual&&state.visual.location;
  const present=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
@@ -1671,7 +1680,7 @@ function doorstepAskChoices(name){
   add("I'll be taking back my "+label+" soon!",`${name} says they will take back their ${label} soon.`);
  }
  const gYou=latestGossip();
- if(gYou&&gYou.win==="You"&&gYou.lose!==name)add("Did you really win a "+gYou.name+"?",`${name} asked whether you really won a ${gYou.name}.`);
+ if(gYou&&gYou.win==="You"&&gYou.lose!==name)add("Did you really win "+doorstepA(gYou.name)+"?",`${name} asked whether you really won ${doorstepA(gYou.name)}.`);
  const seen=[...new Set(rows.map(r=>r.speak))];
  return seen.map(speak=>rows.find(r=>r.speak===speak));
 }
