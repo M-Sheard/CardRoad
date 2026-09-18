@@ -504,7 +504,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <p id="doorstepLine">Bram has been talking pairings for Saturday.</p>
       <div class="doorstepActions">
         <button type="button" id="doorstepAsk">Ask</button>
-        <button type="button" id="doorstepChallenge">Challenge</button>
+        <button type="button" id="doorstepChallenge" class="doorstepPrimary">Challenge</button>
         <button type="button" id="doorstepLeave">Leave</button>
       </div>
     </div>
@@ -5385,7 +5385,6 @@ if($("devDoorstepTalk"))$("devDoorstepTalk").onclick=()=>{
 if($("doorstepAsk"))$("doorstepAsk").onclick=askDoorstepTalk;
 if($("doorstepChallenge"))$("doorstepChallenge").onclick=challengeDoorstepTalk;
 if($("doorstepLeave"))$("doorstepLeave").onclick=closeDoorstepTalk;
-if($("doorstepTalk"))$("doorstepTalk").addEventListener("click",e=>{if(e.target===$("doorstepTalk"))closeDoorstepTalk()});
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
 if($("houseTinBack"))$("houseTinBack").onclick=closeHouseTin;
 if($("houseTinHotspot"))$("houseTinHotspot").onclick=()=>openHouseTin({preview:houseTinTownPreview});
@@ -11637,91 +11636,100 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 }
 </style>
 <style>
-/* Doorstep talk — stay in the room. One line, then Ask / Challenge / Leave.
-   Ask is once per person per day and can stamp Card News. Not a dialogue tree. */
+/* Doorstep talk sits in the town parchment family, not the match-table gold.
+   Spoken italic line, then written choices. The painting stays bright;
+   other people stay visible; the location strip stays usable. */
 #visualShell .doorstepTalk{
   position:absolute;
-  inset:0;
+  left:50%;
+  right:auto;
+  width:min(620px,calc(100% - 24px));
+  bottom:calc(52px + max(10px, env(safe-area-inset-bottom)) + 8px);
+  top:auto;
   z-index:36;
   display:flex;
   align-items:flex-end;
   justify-content:center;
-  padding:0 max(16px,calc(env(safe-area-inset-right) + 10px)) calc(56px + max(16px,env(safe-area-inset-bottom) + 10px)) max(16px,calc(env(safe-area-inset-left) + 10px));
+  padding:0;
   box-sizing:border-box;
   background:transparent;
-  pointer-events:auto;
+  pointer-events:none;
+  transform:translateX(-50%);
 }
 #visualShell .doorstepTalk.hidden,
 #visualShell .doorstepTalk[hidden]{display:none!important}
 #visualShell .doorstepCard{
   width:100%;
-  max-width:min(100%,420px);
+  max-width:none;
   min-width:0;
-  padding:12px 14px 12px;
+  padding:8px 18px 8px 22px;
   display:flex;
   flex-direction:column;
-  gap:10px;
+  gap:4px;
   pointer-events:auto;
   height:auto!important;
   min-height:0!important;
+  box-sizing:border-box;
 }
 #visualShell .doorstepCard #doorstepLine{
   margin:0;
   min-width:0;
-  font:600 15px/1.35 Georgia,serif;
-  color:#1a120c;
+  font:italic 600 14px/1.35 Georgia,serif;
+  color:#2a1c12;
   text-align:center;
 }
 #visualShell .doorstepActions{
   display:grid;
-  grid-template-columns:minmax(0,1fr) minmax(0,1.25fr) minmax(0,1fr);
-  gap:6px;
+  grid-template-columns:minmax(0,1fr) minmax(0,1.15fr) minmax(0,1fr);
+  gap:0;
   min-width:0;
+  border-top:1px solid rgba(90,62,38,.22);
 }
 #visualShell .doorstepActions button{
   min-width:0;
-  min-height:44px;
-  padding:8px 4px;
-  font:800 11px/1.05 Georgia,serif;
-  letter-spacing:.06em;
-  text-transform:uppercase;
-  color:#1a0c08;
-  background:linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%);
-  border:3px solid #3d2414;
-  border-radius:6px;
-  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006;
+  min-height:34px;
+  margin:0;
+  padding:6px 4px 4px;
+  font:600 13px/1.1 Georgia,serif;
+  letter-spacing:.01em;
+  text-transform:none;
+  color:#4a3018;
+  background:transparent;
+  border:0;
+  border-right:1px solid rgba(90,62,38,.22);
+  border-radius:0;
+  box-shadow:none;
 }
-#visualShell .doorstepActions #doorstepChallenge{
-  letter-spacing:.04em;
-}
-#visualShell .doorstepActions #doorstepLeave{
-  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%);
+#visualShell .doorstepActions button:last-child{border-right:0}
+#visualShell .doorstepActions #doorstepChallenge.doorstepPrimary{
+  font-weight:800;
+  color:#1a120c;
 }
 #visualShell .doorstepActions #doorstepAsk:disabled{
-  opacity:.55;
-  filter:grayscale(.15);
+  opacity:.5;
+  font-style:italic;
+  font-weight:500;
 }
-body.isTalking #visualShell .locationStrip{
-  pointer-events:none;
-  opacity:.72;
-}
-.townScene[data-talk-npc] .tomasCutout,
-.townScene[data-talk-npc] .nessaCutout,
-.townScene[data-talk-npc] .bramCutout,
-.townScene[data-talk-npc] .eliraCutout{
-  opacity:.42;
-  transition:opacity .2s ease;
+#visualShell .doorstepActions button:active{
+  color:#1a120c;
 }
 .townScene[data-talk-npc="Tomas"] .tomasCutout,
 .townScene[data-talk-npc="Nessa"] .nessaCutout,
 .townScene[data-talk-npc="Bram"] .bramCutout,
 .townScene[data-talk-npc="Elira"] .eliraCutout{
-  opacity:1;
   z-index:34!important;
+  filter:drop-shadow(0 8px 12px rgba(0,0,0,.4));
 }
 @media(max-width:620px){
-  #visualShell .doorstepCard #doorstepLine{font-size:14px}
-  #visualShell .doorstepActions button{font-size:10px;min-height:42px}
+  #visualShell .doorstepTalk{
+    width:min(620px,calc(100% - 16px));
+    bottom:calc(48px + max(8px, env(safe-area-inset-bottom)) + 6px);
+  }
+  #visualShell .doorstepCard{
+    padding:7px 14px 6px 18px;
+  }
+  #visualShell .doorstepCard #doorstepLine{font-size:13px}
+  #visualShell .doorstepActions button{font-size:12px;min-height:32px}
 }
 </style>
 
