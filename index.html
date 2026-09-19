@@ -2659,7 +2659,9 @@ function contestLetterName(t){
 }
 function tournamentIsBig(t){
  if(!t)return false;
+ if(t.type==="saturdayOpen")return false;
  if(t.type==="championship")return true;
+ if(GRANDPA_BIG_TIERS.includes(t.tier))return true;
  const date=t.date||state.visual?.date;
  return eventsOnDate(date).some(e=>GRANDPA_BIG_TIERS.includes(e.tier));
 }
