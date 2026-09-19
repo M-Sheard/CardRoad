@@ -535,6 +535,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devNewsGazette" type="button" style="margin-top:8px">Preview Card News</button>
         <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (5 cards)</button>
         <button id="devInbox" type="button" style="margin-top:8px">Preview tin inbox</button>
+        <button id="devGrandpaLetter" type="button" style="margin-top:8px">Preview Grandfather letter</button>
         <button id="devOvernightGossip" type="button" style="margin-top:8px">Preview overnight gossip</button>
         <button id="devCopyInRoom" type="button" style="margin-top:8px">Preview copy in the room</button>
         <button id="devThursdayClub" type="button" style="margin-top:8px">Jump to Thursday Club</button>
@@ -2302,7 +2303,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null,matchBeats=[];
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false,grandpaLetterNoted:false};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -2355,6 +2356,7 @@ function ensureWorldDefaults(){
  if(!state.seasonStats)state.seasonStats={playerChallenges:0,incomingAccepted:0,incomingDeclined:0};
  if(!Array.isArray(state.inbox))state.inbox=[];
  if(state.houseTinNoted==null)state.houseTinNoted=false;
+ if(state.grandpaLetterNoted==null)state.grandpaLetterNoted=false;
 }
 function ensureOwnerCopies(owner){
  try{
@@ -2423,6 +2425,9 @@ function wantsHouseTinClubPreview(){
 }
 function wantsInboxPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])inbox=1(?:&|$)/.test(location.search);
+}
+function wantsLetterPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])letter=1(?:&|$)/.test(location.search);
 }
 function wantsGossipPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])gossip=1(?:&|$)/.test(location.search);
@@ -2527,6 +2532,7 @@ function ensureInbox(){
  if(!state)return;
  if(!Array.isArray(state.inbox))state.inbox=[];
  if(state.houseTinNoted==null)state.houseTinNoted=false;
+ if(state.grandpaLetterNoted==null)state.grandpaLetterNoted=false;
 }
 function unreadInboxCount(){
  ensureInbox();
@@ -2535,25 +2541,45 @@ function unreadInboxCount(){
 function journalEsc(s){
  return String(s==null?"":s).replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;","\"":"&quot;"}[c]));
 }
+function letterHeadDate(date){
+ return String(date||"").replace(/^[^,]+,\s*/,"").replace(/\s+\d{4}$/,"");
+}
 const HOUSE_TIN_MAIL={
  id:"house-tin",
  title:"The house tin",
  from:"Lythmere Card Club",
  body:"You are short of a table. The Club keeps ordinary house cards in the tin under Journal — only when you are at the Card Club. They are not the copies you lost. Take until you have seven."
 };
+const GRANDPA_LETTER={
+ id:"grandpa-letter",
+ kind:"letter",
+ title:"A letter from Grandfather",
+ from:"Grandfather",
+ greeting:"You'll have reached town by now.",
+ sign:"— Grandfather",
+ body:[
+  "I packed this under the lid so you'd find it after the walk, not while I was still talking.",
+  "Tomas keeps mornings at the Market. Count the sides before you let him talk you into a wager. Saturday is when the Club all turn up.",
+  "These cards remember more of the old tables than I do. Keep them moving."
+ ]
+};
 function postInbox(msg,opts){
  ensureInbox();
  if(!msg)return null;
  if(msg.id&&state.inbox.some(m=>m.id===msg.id))return null;
+ const body=Array.isArray(msg.body)?msg.body.filter(Boolean).join("\n\n"):(msg.body||"");
  const mail={
   id:msg.id||("IN-"+Math.random().toString(36).slice(2,10).toUpperCase()),
   title:msg.title||"Message",
-  body:msg.body||"",
+  body,
   from:msg.from||"",
   date:formattedWorldDate(),
   phase:state.visual?.phase||"",
   read:false
  };
+ if(msg.kind)mail.kind=msg.kind;
+ if(msg.greeting)mail.greeting=msg.greeting;
+ if(msg.sign)mail.sign=msg.sign;
  state.inbox.push(mail);
  if(!(opts&&opts.preview))save();
  updateWorldRecordButton();
@@ -2588,11 +2614,19 @@ function renderInboxList(){
  if(!mail.length)return `<div class="journalEmpty">No messages yet.</div>`;
  return `<div class="journalMailList">${mail.map(m=>{
   const seal=m.read?"":`<img class="journalMailSeal" src="./assets/ui/paper_seal.png" alt="">`;
-  return `<button type="button" class="journalMailRow${m.read?"":" isUnread"}" data-mail="${journalEsc(m.id)}"><span class="journalMailSealSlot">${seal}</span><span class="journalMailRowCopy"><b>${journalEsc(m.title)}</b><span class="source">${journalEsc([m.from,m.date].filter(Boolean).join(" · "))}</span></span></button>`;
+  const when=m.kind==="letter"?letterHeadDate(m.date):m.date;
+  return `<button type="button" class="journalMailRow${m.read?"":" isUnread"}" data-mail="${journalEsc(m.id)}"><span class="journalMailSealSlot">${seal}</span><span class="journalMailRowCopy"><b>${journalEsc(m.title)}</b><span class="source">${journalEsc([m.from,when].filter(Boolean).join(" · "))}</span></span></button>`;
  }).join("")}</div>`;
 }
 function renderInboxLetter(mail){
- return `<div class="journalMailLetter"><button type="button" class="journalMailBack" data-inbox-back>Inbox</button><b>${journalEsc(mail.title)}</b><div class="source">${journalEsc([mail.from,mail.date].filter(Boolean).join(" · "))}</div><div class="journalMailBody">${journalEsc(mail.body)}</div></div>`;
+ const back=`<button type="button" class="journalMailBack" data-inbox-back>Inbox</button>`;
+ if(mail&&mail.kind==="letter"){
+  const paras=(mail.body||"").split(/\n+/).filter(Boolean).map(p=>`<p>${journalEsc(p)}</p>`).join("");
+  const greeting=mail.greeting?`<p class="journalLetterGreeting">${journalEsc(mail.greeting)}</p>`:"";
+  const sign=mail.sign?`<p class="journalLetterSign">${journalEsc(mail.sign)}</p>`:"";
+  return `<div class="journalMailLetter isLetter">${back}<article class="journalLetter"><header class="journalLetterHead"><span>${journalEsc(mail.from||"")}</span><span>${journalEsc(letterHeadDate(mail.date))}</span></header>${greeting}${paras}${sign}<img class="journalLetterWax" src="./assets/ui/wax_seal.png" alt=""></article></div>`;
+ }
+ return `<div class="journalMailLetter">${back}<b>${journalEsc(mail.title)}</b><div class="source">${journalEsc([mail.from,mail.date].filter(Boolean).join(" · "))}</div><div class="journalMailBody">${journalEsc(mail.body)}</div></div>`;
 }
 function noteHouseTinIfNeeded(opts){
  const preview=!!(opts&&opts.preview);
@@ -2603,6 +2637,31 @@ function noteHouseTinIfNeeded(opts){
  if(!preview&&n>=HOUSE_TIN_FLOOR)return;
  if(!preview)state.houseTinNoted=true;
  postInbox(HOUSE_TIN_MAIL,{preview});
+}
+function noteGrandpaLetterIfNeeded(opts){
+ const preview=!!(opts&&opts.preview);
+ if(!preview&&inHomeTutorial())return;
+ ensureInbox();
+ if(!preview&&state.grandpaLetterNoted)return;
+ if(!preview&&!(state.grandpaTutorial||state.tutorialDone))return;
+ if(!preview){
+  state.grandpaLetterNoted=true;
+  if(state.log&&!state.log.some(x=>/letter from Grandfather/i.test(x))){
+   state.log.push("A letter from Grandfather was packed with the tin.");
+  }
+ }
+ postInbox(GRANDPA_LETTER,{preview});
+}
+function bootGrandpaLetter(){
+ ensureVisualState();
+ state.grandpaTutorial=true;
+ state.tutorialDone=true;
+ state.visual.location="Market";
+ noteGrandpaLetterIfNeeded({preview:true});
+ renderHome();
+ show("home");
+ openJournalView("inbox");
+ openInboxMessage("grandpa-letter");
 }
 let gazettePages=[],gazetteIndex=0,gazetteFlipping=false,gazetteSwipeX=null,gazetteFitGen=0;
 function gazetteEventName(title){
@@ -2935,6 +2994,7 @@ function bootTownOrTutorial(){
   renderHome();show("home");
   return;
  }
+ if(wantsLetterPreview()){bootGrandpaLetter();return}
  if(wantsSaturdayPreview()){jumpVisualToSaturdayOpen();save();renderHome();show("home");return}
  if(wantsHomeTutorial())startGrandpaTutorial();
  else{renderHome();show("home")}
@@ -3145,6 +3205,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  ensureWeekTraveller();
  if(ensureJournalSeen())save();
  noteHouseTinIfNeeded();
+ noteGrandpaLetterIfNeeded();
 }
 const $=x=>document.getElementById(x);
 const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","houseTin","clubWall","seriesSummary","cardInspector"];
@@ -5017,6 +5078,7 @@ function finishTutorialToTown(){
     news("Grandfather said to look for Tomas in the Market.");
     ensureVisualState();
     state.visual.location="Market";
+    noteGrandpaLetterIfNeeded();
     save();
   }
   resetResultChrome();
@@ -6189,6 +6251,10 @@ if($("devInbox"))$("devInbox").onclick=()=>{
  noteHouseTinIfNeeded({preview:true});
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  show("home");renderHome();
+};
+if($("devGrandpaLetter"))$("devGrandpaLetter").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootGrandpaLetter();
 };
 if($("devOvernightGossip"))$("devOvernightGossip").onclick=()=>bootOvernightGossip();
 if($("devCopyInRoom"))$("devCopyInRoom").onclick=()=>bootCopyInRoom();
@@ -12341,6 +12407,73 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 .journalOverlay .journalMailBody{
   font-size:clamp(13px,3.6vw,15px);
   line-height:1.45;
+}
+.journalOverlay .journalMailLetter.isLetter{
+  gap:6px;
+  padding:0 0 6px;
+}
+.journalOverlay .journalLetter{
+  position:relative;
+  min-width:0;
+  margin:0;
+  padding:12px 12px 42px;
+  color:#3a2414;
+  background:
+    linear-gradient(90deg,rgba(90,50,20,.07),transparent 10%,transparent 90%,rgba(90,50,20,.07)),
+    linear-gradient(180deg,#f7ead0 0%,#efe0c0 52%,#e8d5ae 100%);
+  border:1px solid #c4a46a;
+  box-shadow:inset 0 1px 0 #fff8e8,0 4px 10px #0003;
+}
+.journalOverlay .journalLetterHead{
+  display:flex;
+  justify-content:space-between;
+  gap:8px;
+  min-width:0;
+  margin:0 0 10px;
+  font-size:clamp(10px,2.8vw,11px);
+  letter-spacing:.06em;
+  text-transform:uppercase;
+  color:#6a4a2a;
+}
+.journalOverlay .journalLetterHead span{
+  min-width:0;
+  flex:0 1 auto;
+  white-space:nowrap;
+}
+.journalOverlay .journalLetterHead span:last-child{
+  text-align:right;
+}
+.journalOverlay .journalLetter p{
+  margin:0 0 10px;
+  font-size:clamp(12px,3.4vw,15px);
+  line-height:1.45;
+}
+.journalOverlay .journalLetterGreeting{
+  font-style:italic;
+}
+.journalOverlay .journalLetterSign{
+  margin:12px 0 0;
+  text-align:right;
+  font-style:italic;
+}
+.journalOverlay .journalLetterWax{
+  position:absolute;
+  right:8px;
+  bottom:6px;
+  width:36px;
+  height:36px;
+  object-fit:contain;
+  border-radius:50%;
+  pointer-events:none;
+  mix-blend-mode:multiply;
+  filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
+}
+@media(max-width:360px){
+  .journalOverlay .journalLetter{padding:8px 8px 30px}
+  .journalOverlay .journalLetterHead{margin:0 0 8px;gap:6px}
+  .journalOverlay .journalLetter p{margin:0 0 8px;font-size:12px;line-height:1.4}
+  .journalOverlay .journalLetterSign{margin:8px 0 0}
+  .journalOverlay .journalLetterWax{width:28px;height:28px;right:6px;bottom:4px}
 }
 .journalOverlay .journalMailBack{
   align-self:flex-start;
