@@ -487,6 +487,9 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       </div>
     </div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
+    <button id="clubWallHotspot" class="clubWallHotspot hidden" type="button" aria-label="Champion picture">
+      <img src="assets/ui/club_champ_elira.png" alt="">
+    </button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide paperPlaque" id="locationStrip" aria-label="Lythmere locations">
     <span class="paperCorners" aria-hidden="true">
@@ -538,6 +541,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devFridayClub" type="button" style="margin-top:8px">Jump to Friday Club</button>
         <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
         <button id="devDoorstepTalk" type="button" style="margin-top:8px">Preview doorstep talk</button>
+        <button id="devClubWall" type="button" style="margin-top:8px">Preview Club champion picture</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -636,6 +640,21 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       <div id="tournamentBracket" class="tournamentBracket"></div>
     </div>
     <div id="tournamentActions" class="challengeActions"></div>
+  </div>
+</div>
+
+<div id="clubWall" class="hidden">
+  <div class="clubWallTable leftoverTable">
+    <div class="clubWallStage">
+      <div class="clubWallFrame">
+        <img class="clubWallArt" id="clubWallArt" src="assets/ui/club_champ_elira_overlay.png" alt="Last Saturday Open champion">
+        <p id="clubWallChamp" class="clubWallPlate">Elira</p>
+      </div>
+    </div>
+    <p id="clubWallNote" class="clubWallCaption">Last Saturday's Open.</p>
+    <div class="clubWallActions">
+      <button type="button" id="clubWallBack" class="challengePlaqueBtn">Back</button>
+    </div>
   </div>
 </div>
 
@@ -1331,7 +1350,7 @@ const DOORSTEP_PLACE={
   "Far table's playing slow on purpose.",
   "Smells like old oak and ink in here.",
   "They've moved the spare chairs again.",
-  "That pairing wall gets more looks than the boards."
+  "Last week's champion is still on the wall."
  ],
  Market:[
   "Beph's stall's still shut.",
@@ -1853,6 +1872,66 @@ function bootDoorstepTalk(){
  const who=(localNpcNames().filter(n=>npcLocationNow(n)==="Card Club")[0])||"Bram";
  openDoorstepTalk(who);
 }
+function bootClubWall(){
+ jumpVisualToOpenWeek("Friday");
+ save();
+ renderHome();
+ openClubWall();
+}
+function nextLocalOpenEvent(){
+ ensureVisualState();
+ const now=state.visual.date;
+ const y=visualDateObj().getFullYear();
+ return eventsForYear(y).find(e=>e.date>=now&&e.tier==="Local")||eventsForYear(y+1).find(e=>e.tier==="Local")||null;
+}
+function discoverOpenFromWall(){
+ const ev=nextLocalOpenEvent();
+ if(!ev)return;
+ discoverEvent({...ev,source:"the Club wall"});
+}
+function lastOpenChampion(){
+ const t=state.activeTournament;
+ if(t&&t.type==="saturdayOpen"&&t.status==="complete"&&t.finalWinner){
+  return {name:t.finalWinner,date:t.date,event:t.name||"Lythmere Saturday Open"};
+ }
+ const wins=(state.season.tournamentHistory||[]).filter(h=>/Saturday Open/i.test(h.tournament||"")&&h.round==="Winner");
+ if(wins.length){
+  const last=wins[wins.length-1];
+  return {name:last.owner,date:last.date||previousSaturdayIso(),event:last.tournament};
+ }
+ return {name:"Elira",date:previousSaturdayIso(),event:"Lythmere Saturday Open",prior:true};
+}
+function clubChampLabel(name){
+ return name==="You"?"You":name;
+}
+function fillClubWall(){
+ const champ=lastOpenChampion();
+ const plate=$("clubWallChamp"),note=$("clubWallNote"),art=$("clubWallArt");
+ const when=champ.date?new Date(String(champ.date).slice(0,10)+"T12:00:00"):null;
+ const dateLabel=when&&!Number.isNaN(when.getTime())?when.toLocaleDateString("en-GB",{day:"numeric",month:"long"}):"";
+ if(plate)plate.textContent=clubChampLabel(champ.name);
+ if(art){
+  art.src="assets/ui/club_champ_elira_overlay.png";
+  art.alt=(clubChampLabel(champ.name)||"Champion")+" · Saturday Open";
+ }
+ if(note){
+  const openName=String(champ.event||"Saturday Open").replace(/^Lythmere\s+/i,"");
+  note.textContent=champ.prior
+   ?(dateLabel?`Last ${openName}, ${dateLabel}.`:`Last ${openName}.`)
+   :(dateLabel?`${openName} · ${dateLabel}`:openName);
+ }
+}
+function openClubWall(){
+ if(typeof closeDoorstepTalk==="function")closeDoorstepTalk();
+ if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
+ fillClubWall();
+ discoverOpenFromWall();
+ show("clubWall");
+}
+function closeClubWall(){
+ show("home");
+ renderHome();
+}
 function openWeekSubtitle(location,base){
  if(isSaturdayEventNow()&&location==="Card Club"){
   return "Banners up. Travelling players at the far tables. Saturday Open this afternoon.";
@@ -2183,6 +2262,9 @@ function wantsFridayPreview(){
 }
 function wantsTalkPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])talk=1(?:&|$)/.test(location.search);
+}
+function wantsWallPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])wall=1(?:&|$)/.test(location.search);
 }
 function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
@@ -2567,6 +2649,13 @@ function nextSaturdayIso(from){
  while(d.getDay()!==6)d.setDate(d.getDate()+1);
  return d.toISOString().slice(0,10);
 }
+function previousSaturdayIso(from){
+ let d=from?new Date(from+"T12:00:00"):visualDateObj();
+ if(Number.isNaN(d.getTime()))d=new Date("2026-03-02T12:00:00");
+ d.setDate(d.getDate()-1);
+ while(d.getDay()!==6)d.setDate(d.getDate()-1);
+ return d.toISOString().slice(0,10);
+}
 function jumpVisualToSaturdayOpen(){
  ensureVisualState();
  state.grandpaTutorial=true;
@@ -2644,6 +2733,7 @@ function bootTownOrTutorial(){
  if(wantsGossipPreview()){bootOvernightGossip();return}
  if(wantsCopyRoomPreview()){bootCopyInRoom();return}
  if(wantsTalkPreview()){bootDoorstepTalk();return}
+ if(wantsWallPreview()){bootClubWall();return}
  if(wantsThursdayPreview()){jumpVisualToOpenWeek("Thursday");save();renderHome();show("home");return}
  if(wantsFridayPreview()){jumpVisualToOpenWeek("Friday");save();renderHome();show("home");return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
@@ -2876,7 +2966,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  noteHouseTinIfNeeded();
 }
 const $=x=>document.getElementById(x);
-const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","houseTin","seriesSummary","cardInspector"];
+const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","houseTin","clubWall","seriesSummary","cardInspector"];
 function leftoverScreenId(){
  const j=$("journalOverlay");
  if(j&&!j.classList.contains("hidden"))return "journal";
@@ -2884,7 +2974,7 @@ function leftoverScreenId(){
 }
 function show(id){
  if(id!=="newsGazette")gazetteFitGen++;
- ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","savedDecks","game","seriesSummary","result","tournament","newsGazette","houseTin"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
+ ["home","challenge","npcDossier","termsBuilder","profile","cardInspector","starter","deckSelect","savedDecks","game","seriesSummary","result","tournament","newsGazette","houseTin","clubWall"].forEach(x=>$(x).classList.toggle("hidden",x!==id));
  scheduleScreenLayout(id);
 }
 function matchViewBox(){
@@ -2949,6 +3039,10 @@ function layoutScreenFit(id){
  }
  if(id==="houseTin"){
   const root=$("houseTin");
+  return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
+ }
+ if(id==="clubWall"){
+  const root=$("clubWall");
   return layoutStageWidth(root,root&&root.querySelector(".leftoverTable"),"--stage-w",200);
  }
  if(id==="journal"){
@@ -3838,6 +3932,7 @@ function renderWorldScene(){
  updateWorldRecordButton();
  $("eventHotspot").classList.toggle("hidden",!saturdayOpen);
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
+ if($("clubWallHotspot"))$("clubWallHotspot").classList.toggle("hidden",state.visual.location!=="Card Club");
  if($("houseTinHotspot")){
   const atClub=state.visual.location==="Card Club";
   const short=houseTinTownPreview||((Array.isArray(state.player)?state.player.length:0)<HOUSE_TIN_FLOOR);
@@ -5889,6 +5984,8 @@ if($("journalContent"))$("journalContent").addEventListener("click",e=>{
 });
 if($("noticeBoard"))$("noticeBoard").onclick=()=>{openJournalView();};
 if($("eventHotspot"))$("eventHotspot").onclick=openSaturdayTournament;
+if($("clubWallHotspot"))$("clubWallHotspot").onclick=openClubWall;
+if($("clubWallBack"))$("clubWallBack").onclick=closeClubWall;
 if($("tableTalk"))$("tableTalk").onclick=()=>{if(tableTalkQueue&&tableTalkQueue.advance)tableTalkQueue.advance()};
 if($("game"))$("game").addEventListener("pointerup",e=>{
  if(!tableTalkQueue||!tableTalkQueue.advance||!inHomeTutorial())return;
@@ -5918,12 +6015,16 @@ if($("devDoorstepTalk"))$("devDoorstepTalk").onclick=()=>{
  $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
  bootDoorstepTalk();
 };
+if($("devClubWall"))$("devClubWall").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootClubWall();
+};
 if($("doorstepAsk"))$("doorstepAsk").onclick=askDoorstepTalk;
 if($("doorstepChallenge"))$("doorstepChallenge").onclick=challengeDoorstepTalk;
 if($("doorstepLeave"))$("doorstepLeave").onclick=closeDoorstepTalk;
 if($("townScene"))$("townScene").addEventListener("pointerdown",e=>{
  if(!doorstepTalkName)return;
- if(e.target.closest&&e.target.closest("#doorstepTalk,#eventHotspot,#houseTinHotspot"))return;
+ if(e.target.closest&&e.target.closest("#doorstepTalk,#eventHotspot,#houseTinHotspot,#clubWallHotspot"))return;
  if(e.target.closest&&e.target.closest("img.tomasCutout,img.nessaCutout,img.bramCutout,img.eliraCutout,img.bephCutout"))return;
  closeDoorstepTalk();
 });
@@ -7774,6 +7875,47 @@ if ('serviceWorker' in navigator) {
 @media(max-width:620px){
   #visualShell #houseTinHotspot{width:min(81px,23vw)!important}
 }
+#visualShell .townScene #clubWallHotspot{
+  position:absolute!important;
+  z-index:11;
+  left:10.35%!important;
+  right:auto!important;
+  top:34.85%!important;
+  width:10.2%!important;
+  height:5.18%!important;
+  min-width:0!important;
+  min-height:0!important;
+  margin:-18px!important;
+  padding:18px!important;
+  box-sizing:content-box!important;
+  border:0!important;
+  border-radius:0!important;
+  background:transparent!important;
+  box-shadow:none!important;
+  transform:none;
+  filter:sepia(.12) saturate(.84) brightness(.92) contrast(.9);
+  mix-blend-mode:normal;
+  cursor:pointer;
+}
+#visualShell .townScene #clubWallHotspot.hidden{display:none!important}
+#visualShell .townScene:not([data-location="Card Club"]) #clubWallHotspot{display:none!important}
+#visualShell .townScene #clubWallHotspot img{
+  display:block;
+  width:100%;
+  height:100%;
+  object-fit:fill;
+  object-position:center;
+  pointer-events:none;
+}
+#visualShell .townScene #clubWallHotspot:active{transform:scale(.97);filter:sepia(.12) saturate(.84) brightness(.84) contrast(.9)}
+@media(max-width:360px){
+  #visualShell .townScene #clubWallHotspot{
+    left:9.11%!important;
+    top:34.79%!important;
+    width:10.85%!important;
+    height:5.21%!important;
+  }
+}
 @media(max-width:620px){
   #visualShell #advanceTime.scrollPlaque{
     max-width:min(224px,100%)!important;
@@ -8872,12 +9014,14 @@ html,body,#visualShell{color-scheme:only light}
 .townScene.spotOn #spotLayer{display:block}
 .townScene.spotOn #npcHotspots,
 .townScene.spotOn .npcHotspot,
-.townScene.spotOn #eventHotspot{pointer-events:none!important}
+.townScene.spotOn #eventHotspot,
+.townScene.spotOn #clubWallHotspot{pointer-events:none!important}
 .townScene.spotOn .tomasCutout,
 .townScene.spotOn .nessaCutout,
 .townScene.spotOn .bramCutout,
 .townScene.spotOn .eliraCutout,
-.townScene.spotOn .bephCutout{
+.townScene.spotOn .bephCutout,
+.townScene.spotOn #clubWallHotspot{
   visibility:hidden!important;
   pointer-events:none!important
 }
@@ -9921,6 +10065,7 @@ html,body,#visualShell{color-scheme:only light}
 #tournament,
 #newsGazette,
 #houseTin,
+#clubWall,
 .journalOverlay{
   --stage-w:440px;
 }
@@ -11619,6 +11764,119 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 }
 @media(max-width:620px){
   #houseTin .houseTinWell{border-width:8px;padding:12px 10px 12px}
+}
+
+#clubWall{
+  position:relative;
+  z-index:8;
+  max-width:none!important;
+  margin:0!important;
+  width:100%!important;
+  height:100dvh!important;
+  height:100svh!important;
+  min-height:100dvh!important;
+  max-height:100dvh;
+  overflow:hidden;
+  box-sizing:border-box;
+  padding:max(16px,env(safe-area-inset-top) + 10px) max(16px,env(safe-area-inset-right) + 10px) max(16px,env(safe-area-inset-bottom) + 10px) max(16px,env(safe-area-inset-left) + 10px)!important;
+  background:#1a140f url("assets/ui/match_club_table.png") center / cover no-repeat!important;
+  color:#1a120c!important;
+  display:flex!important;
+  align-items:center;
+  justify-content:center;
+  touch-action:pan-y;
+}
+#clubWall.hidden{display:none!important}
+#clubWall .clubWallTable{
+  height:100%;
+  min-width:0;
+  min-height:0;
+  display:flex;
+  flex-direction:column;
+  align-items:center;
+  justify-content:center;
+  gap:12px;
+  padding:4px 8px 0;
+  box-sizing:border-box;
+  overflow:hidden;
+}
+#clubWall .clubWallStage{
+  flex:1 1 auto;
+  width:100%;
+  min-height:0;
+  min-width:0;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+}
+#clubWall .clubWallFrame{
+  position:relative;
+  width:100%;
+  max-height:100%;
+  aspect-ratio:837/1107;
+  filter:drop-shadow(0 10px 16px #0008);
+}
+#clubWall .clubWallArt{
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  object-fit:contain;
+  object-position:center;
+  pointer-events:none;
+}
+#clubWall .clubWallPlate{
+  position:absolute;
+  left:28%;
+  right:28%;
+  bottom:3.6%;
+  margin:0;
+  padding:0 4px;
+  height:5.4%;
+  display:flex;
+  align-items:center;
+  justify-content:center;
+  overflow:hidden;
+  font:700 clamp(11px,3.1vw,15px)/1 Georgia,"Times New Roman",serif;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#2a1c10;
+  text-shadow:0 1px 0 #c9a45a88;
+  pointer-events:none;
+}
+#clubWall .clubWallCaption{
+  flex:0 0 auto;
+  margin:0;
+  max-width:92%;
+  text-align:center;
+  font:italic 500 clamp(12px,3.4vw,16px)/1.3 Georgia,"Times New Roman",serif;
+  color:#f0e2c4;
+  text-shadow:0 1px 2px #000a;
+}
+#clubWall .clubWallActions{
+  display:flex;
+  flex-direction:column;
+  gap:8px;
+  flex:0 0 auto;
+  width:min(100%,320px);
+  padding-bottom:4px;
+}
+#clubWall .clubWallActions button{
+  display:block;
+  width:100%;
+  margin:0;
+  min-height:48px;
+  padding:10px 12px!important;
+  font-family:Georgia,"Times New Roman",serif!important;
+  font-size:clamp(14px,4vw,17px)!important;
+  font-weight:800!important;
+  letter-spacing:.08em;
+  text-transform:uppercase;
+  color:#1a0c08!important;
+  background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)!important;
+  border:3px solid #3d2414!important;
+  border-radius:6px!important;
+  box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006!important;
 }
 
 .journalOverlay:not(.hidden){
