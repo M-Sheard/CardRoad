@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v136-tomas-nessa-place';
+const CACHE_NAME = 'card-road-pwa-v138-pin-cover';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
