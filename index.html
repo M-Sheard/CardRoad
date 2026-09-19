@@ -7868,21 +7868,23 @@ if ('serviceWorker' in navigator) {
 }
 #visualShell .townScene #clubWallHotspot{
   position:absolute!important;
-  z-index:12;
-  left:max(10px,calc(env(safe-area-inset-left) + 8px))!important;
+  z-index:11;
+  left:5.5%!important;
   right:auto!important;
-  top:max(88px,calc(env(safe-area-inset-top) + 72px))!important;
-  width:min(22vw,92px)!important;
-  min-width:0!important;
+  top:30.5%!important;
+  width:min(14vw,58px)!important;
+  min-width:44px!important;
   height:auto!important;
   margin:0!important;
-  padding:0!important;
+  padding:12px!important;
+  box-sizing:content-box!important;
   border:0!important;
   border-radius:0!important;
   background:transparent!important;
   box-shadow:none!important;
-  transform:rotate(-1.5deg);
-  filter:drop-shadow(0 5px 8px rgba(18,12,8,.4));
+  transform:rotate(-2deg);
+  filter:sepia(.18) saturate(.78) brightness(.9) contrast(.86);
+  mix-blend-mode:multiply;
   cursor:pointer;
 }
 #visualShell .townScene #clubWallHotspot.hidden{display:none!important}
@@ -7893,9 +7895,9 @@ if ('serviceWorker' in navigator) {
   height:auto;
   pointer-events:none;
 }
-#visualShell .townScene #clubWallHotspot:active{transform:rotate(-1.5deg) scale(.97)}
+#visualShell .townScene #clubWallHotspot:active{transform:rotate(-2deg) scale(.97);filter:sepia(.18) saturate(.78) brightness(.82) contrast(.86)}
 @media(max-width:360px){
-  #visualShell .townScene #clubWallHotspot{width:min(24vw,84px)!important}
+  #visualShell .townScene #clubWallHotspot{width:min(16vw,54px)!important;top:30%!important;left:4.5%!important}
 }
 @media(max-width:620px){
   #visualShell #advanceTime.scrollPlaque{
