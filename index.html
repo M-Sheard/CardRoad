@@ -542,6 +542,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
         <button id="devDoorstepTalk" type="button" style="margin-top:8px">Preview doorstep talk</button>
         <button id="devClubWall" type="button" style="margin-top:8px">Preview Club champion picture</button>
+        <button id="devWeekTraveller" type="button" style="margin-top:8px">Preview week traveller</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -888,7 +889,8 @@ const NPC_CUTOUT={
  Nessa:"./assets/npcs/nessa_standee_bevel_v25.png",
  Bram:"./assets/npcs/bram_standee_bevel_v25.png",
  Elira:"./assets/npcs/elira_standee_bevel_v25.png",
- Beph:"./assets/npcs/beph_standee_bevel_v3.png"
+ Beph:"./assets/npcs/beph_standee_bevel_v3.png",
+ Merrin:"./assets/npcs/merrin_standee_bevel_v1.png"
 };
 const NPC_BIO={
  Tomas:"A hot-blooded Market regular. He plays fast, takes risks, and hates leaving a loss on the table.",
@@ -896,6 +898,7 @@ const NPC_BIO={
  Nessa:"Warm company at the Inn and Market. She would rather share a Match and a laugh than grind a rivalry.",
  Elira:"A reserved Card Club player. He lets the board talk; knowing him well takes time.",
  Beph:"Keeps a fruit stall in Lythmere Market. She is away on pilgrimage for now.",
+ Merrin:"Took the Northvale coach. Tight closed-hand player; gone by Sunday.",
  "Visitor A":"A travelling competitor in town for the Open. They will move on when the event ends.",
  "Visitor B":"A travelling competitor in town for the Open. They will move on when the event ends.",
  "Visitor C":"A travelling competitor in town for the Open. They will move on when the event ends."
@@ -953,6 +956,10 @@ function syncBephStandee(scene){
  if(img.style.display!==vis) img.style.display=vis;
  if(!onMarket)closeBephStall();
 }
+function travellerStamp(name){
+ const src=NPC_CUTOUT[name]||NPC_CUTOUT.Merrin;
+ return {cls:"travellerCutout",src:src+"?v=bevel1"};
+}
 function syncTownStandees(){
  const scene=$("townScene")||document.querySelector(".townScene");
  if(!scene)return;
@@ -960,6 +967,7 @@ function syncTownStandees(){
  const crowd=String(present.length);
  if(scene.dataset.crowd!==crowd) scene.dataset.crowd=crowd;
  const here=new Set(present);
+ const week=weekTravellerName();
  Object.entries(TOWN_STAMP).forEach(([name,spec])=>{
   const live=here.has(name);
   let img=scene.querySelector("."+spec.cls);
@@ -970,8 +978,26 @@ function syncTownStandees(){
   if(img.style.display!==vis) img.style.display=vis;
   if(!live) img.removeAttribute("data-slot");
  });
- const slotOrder=({1:[0],2:[0,1],3:[0,1,3],4:[0,1,2,3]})[present.length]||present.map((_,i)=>i);
- present.forEach((name,i)=>{
+ const weekLive=!!(week&&here.has(week));
+ let travImg=scene.querySelector(".travellerCutout");
+ if(weekLive||travImg){
+  const spec=travellerStamp(week||"Merrin");
+  travImg=ensureTownCutout(scene,week||"Merrin",spec);
+  if(weekLive){
+   travImg.alt=week;
+   travImg.setAttribute("aria-label",week);
+   if(travImg.getAttribute("src")!==spec.src) travImg.src=spec.src;
+   travImg.onclick=()=>{const btn=document.querySelector('#npcHotspots .npcHotspot[data-npc="'+week+'"]');if(btn)btn.click();};
+   travImg.style.display="block";
+   travImg.dataset.slot="4";
+  }else{
+   travImg.style.display="none";
+   travImg.removeAttribute("data-slot");
+  }
+ }
+ const locals=present.filter(n=>TOWN_STAMP[n]);
+ const slotOrder=({1:[0],2:[0,1],3:[0,1,3],4:[0,1,2,3]})[locals.length]||locals.map((_,i)=>i);
+ locals.forEach((name,i)=>{
   const spec=TOWN_STAMP[name];
   if(!spec)return;
   const img=scene.querySelector("."+spec.cls);
@@ -1145,7 +1171,9 @@ function daysUntilSaturday(){
  return Math.round((sat-visualDateObj())/86400000);
 }
 function visualDateLabel(){let d=visualDateObj();return d.toLocaleDateString("en-GB",{weekday:"long",day:"numeric",month:"long"})+" · Year "+state.season.year}
-function npcLocationNow(n){ensureVisualState();let r=V6_ROUTINES[n]?.[visualWeekday()]||{};let scheduled=r[state.visual.phase];
+function npcLocationNow(n){ensureVisualState();
+ if(n&&n===weekTravellerName())return "Card Club";
+ let r=V6_ROUTINES[n]?.[visualWeekday()]||{};let scheduled=r[state.visual.phase];
  // V6 event response: serious competitors converge on the club for Saturday's event.
  if(visualWeekday()==="Saturday"&&state.visual.phase==="Afternoon")return "Card Club";
  return scheduled||null;
@@ -1342,6 +1370,23 @@ const DOORSTEP_VOICE={
   "I came to look, not to chatter.",
   "The gilt's been polished. Distracting.",
   "A worthwhile board is enough conversation."
+ ],
+ Merrin:[
+  "Coach got in this morning. Legs still rattling.",
+  "I'm only here the week.",
+  "Northvale tables are meaner. Lythmere's kinder.",
+  "Don't get attached. Sunday's the last coach.",
+  "Got a spare chair? I travel light.",
+  "Closed hand. I don't chatter my tin.",
+  "I'll sit if the terms are ordinary.",
+  "Club's warmer than the road. I'll take it.",
+  "I don't know your names yet. Deal anyway.",
+  "If I win a copy, it comes with me.",
+  "Ask before Saturday. I might be in the Open.",
+  "Road dust on the plaque. Sorry.",
+  "I play, I sleep at the Inn, I leave.",
+  "Your champion's on the wall. Nice gilt.",
+  "One week. Then the next town."
  ]
 };
 const DOORSTEP_PLACE={
@@ -1588,13 +1633,18 @@ function doorstepCompanyPool(name){
    else if(name==="Bram")out.push("Elira's working a quiet corner. As usual.");
   }
  });
+ const trav=weekTravellerName();
+ if(trav&&trav!==name&&npcLocationNow(trav)===here){
+  out.push(trav+"'s only here the week.");
+  out.push(trav+" came in on the coach.");
+ }
  return out;
 }
 function doorstepSpeakPool(name){
  const here=npcLocationNow(name)||(state.visual&&state.visual.location)||"";
  const out=[];
  const add=xs=>{(xs||[]).forEach(x=>{if(x)out.push(x)})};
- add(DOORSTEP_VOICE[name]||["Go on then."]);
+ add(DOORSTEP_VOICE[name]||DOORSTEP_VOICE.Merrin||["Go on then."]);
  add(DOORSTEP_PLACE[here]||[]);
  add(doorstepTimePool());
  add(doorstepSaturdayPool(name));
@@ -1641,6 +1691,15 @@ function doorstepAskChoices(name){
  const here=state.visual&&state.visual.location;
  const present=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)===here);
  const elsewhere=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)&&npcLocationNow(n)!==here);
+ const trav=weekTravellerName();
+ if(trav&&trav!==name&&npcLocationNow(trav)===here){
+  add(`${trav}'s only here the week.`,`${name} says ${trav} is only in town for the week.`);
+  add(`${trav} took the Northvale coach.`,`${name} says ${trav} came in on the Northvale coach.`);
+ }
+ if(name===trav){
+  add("I'm only here till Sunday.",`${name} is only in town until Sunday.`);
+  add("You'll find me at the Club this week.",`${name} is staying at the Club this week.`);
+ }
  const days=daysUntilSaturday();
  present.forEach(other=>{
   if(days===1)add(`${other}'s already talking about tomorrow's Open.`,`${name} says ${other} is already talking about tomorrow's Open.`);
@@ -1734,7 +1793,7 @@ function fillDoorstepTalk(name){
 function positionDoorstepTalk(){
  const wrap=$("doorstepTalk"),scene=$("townScene");
  if(!wrap||!doorstepTalkName||wrap.hidden||!scene)return;
- const spec=TOWN_STAMP[doorstepTalkName];
+ const spec=TOWN_STAMP[doorstepTalkName]||(doorstepTalkName&&doorstepTalkName===weekTravellerName()?travellerStamp(doorstepTalkName):null);
  const img=spec&&scene.querySelector("."+spec.cls);
  const card=wrap.querySelector(".doorstepCard");
  if(!img||!card)return;
@@ -1994,8 +2053,12 @@ function fillNoticeBoard(info){
  if(!$("noticeBoard"))return;
  info=info||{label:"Notices",ids:[]};
  const g=latestGossip();
+ const week=weekTravellerName();
  const noticeEvents=(info.ids||[]).map(worldEvent).filter(Boolean).slice(0,3);
  const parts=[];
+ if(week){
+  parts.push(`<span class="noticeItem"><b>${week} in town</b><small>at the Club this week</small></span>`);
+ }
  if(g){
   const where=g.place&&g.place!=="Lythmere"?` · ${g.place}`:"";
   parts.push(`<span class="noticeItem"><b>${g.win} took ${g.name}</b><small>from ${g.lose}${where}</small></span>`);
@@ -2068,9 +2131,82 @@ function hydrateTournamentVisitors(){
  t.visitors.forEach(ensureTraveller);
 }
 function pickSaturdayTravellers(){
+ const week=weekTravellerName();
  const used=new Set(localNpcNames());
+ if(week)used.add(week);
  const pool=shuffledList(TRAVELLERS.filter(v=>v&&v.name&&!used.has(v.name)));
- return pool.slice(0,3).map(v=>({name:v.name,skill:v.skill,risk:v.risk,start:[...v.start],bio:v.bio}));
+ const extra=pool.slice(0,week?2:3).map(v=>({name:v.name,skill:v.skill,risk:v.risk,start:[...v.start],bio:v.bio}));
+ if(!week)return extra;
+ const home=TRAVELLERS.find(v=>v.name===week);
+ const first=home?{name:home.name,skill:home.skill,risk:home.risk,start:[...home.start],bio:home.bio}:null;
+ return [first,...extra].filter(Boolean).slice(0,3);
+}
+function weekMondayIso(from){
+ let d=from?new Date(from+"T12:00:00"):visualDateObj();
+ if(Number.isNaN(d.getTime()))d=new Date("2026-03-02T12:00:00");
+ const back=(d.getDay()+6)%7;
+ d.setDate(d.getDate()-back);
+ return d.toISOString().slice(0,10);
+}
+function nextMondayIso(from){
+ let d=new Date(weekMondayIso(from)+"T12:00:00");
+ d.setDate(d.getDate()+7);
+ return d.toISOString().slice(0,10);
+}
+function travellerByName(name){
+ return TRAVELLERS.find(v=>v.name===name)||TRAVELLERS[0];
+}
+function weekTravellerName(){
+ const t=state&&state.weekTraveller;
+ if(!t||!t.name)return "";
+ const today=(state.visual&&state.visual.date)||"";
+ if(t.arrive&&today<t.arrive)return "";
+ if(t.leave&&today>=t.leave)return "";
+ return t.name;
+}
+function announceWeekTraveller(t,opts){
+ if(!t||t.announced)return;
+ t.announced=true;
+ const line=`${t.name} took the Northvale coach. You'll find them at the Club this week.`;
+ news(line,{h:`${t.name} in town`,p:line});
+ if(!(opts&&opts.silent))save();
+}
+function ensureWeekTraveller(opts){
+ if(!state)return;
+ ensureVisualState();
+ const today=state.visual.date;
+ const arrive=weekMondayIso(today);
+ const leave=nextMondayIso(today);
+ const t=state.weekTraveller;
+ if(t&&t.leave&&today>=t.leave){
+  if(t.announced&&!t.departedNews){
+   news(`${t.name} took the morning coach.`);
+   t.departedNews=true;
+  }
+  state.weekTravellerDone=t.arrive;
+  state.weekTraveller=null;
+ }
+ if(!state.weekTraveller){
+  if(state.weekTravellerDone)return;
+  const v=travellerByName("Merrin");
+  state.weekTraveller={name:v.name,arrive,leave,announced:false};
+ }
+ const live=state.weekTraveller;
+ if(live&&today>=live.arrive&&today<live.leave){
+  ensureTraveller(travellerByName(live.name));
+  if(!live.announced)announceWeekTraveller(live,opts);
+ }
+}
+function bootWeekTraveller(){
+ jumpVisualToOpenWeek("Thursday");
+ if(state.weekTravellerDone&&!weekTravellerName()){
+  state.weekTravellerDone=null;
+  state.weekTraveller=null;
+ }
+ ensureWeekTraveller({silent:true});
+ save();
+ renderHome();
+ show("home");
 }
 function competitorBio(n){
  if(n==="You")return "Lythmere's newest road player. Grandfather's gift is on the table tonight.";
@@ -2265,6 +2401,9 @@ function wantsTalkPreview(){
 }
 function wantsWallPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])wall=1(?:&|$)/.test(location.search);
+}
+function wantsTravellerPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])traveller=1(?:&|$)/.test(location.search);
 }
 function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
@@ -2734,6 +2873,7 @@ function bootTownOrTutorial(){
  if(wantsCopyRoomPreview()){bootCopyInRoom();return}
  if(wantsTalkPreview()){bootDoorstepTalk();return}
  if(wantsWallPreview()){bootClubWall();return}
+ if(wantsTravellerPreview()){bootWeekTraveller();return}
  if(wantsThursdayPreview()){jumpVisualToOpenWeek("Thursday");save();renderHome();show("home");return}
  if(wantsFridayPreview()){jumpVisualToOpenWeek("Friday");save();renderHome();show("home");return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
@@ -2962,6 +3102,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  ensureTutorial();
  ensureVisualState();
  ensureInbox();
+ ensureWeekTraveller();
  if(ensureJournalSeen())save();
  noteHouseTinIfNeeded();
 }
@@ -3920,7 +4061,11 @@ function renderWorldScene(){
    b.classList.toggle("active",on);
    if(on)b.setAttribute("aria-current","location");else b.removeAttribute("aria-current");
  });
- let spots=$("npcHotspots");spots.innerHTML="";let present=localNpcNames().filter(n=>npcLocationNow(n)===state.visual.location);
+ let spots=$("npcHotspots");spots.innerHTML="";
+ ensureWeekTraveller({silent:true});
+ let present=localNpcNames().filter(n=>npcLocationNow(n)===state.visual.location);
+ const weekHere=weekTravellerName();
+ if(weekHere&&state.visual.location==="Card Club"&&!present.includes(weekHere))present=present.concat(weekHere);
  let sceneEl=$("townScene");if(sceneEl)sceneEl.dataset.crowd=String(present.length);
  let positions=[[51,43],[72,64],[30,62],[80,70]];
  present.forEach((n,i)=>{let b=document.createElement("button");b.className="npcHotspot"+(n==="Tomas"?" tomas-production":"");b.dataset.npc=n;b.dataset.slot=String(i);b.style.left=positions[i%positions.length][0]+"%";b.style.top=positions[i%positions.length][1]+"%";b.innerHTML=`<span class="figure"></span><span class="tag">${n}</span>`;b.title=npcPriority(n);b.onclick=()=>openDoorstepTalk(n);spots.appendChild(b)});
@@ -4156,8 +4301,10 @@ function renderKnownCollection(npc){
 function news(text,paper){
  if(text){
   if(!state.news)state.news=[];
-  state.news.push(text);
-  if(state.news.length>48)state.news=state.news.slice(-48);
+  if(state.news[state.news.length-1]!==text){
+   state.news.push(text);
+   if(state.news.length>48)state.news=state.news.slice(-48);
+  }
  }
  if(paper)gazette(paper.h,paper.p);
  syncJournalTabSeals();
@@ -6019,13 +6166,17 @@ if($("devClubWall"))$("devClubWall").onclick=()=>{
  $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
  bootClubWall();
 };
+if($("devWeekTraveller"))$("devWeekTraveller").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootWeekTraveller();
+};
 if($("doorstepAsk"))$("doorstepAsk").onclick=askDoorstepTalk;
 if($("doorstepChallenge"))$("doorstepChallenge").onclick=challengeDoorstepTalk;
 if($("doorstepLeave"))$("doorstepLeave").onclick=closeDoorstepTalk;
 if($("townScene"))$("townScene").addEventListener("pointerdown",e=>{
  if(!doorstepTalkName)return;
  if(e.target.closest&&e.target.closest("#doorstepTalk,#eventHotspot,#houseTinHotspot,#clubWallHotspot"))return;
- if(e.target.closest&&e.target.closest("img.tomasCutout,img.nessaCutout,img.bramCutout,img.eliraCutout,img.bephCutout"))return;
+ if(e.target.closest&&e.target.closest("img.tomasCutout,img.nessaCutout,img.bramCutout,img.eliraCutout,img.bephCutout,img.travellerCutout"))return;
  closeDoorstepTalk();
 });
 if($("houseTinTake"))$("houseTinTake").onclick=takeHouseCard;
@@ -7686,30 +7837,36 @@ if ('serviceWorker' in navigator) {
 .townScene [data-plate="tomasCutout"],
 .townScene [data-plate="nessaCutout"],
 .townScene [data-plate="bramCutout"],
-.townScene [data-plate="eliraCutout"]{display:none!important}
+.townScene [data-plate="eliraCutout"],
+.townScene [data-plate="travellerCutout"]{display:none!important}
 .townScene .tomasCutout,
 .townScene .nessaCutout,
 .townScene .bramCutout,
-.townScene .eliraCutout{
+.townScene .eliraCutout,
+.townScene .travellerCutout{
   object-fit:contain!important;
   background:transparent!important;
   filter:drop-shadow(4px 10px 8px rgba(18,12,8,.42))!important;
 }
 </style>
 <style>
-/* v35 — four standing anchors per location. Size is per slot (perspective),
-   not a crowd-wide shrink, so the wood plaque stays readable. */
+/* v35 — four standing anchors per location, plus Club pin 4 reserved for
+   the week traveller. Size is per slot (perspective), not a crowd-wide shrink. */
 .townScene[data-crowd] .tomasCutout,
 .townScene[data-crowd] .nessaCutout,
 .townScene[data-crowd] .bramCutout,
 .townScene[data-crowd] .eliraCutout,
+.townScene[data-crowd] .travellerCutout,
 .townScene .tomasCutout,
 .townScene .nessaCutout,
 .townScene .bramCutout,
-.townScene .eliraCutout{
+.townScene .eliraCutout,
+.townScene .travellerCutout{
+  position:absolute!important;
   right:auto!important;
   width:min(30vw,220px)!important;
   max-width:220px!important;
+  height:auto!important;
   transform-origin:50% 100%!important;
   transform:scale(var(--slot-scale,1))!important;
   left:var(--slot-x,8%)!important;
@@ -7719,7 +7876,8 @@ if ('serviceWorker' in navigator) {
 .townScene .tomasCutout,
 .townScene .nessaCutout,
 .townScene .bramCutout,
-.townScene .eliraCutout{
+.townScene .eliraCutout,
+.townScene .travellerCutout{
   pointer-events:auto!important;
   cursor:pointer;
 }
@@ -7727,7 +7885,8 @@ if ('serviceWorker' in navigator) {
 .townScene .tomasCutout:active,
 .townScene .nessaCutout:active,
 .townScene .bramCutout:active,
-.townScene .eliraCutout:active{
+.townScene .eliraCutout:active,
+.townScene .travellerCutout:active{
   transform:scale(calc(var(--slot-scale,1) * .975))!important;
 }
 
@@ -7751,12 +7910,14 @@ if ('serviceWorker' in navigator) {
 .townScene[data-location="Card Club"] [data-slot="1"]{--slot-x:22.3%;--slot-bottom:37.1%;--slot-scale:.70;--slot-z:23}
 .townScene[data-location="Card Club"] [data-slot="2"]{--slot-x:58.1%;--slot-bottom:44.7%;--slot-scale:.47;--slot-z:18}
 .townScene[data-location="Card Club"] [data-slot="3"]{--slot-x:31.8%;--slot-bottom:47.7%;--slot-scale:.38;--slot-z:17}
+.townScene[data-location="Card Club"] [data-slot="4"]{--slot-x:40.8%;--slot-bottom:38.4%;--slot-scale:.56;--slot-z:20}
 
 @media(max-width:620px){
   .townScene .tomasCutout,
   .townScene .nessaCutout,
   .townScene .bramCutout,
-  .townScene .eliraCutout{
+  .townScene .eliraCutout,
+  .townScene .travellerCutout{
     width:min(42vw,200px)!important;
     max-width:200px!important;
   }
@@ -8993,6 +9154,7 @@ html,body,#visualShell{color-scheme:only light}
 <style>
 /* Canonical location-anchor tool (locked). Off by default.
    New screens: add ?pins=1 to the URL, then Mark spots → pins 0–3 → Copy → bake v35 slot CSS.
+   Card Club pin 4 is reserved for the week traveller.
    Hidden for players; not mounted unless that query (or localStorage cardRoadPins=1). */
 #spotToggle{
   position:absolute;z-index:46;
@@ -10416,15 +10578,21 @@ html,body,#visualShell{color-scheme:only light}
     Market:["left stall","right stall","fountain-side","street receding"],
     Riverside:["left path","right bank","mid path","water-side"],
     Inn:["hearth left","rug center","bar right","back tables"],
-    "Card Club":["left floor","right floor","mid back","far table"]
+    "Card Club":["left floor","right floor","mid back","far table","traveller"]
   };
-  const Z={Market:[23,22,18,17],Riverside:[23,22,18,19],Inn:[22,23,22,18],"Card Club":[22,23,18,17]};
+  const Z={Market:[23,22,18,17],Riverside:[23,22,18,19],Inn:[22,23,22,18],"Card Club":[22,23,18,17,21]};
   const byLoc={}, endsByLoc={};
   let on=false, listOn=true, drag=null;
   function scene(){return document.querySelector(".townScene")}
   function locName(){return (scene()&&scene().dataset.location)||"Market"}
+  function pinCount(loc){return loc==="Card Club"?5:4}
   function slots(loc){
-    if(!byLoc[loc])byLoc[loc]=[null,null,null,null];
+    const n=pinCount(loc);
+    const cur=byLoc[loc];
+    if(!cur||cur.length!==n){
+      const old=cur||[];
+      byLoc[loc]=Array.from({length:n},(_,i)=>old[i]||null);
+    }
     return byLoc[loc];
   }
   function ends(loc){
@@ -10512,7 +10680,7 @@ html,body,#visualShell{color-scheme:only light}
       const auto=i===1||i===2?" auto":"";
       return i+" "+hints[i]+" — "+pct(p.left)+"L "+pct(p.bottom)+"B ×"+sc2(p.scale)+auto;
     });
-    box.innerHTML="<b>"+loc+"</b><p class=\"spotHint\">0 front / 3 back. 1–2 scale from how high they sit.</p>"
+    box.innerHTML="<b>"+loc+"</b><p class=\"spotHint\">0 front / 3 back. Club pin 4 is travellers. 1–2 scale from how high they sit.</p>"
       +'<div class="spotEnd"><span>Front 0</span><span>'+sc2(e.front)+'</span><button type="button" data-end="front" data-dir="-1">−</button><button type="button" data-end="front" data-dir="1">+</button></div>'
       +'<div class="spotEnd"><span>Back 3</span><span>'+sc2(e.back)+'</span><button type="button" data-end="back" data-dir="-1">−</button><button type="button" data-end="back" data-dir="1">+</button></div>'
       +"<code>"+lines.join("<br>")+"</code>"
@@ -10577,7 +10745,7 @@ html,body,#visualShell{color-scheme:only light}
       const y=document.createElement("span"); y.className="spotTick y"; y.style.bottom=n+"%"; y.textContent=n+"%";
       layer.appendChild(x); layer.appendChild(y);
     });
-    for(let i=0;i<4;i++){
+    for(let i=0;i<5;i++){
       const d=document.createElement("button");
       d.type="button"; d.className="spotGhost"; d.dataset.i=String(i); d.style.display="none";
       const img=document.createElement("img");
@@ -10613,7 +10781,7 @@ html,body,#visualShell{color-scheme:only light}
       const endBtn=e.target.closest("[data-end]");
       if(endBtn){bumpEnd(endBtn.dataset.end,+endBtn.dataset.dir);return}
       if(e.target.id==="spotCopy")copyText();
-      if(e.target.id==="spotClear"){byLoc[locName()]=[null,null,null,null];paintDots();paintReadout();applySlots()}
+      if(e.target.id==="spotClear"){byLoc[locName()]=Array.from({length:pinCount(locName())},()=>null);paintDots();paintReadout();applySlots()}
       if(e.target.id==="spotHideList"){listOn=false;syncListBtn()}
     });
     shell.appendChild(box);
@@ -10622,7 +10790,7 @@ html,body,#visualShell{color-scheme:only light}
       e.preventDefault();
       const list=slots(locName());
       let i=list.findIndex(p=>!p);
-      if(i<0)i=3;
+      if(i<0)i=pinCount(locName())-1;
       list[i]=clientPct(sc,e.clientX,e.clientY);
       paintDots(); paintReadout(); applySlots();
     });
