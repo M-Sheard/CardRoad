@@ -1008,6 +1008,46 @@ function syncTownStandees(){
   if(old.style.pointerEvents!=="none") old.style.pointerEvents="none";
  });
  syncBephStandee(scene);
+ requestAnimationFrame(()=>{layoutTownPins();requestAnimationFrame(layoutTownPins)});
+}
+
+const TOWN_ART={w:941,h:1672};
+const TOWN_PIN_REF={w:390,h:844};
+function townCoverMap(sw,sh){
+ const scale=Math.max(sw/TOWN_ART.w,sh/TOWN_ART.h);
+ const dw=TOWN_ART.w*scale,dh=TOWN_ART.h*scale;
+ return {scale,dw,dh,left:(sw-dw)/2,top:(sh-dh)/2,sw,sh};
+}
+function layoutTownPins(){
+ const sc=document.querySelector(".townScene");
+ if(!sc||sc.classList.contains("spotOn"))return;
+ const sw=sc.clientWidth,sh=sc.clientHeight;
+ if(sw<8||sh<8)return;
+ const cover=townCoverMap(sw,sh);
+ const ref=townCoverMap(TOWN_PIN_REF.w,TOWN_PIN_REF.h);
+ sc.querySelectorAll("[data-slot]").forEach(el=>{
+  if(el.style.display==="none"){
+   el.style.removeProperty("--slot-x");
+   el.style.removeProperty("--slot-bottom");
+   el.style.removeProperty("--slot-scale");
+   return;
+  }
+  const cs=getComputedStyle(el);
+  const pinX=parseFloat(cs.getPropertyValue("--pin-x"));
+  const pinB=parseFloat(cs.getPropertyValue("--pin-bottom"));
+  const pinS=parseFloat(cs.getPropertyValue("--pin-scale"));
+  if(!Number.isFinite(pinX)||!Number.isFinite(pinB))return;
+  const sx=cover.left+pinX/100*cover.dw;
+  const sy=cover.top+(1-pinB/100)*cover.dh;
+  const cxPct=sx/sw*100;
+  const botPct=(sh-sy)/sh*100;
+  const standeeW=el.offsetWidth||Math.min(sw*.30,220);
+  const half=(standeeW*.5/sw)*100;
+  const scaleAdj=(cover.scale/ref.scale)*(TOWN_PIN_REF.w/sw);
+  el.style.setProperty("--slot-x",(cxPct-half).toFixed(2)+"%");
+  el.style.setProperty("--slot-bottom",botPct.toFixed(2)+"%");
+  el.style.setProperty("--slot-scale",((Number.isFinite(pinS)?pinS:1)*scaleAdj).toFixed(3));
+ });
 }
 
 function isoDate(d){return d.toISOString().slice(0,10)}
@@ -3141,6 +3181,7 @@ function scheduleScreenLayout(id){
 function scheduleMatchLayout(){scheduleScreenLayout("game")}
 function onViewportLayout(){
  positionDoorstepTalk();
+ layoutTownPins();
  if(viewportLayoutTimer)clearTimeout(viewportLayoutTimer);
  viewportLayoutTimer=setTimeout(()=>{
   viewportLayoutTimer=0;
@@ -7850,8 +7891,9 @@ if ('serviceWorker' in navigator) {
 }
 </style>
 <style>
-/* v35 — four standing anchors per location, plus Club pin 4 reserved for
-   the week traveller. Size is per slot (perspective), not a crowd-wide shrink. */
+/* v35 — standing anchors per location, plus Club pin 4 for the week traveller.
+   Size is per slot (perspective), not a crowd-wide shrink.
+   --pin-* is on the painting; layoutTownPins() maps it through cover onto --slot-*. */
 .townScene[data-crowd] .tomasCutout,
 .townScene[data-crowd] .nessaCutout,
 .townScene[data-crowd] .bramCutout,
@@ -7890,29 +7932,30 @@ if ('serviceWorker' in navigator) {
   transform:scale(calc(var(--slot-scale,1) * .975))!important;
 }
 
-/* Market: 0 left stall, 1 right stall, 2 fountain-side back, 3 street receding */
-.townScene[data-location="Market"] [data-slot="0"]{--slot-x:-1.9%;--slot-bottom:6.1%;--slot-scale:.90;--slot-z:23}
-.townScene[data-location="Market"] [data-slot="1"]{--slot-x:24.0%;--slot-bottom:6.8%;--slot-scale:.89;--slot-z:22}
-.townScene[data-location="Market"] [data-slot="2"]{--slot-x:55.2%;--slot-bottom:25.6%;--slot-scale:.58;--slot-z:18}
-.townScene[data-location="Market"] [data-slot="3"]{--slot-x:34.4%;--slot-bottom:37.7%;--slot-scale:.38;--slot-z:17}
+/* Pins are stored on the painting (--pin-*), then mapped through
+   background-size:cover onto the scene (--slot-*). See layoutTownPins(). */
+.townScene[data-location="Market"] [data-slot="0"]{--pin-x:19.70%;--pin-bottom:6.10%;--pin-scale:.90;--slot-x:-1.9%;--slot-bottom:6.1%;--slot-scale:.90;--slot-z:23}
+.townScene[data-location="Market"] [data-slot="1"]{--pin-x:40.97%;--pin-bottom:6.80%;--pin-scale:.89;--slot-x:24.0%;--slot-bottom:6.8%;--slot-scale:.89;--slot-z:22}
+.townScene[data-location="Market"] [data-slot="2"]{--pin-x:66.59%;--pin-bottom:25.60%;--pin-scale:.58;--slot-x:55.2%;--slot-bottom:25.6%;--slot-scale:.58;--slot-z:18}
+.townScene[data-location="Market"] [data-slot="3"]{--pin-x:49.51%;--pin-bottom:37.70%;--pin-scale:.38;--slot-x:34.4%;--slot-bottom:37.7%;--slot-scale:.38;--slot-z:17}
 
-.townScene[data-location="Riverside"] [data-slot="0"]{--slot-x:71.2%;--slot-bottom:6.7%;--slot-scale:.82;--slot-z:23}
-.townScene[data-location="Riverside"] [data-slot="1"]{--slot-x:-8.4%;--slot-bottom:31.6%;--slot-scale:.47;--slot-z:22}
-.townScene[data-location="Riverside"] [data-slot="2"]{--slot-x:67.4%;--slot-bottom:41.1%;--slot-scale:.34;--slot-z:18}
-.townScene[data-location="Riverside"] [data-slot="3"]{--slot-x:61.4%;--slot-bottom:45.2%;--slot-scale:.28;--slot-z:19}
+.townScene[data-location="Riverside"] [data-slot="0"]{--pin-x:79.72%;--pin-bottom:6.70%;--pin-scale:.82;--slot-x:71.2%;--slot-bottom:6.7%;--slot-scale:.82;--slot-z:23}
+.townScene[data-location="Riverside"] [data-slot="1"]{--pin-x:14.37%;--pin-bottom:31.60%;--pin-scale:.47;--slot-x:-8.4%;--slot-bottom:31.6%;--slot-scale:.47;--slot-z:22}
+.townScene[data-location="Riverside"] [data-slot="2"]{--pin-x:76.60%;--pin-bottom:41.10%;--pin-scale:.34;--slot-x:67.4%;--slot-bottom:41.1%;--slot-scale:.34;--slot-z:18}
+.townScene[data-location="Riverside"] [data-slot="3"]{--pin-x:71.68%;--pin-bottom:45.20%;--pin-scale:.28;--slot-x:61.4%;--slot-bottom:45.2%;--slot-scale:.28;--slot-z:19}
 
-.townScene[data-location="Inn"] [data-slot="0"]{--slot-x:24.7%;--slot-bottom:3.3%;--slot-scale:1.18;--slot-z:22}
-.townScene[data-location="Inn"] [data-slot="1"]{--slot-x:13.9%;--slot-bottom:48.3%;--slot-scale:.43;--slot-z:23}
-.townScene[data-location="Inn"] [data-slot="2"]{--slot-x:78.1%;--slot-bottom:30.5%;--slot-scale:.73;--slot-z:22}
-.townScene[data-location="Inn"] [data-slot="3"]{--slot-x:38.0%;--slot-bottom:53.5%;--slot-scale:.34;--slot-z:18}
+.townScene[data-location="Inn"] [data-slot="0"]{--pin-x:41.54%;--pin-bottom:3.30%;--pin-scale:1.18;--slot-x:24.7%;--slot-bottom:3.3%;--slot-scale:1.18;--slot-z:22}
+.townScene[data-location="Inn"] [data-slot="1"]{--pin-x:32.68%;--pin-bottom:48.30%;--pin-scale:.43;--slot-x:13.9%;--slot-bottom:48.3%;--slot-scale:.43;--slot-z:23}
+.townScene[data-location="Inn"] [data-slot="2"]{--pin-x:85.39%;--pin-bottom:30.50%;--pin-scale:.73;--slot-x:78.1%;--slot-bottom:30.5%;--slot-scale:.73;--slot-z:22}
+.townScene[data-location="Inn"] [data-slot="3"]{--pin-x:52.46%;--pin-bottom:53.50%;--pin-scale:.34;--slot-x:38.0%;--slot-bottom:53.5%;--slot-scale:.34;--slot-z:18}
 
-.townScene[data-location="Card Club"] [data-slot="0"]{--slot-x:6.7%;--slot-bottom:33.4%;--slot-scale:.82;--slot-z:22}
-.townScene[data-location="Card Club"] [data-slot="1"]{--slot-x:22.3%;--slot-bottom:37.1%;--slot-scale:.70;--slot-z:23}
-.townScene[data-location="Card Club"] [data-slot="2"]{--slot-x:68.2%;--slot-bottom:43.2%;--slot-scale:.54;--slot-z:20}
-.townScene[data-location="Card Club"] [data-slot="3"]{--slot-x:31.8%;--slot-bottom:47.7%;--slot-scale:.38;--slot-z:17}
-.townScene[data-location="Card Club"] [data-slot="4"]{--slot-x:58.1%;--slot-bottom:44.7%;--slot-scale:.47;--slot-z:18}
-.townScene[data-location="Card Club"][data-saturday="open"] [data-slot="0"]{--slot-x:57.6%;--slot-bottom:52.8%;--slot-scale:.38;--slot-z:15}
-.townScene[data-location="Card Club"][data-saturday="open"] [data-slot="4"]{--slot-x:10.2%;--slot-bottom:37.7%;--slot-scale:.66;--slot-z:24}
+.townScene[data-location="Card Club"] [data-slot="0"]{--pin-x:26.76%;--pin-bottom:33.40%;--pin-scale:.82;--slot-x:6.7%;--slot-bottom:33.4%;--slot-scale:.82;--slot-z:22}
+.townScene[data-location="Card Club"] [data-slot="1"]{--pin-x:39.57%;--pin-bottom:37.10%;--pin-scale:.70;--slot-x:22.3%;--slot-bottom:37.1%;--slot-scale:.70;--slot-z:23}
+.townScene[data-location="Card Club"] [data-slot="2"]{--pin-x:77.26%;--pin-bottom:43.20%;--pin-scale:.54;--slot-x:68.2%;--slot-bottom:43.2%;--slot-scale:.54;--slot-z:20}
+.townScene[data-location="Card Club"] [data-slot="3"]{--pin-x:47.37%;--pin-bottom:47.70%;--pin-scale:.38;--slot-x:31.8%;--slot-bottom:47.7%;--slot-scale:.38;--slot-z:17}
+.townScene[data-location="Card Club"] [data-slot="4"]{--pin-x:68.97%;--pin-bottom:44.70%;--pin-scale:.47;--slot-x:58.1%;--slot-bottom:44.7%;--slot-scale:.47;--slot-z:18}
+.townScene[data-location="Card Club"][data-saturday="open"] [data-slot="0"]{--pin-x:68.56%;--pin-bottom:52.80%;--pin-scale:.38;--slot-x:57.6%;--slot-bottom:52.8%;--slot-scale:.38;--slot-z:15}
+.townScene[data-location="Card Club"][data-saturday="open"] [data-slot="4"]{--pin-x:29.64%;--pin-bottom:37.70%;--pin-scale:.66;--slot-x:10.2%;--slot-bottom:37.7%;--slot-scale:.66;--slot-z:24}
 
 @media(max-width:620px){
   .townScene .tomasCutout,
@@ -10734,7 +10777,7 @@ html,body,#visualShell{color-scheme:only light}
     if(btn)btn.textContent=on?"Hide grid":"Mark spots";
     syncListBtn();
     if(on){paintDots();paintReadout();applySlots()}
-    else applySlots();
+    else {applySlots();if(typeof layoutTownPins==="function")layoutTownPins()}
   }
   function mount(){
     const sc=scene();
