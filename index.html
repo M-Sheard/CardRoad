@@ -2622,6 +2622,11 @@ function scheduleGrandpaChatter(fromIso){
  const gap=28+Math.floor(Math.random()*8);
  state.grandpaMail.nextChatter=addDaysIso(fromIso||state.visual?.date,gap);
 }
+function hushGrandpaChatter(days){
+ ensureGrandpaMail();
+ const quiet=addDaysIso(state.visual?.date,days||2);
+ if(!state.grandpaMail.nextChatter||quiet>state.grandpaMail.nextChatter)state.grandpaMail.nextChatter=quiet;
+}
 function pickGrandpaPool(pool,key){
  ensureGrandpaMail();
  if(!pool||!pool.length)return {greeting:"Well.",body:["I forget what I meant to say."],sign:"— Grandfather"};
@@ -2667,11 +2672,6 @@ function postGrandpaLetter(spec,opts){
   sign:filled.sign,
   body:filled.body
  },opts);
-}
-function hushGrandpaChatter(days){
- ensureGrandpaMail();
- const quiet=addDaysIso(state.visual?.date,days||2);
- if(!state.grandpaMail.nextChatter||quiet>state.grandpaMail.nextChatter)state.grandpaMail.nextChatter=quiet;
 }
 function postInbox(msg,opts){
  ensureInbox();
@@ -2770,12 +2770,12 @@ function maybeGrandpaChatter(opts){
  ensureGrandpaMail();
  const today=state.visual?.date;
  if(!preview){
-  if(!state.grandpaMail.nextChatter){scheduleGrandpaChatter();return null;}
+  if(!state.grandpaMail.nextChatter){scheduleGrandpaChatter();save();return null;}
   if(!today||today<state.grandpaMail.nextChatter)return null;
  }
  const spec=pickGrandpaPool(GRANDPA_CHAT_LETTERS,"lastChat");
  const mail=postGrandpaLetter({id:preview?"grandpa-chat-preview":("grandpa-chat-"+today),title:"A letter from Grandfather",...spec},{preview});
- if(!preview&&mail)scheduleGrandpaChatter();
+ if(!preview){scheduleGrandpaChatter();save()}
  return mail;
 }
 function noteGrandpaWinIfNeeded(opts){
@@ -2787,7 +2787,7 @@ function noteGrandpaWinIfNeeded(opts){
  const id=preview?"grandpa-win-preview":("grandpa-win-"+(t.date||state.visual?.date||"")+"-"+(t.type||t.name||"open"));
  const spec=pickGrandpaPool(GRANDPA_WIN_LETTERS,"lastWin");
  const mail=postGrandpaLetter({id,...spec},{preview,vars:{event}});
- if(!preview&&mail)hushGrandpaChatter(3);
+ if(!preview&&mail){hushGrandpaChatter(3);save()}
  return mail;
 }
 function noteGrandpaEnterIfNeeded(opts){
@@ -2802,7 +2802,7 @@ function noteGrandpaEnterIfNeeded(opts){
  const id=preview?"grandpa-enter-preview":("grandpa-enter-"+(t.date||state.visual?.date||"")+"-"+(t.type||"open"));
  const spec=pickGrandpaPool(GRANDPA_ENTER_LETTERS,"lastEnter");
  const mail=postGrandpaLetter({id,...spec},{preview,vars:{event}});
- if(!preview&&mail)hushGrandpaChatter(2);
+ if(!preview&&mail){hushGrandpaChatter(2);save()}
  return mail;
 }
 function bootGrandpaLetter(kind){
