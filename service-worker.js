@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v128-club-champ-scale';
+const CACHE_NAME = 'card-road-pwa-v129-club-champ-lower';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
