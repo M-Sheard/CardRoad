@@ -487,8 +487,8 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
       </div>
     </div>
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Saturday Open</button>
-    <button id="clubWallHotspot" class="clubWallHotspot hidden" type="button" aria-label="Pairing wall">
-      <img src="assets/ui/club_pairing_board.png" alt="">
+    <button id="clubWallHotspot" class="clubWallHotspot hidden" type="button" aria-label="Champion picture">
+      <img src="assets/ui/club_champ_elira.png" alt="">
     </button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide paperPlaque" id="locationStrip" aria-label="Lythmere locations">
@@ -541,7 +541,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devFridayClub" type="button" style="margin-top:8px">Jump to Friday Club</button>
         <button id="devTownTalk" type="button" style="margin-top:8px">Preview town talk overlay</button>
         <button id="devDoorstepTalk" type="button" style="margin-top:8px">Preview doorstep talk</button>
-        <button id="devClubWall" type="button" style="margin-top:8px">Preview Club wall</button>
+        <button id="devClubWall" type="button" style="margin-top:8px">Preview Club champion picture</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -647,14 +647,11 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
   <div class="clubWallTable leftoverTable">
     <div class="clubWallStage">
       <div class="clubWallFrame">
-        <img class="clubWallArt" src="assets/ui/club_pairing_sheet.png" alt="Saturday Open pairing sheet">
-        <div class="clubWallInk">
-          <p id="clubWallKicker" class="clubWallKicker">First round</p>
-          <ol id="clubWallPairs" class="clubWallPairs"></ol>
-          <p id="clubWallNote" class="clubWallNote"></p>
-        </div>
+        <img class="clubWallArt" id="clubWallArt" src="assets/ui/club_champ_elira_overlay.png" alt="Last Saturday Open champion">
+        <p id="clubWallChamp" class="clubWallPlate">Elira</p>
       </div>
     </div>
+    <p id="clubWallNote" class="clubWallCaption">Last Saturday's Open.</p>
     <div class="clubWallActions">
       <button type="button" id="clubWallBack" class="challengePlaqueBtn">Back</button>
     </div>
@@ -1353,7 +1350,7 @@ const DOORSTEP_PLACE={
   "Far table's playing slow on purpose.",
   "Smells like old oak and ink in here.",
   "They've moved the spare chairs again.",
-  "That pairing wall gets more looks than the boards."
+  "Last week's champion is still on the wall."
  ],
  Market:[
   "Beph's stall's still shut.",
@@ -1890,33 +1887,38 @@ function nextLocalOpenEvent(){
 function discoverOpenFromWall(){
  const ev=nextLocalOpenEvent();
  if(!ev)return;
- discoverEvent({...ev,source:"the Club pairing wall"});
+ discoverEvent({...ev,source:"the Club wall"});
 }
-function clubWallSheet(){
- const blank=[["—","—"],["—","—"],["—","—"],["—","—"]];
- const posted=[["You","Tomas"],["Bram","Nessa"],["Elira","Merrin"],["Willa","Fen"]];
- const going=[["You","—"],["Bram","Nessa"],["Elira","—"],["—","—"]];
- if(isSaturdayEventNow())return {kicker:"",pairs:posted,note:"This afternoon. First round at the Club tables."};
- if(visualWeekday()==="Saturday")return {kicker:"",pairs:posted,note:"The Open is this afternoon."};
- const days=daysUntilSaturday();
- if(days===1)return {kicker:"",pairs:posted,note:"Saturday Open tomorrow afternoon."};
- if(days===2)return {kicker:"",pairs:going,note:"Names going up. Pencil's still out. Friday they post the wall."};
- if(days===3)return {kicker:"",pairs:blank,note:"Empty seats. Names go up Thursday."};
- return {kicker:"",pairs:blank,note:"Sheet's down. Next Open is Saturday."};
+function lastOpenChampion(){
+ const t=state.activeTournament;
+ if(t&&t.type==="saturdayOpen"&&t.status==="complete"&&t.finalWinner){
+  return {name:t.finalWinner,date:t.date,event:t.name||"Lythmere Saturday Open"};
+ }
+ const wins=(state.season.tournamentHistory||[]).filter(h=>/Saturday Open/i.test(h.tournament||"")&&h.round==="Winner");
+ if(wins.length){
+  const last=wins[wins.length-1];
+  return {name:last.owner,date:last.date||previousSaturdayIso(),event:last.tournament};
+ }
+ return {name:"Elira",date:previousSaturdayIso(),event:"Lythmere Saturday Open",prior:true};
+}
+function clubChampLabel(name){
+ return name==="You"?"You":name;
 }
 function fillClubWall(){
- const sheet=clubWallSheet();
- const kick=$("clubWallKicker"),note=$("clubWallNote"),list=$("clubWallPairs");
- if(kick){
-  kick.textContent=sheet.kicker||"";
-  kick.hidden=!sheet.kicker;
+ const champ=lastOpenChampion();
+ const plate=$("clubWallChamp"),note=$("clubWallNote"),art=$("clubWallArt");
+ const when=champ.date?new Date(String(champ.date).slice(0,10)+"T12:00:00"):null;
+ const dateLabel=when&&!Number.isNaN(when.getTime())?when.toLocaleDateString("en-GB",{day:"numeric",month:"long"}):"";
+ if(plate)plate.textContent=clubChampLabel(champ.name);
+ if(art){
+  art.src="assets/ui/club_champ_elira_overlay.png";
+  art.alt=(clubChampLabel(champ.name)||"Champion")+" · Saturday Open";
  }
- if(note)note.textContent=sheet.note;
- if(list){
-  list.innerHTML=sheet.pairs.map((pair,i)=>{
-   const a=pair[0]||"—",b=pair[1]||"—";
-   return `<li><span class="clubWallTableN">${i+1}</span> ${a} vs ${b}</li>`;
-  }).join("");
+ if(note){
+  const openName=String(champ.event||"Saturday Open").replace(/^Lythmere\s+/i,"");
+  note.textContent=champ.prior
+   ?(dateLabel?`Last ${openName}, ${dateLabel}.`:`Last ${openName}.`)
+   :(dateLabel?`${openName} · ${dateLabel}`:openName);
  }
 }
 function openClubWall(){
@@ -2645,6 +2647,13 @@ function nextSaturdayIso(from){
  let d=from?new Date(from+"T12:00:00"):visualDateObj();
  if(Number.isNaN(d.getTime()))d=new Date("2026-03-07T12:00:00");
  while(d.getDay()!==6)d.setDate(d.getDate()+1);
+ return d.toISOString().slice(0,10);
+}
+function previousSaturdayIso(from){
+ let d=from?new Date(from+"T12:00:00"):visualDateObj();
+ if(Number.isNaN(d.getTime()))d=new Date("2026-03-02T12:00:00");
+ d.setDate(d.getDate()-1);
+ while(d.getDay()!==6)d.setDate(d.getDate()-1);
  return d.toISOString().slice(0,10);
 }
 function jumpVisualToSaturdayOpen(){
@@ -11796,7 +11805,7 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   position:relative;
   width:100%;
   max-height:100%;
-  aspect-ratio:829/1071;
+  aspect-ratio:837/1152;
   filter:drop-shadow(0 10px 16px #0008);
 }
 #clubWall .clubWallArt{
@@ -11808,61 +11817,33 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   object-position:center;
   pointer-events:none;
 }
-#clubWall .clubWallInk{
+#clubWall .clubWallPlate{
   position:absolute;
-  left:20%;
-  right:20%;
-  top:28%;
-  bottom:13%;
+  left:30%;
+  right:30%;
+  bottom:7.2%;
+  margin:0;
+  padding:0 4px;
+  height:7.5%;
   display:flex;
-  flex-direction:column;
-  min-width:0;
-  min-height:0;
+  align-items:center;
+  justify-content:center;
   overflow:hidden;
-  color:#3a2a1c;
-  font-family:Georgia,"Times New Roman",serif;
+  font:700 clamp(11px,3.1vw,15px)/1 Georgia,"Times New Roman",serif;
+  letter-spacing:.12em;
+  text-transform:uppercase;
+  color:#2a1c10;
+  text-shadow:0 1px 0 #c9a45a88;
+  pointer-events:none;
+}
+#clubWall .clubWallCaption{
+  flex:0 0 auto;
+  margin:0;
+  max-width:92%;
   text-align:center;
-}
-#clubWall .clubWallKicker{
-  flex:0 0 auto;
-  align-self:stretch;
-  margin:0 0 6px;
-  padding:1px 4px 3px;
-  background:#efe6d2;
-  font:italic 650 clamp(13px,3.8vw,18px)/1.15 Georgia,"Times New Roman",serif;
-  color:#5a3a22;
-}
-#clubWall .clubWallKicker[hidden]{display:none!important}
-#clubWall .clubWallPairs{
-  flex:1 1 auto;
-  min-height:0;
-  margin:0;
-  padding:0;
-  list-style:none;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-evenly;
-  overflow:hidden;
-}
-#clubWall .clubWallPairs li{
-  margin:0;
-  padding:2px 0;
-  font:600 clamp(12px,3.4vw,16px)/1.25 Georgia,"Times New Roman",serif;
-  letter-spacing:.01em;
-  color:#2a1c12;
-}
-#clubWall .clubWallTableN{
-  display:inline-block;
-  min-width:1.1em;
-  margin-right:.35em;
-  font-weight:700;
-  color:#6a4a32;
-}
-#clubWall .clubWallNote{
-  flex:0 0 auto;
-  margin:8px 0 0;
-  font:italic 400 clamp(11px,3.1vw,14px)/1.3 Georgia,"Times New Roman",serif;
-  color:#5a3a22;
+  font:italic 500 clamp(12px,3.4vw,16px)/1.3 Georgia,"Times New Roman",serif;
+  color:#f0e2c4;
+  text-shadow:0 1px 2px #000a;
 }
 #clubWall .clubWallActions{
   display:flex;
