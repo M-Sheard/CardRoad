@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v152-week-in-town';
+const CACHE_NAME = 'card-road-pwa-v153-week-in-town';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
