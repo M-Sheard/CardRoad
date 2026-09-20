@@ -2827,15 +2827,19 @@ function bootWeekTraveller(){
  show("home");
 }
 function bootIncomingChallenge(){
- state.grandpaTutorial=true;
- state.tutorialDone=true;
+ if(typeof finishTutorialToTown==="function")finishTutorialToTown();
+ else{
+  homeTutorial=null;
+  state.grandpaTutorial=true;
+  state.tutorialDone=true;
+ }
  state.matches=Math.max(state.matches||0,1);
- const here=state.visual&&state.visual.location;
+ const here=(state.visual&&state.visual.location)||"Market";
+ state.visual.location=here;
  let who=localNpcNames().find(n=>npcLocationNow(n)===here);
  if(!who){
   who="Tomas";
-  const loc=npcLocationNow(who)||"Market";
-  state.visual.location=loc;
+  state.visual.location=npcLocationNow(who)||"Market";
  }
  state.incoming={npc:who,reason:"Looking for a competitive match"};
  save();
@@ -13337,7 +13341,8 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
   max-height:min(52vh, 100%);
 }
 .journalOverlay .journalWell:has(.journalDev[open]) .journalSheet{
-  flex:1 1 36%;
+  flex:0 1 28%;
+  min-height:72px;
 }
 .journalOverlay .journalActions{
   display:flex;
