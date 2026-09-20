@@ -1343,6 +1343,12 @@ function doorstepPick(list,salt,avoid){
  const use=pool.length?pool:raw;
  return use[doorstepHash(salt)%use.length];
 }
+function doorstepSaid(name,map){
+ if(!map)return "";
+ return map[name]||map.else||map.Merrin||"";
+}
+// Voice follows locked personalities (bible): Tomas hot-blooded; Nessa warm; Bram respectful/craft; Elira reserved; Merrin one-week closed-hand.
+// Friend/rival/respect stance waits. Do not pour a shared pile into every mouth.
 const DOORSTEP_VOICE={
  Tomas:[
   "I'm after a table.",
@@ -1359,7 +1365,22 @@ const DOORSTEP_VOICE={
   "If I lose, we play again. That's the rule.",
   "I can hear a claim from three stalls away.",
   "Don't look at my tin like that.",
-  "Standing around is worse than losing."
+  "Standing around is worse than losing.",
+  "Draw's a waste of a good argument.",
+  "I don't practice. I play.",
+  "You blinking at the corners? Pick one.",
+  "I've got a hand itching.",
+  "If Bram wants a handshake first, he can wait.",
+  "Lost last night. Still mad about it.",
+  "Don't shuffle like you're afraid of them.",
+  "I'll sit ugly terms if the board's quick.",
+  "Who just claimed? Sounded like mine.",
+  "Market noise helps. Keeps me mean.",
+  "Nessa said be nice. No.",
+  "I count the sides after I put it down. Usually.",
+  "Come on. Before I talk myself out of it.",
+  "Elira's staring. Good. Let him.",
+  "If you're scared of Claim One, say so."
  ],
  Nessa:[
   "I've time, if you do.",
@@ -1376,7 +1397,22 @@ const DOORSTEP_VOICE={
   "That far table's laughing too loud. Good.",
   "If we play, let's not make it grim.",
   "I saved you a bit of cake. Then I ate it.",
-  "The river path's pretty this week."
+  "The river path's pretty this week.",
+  "Tomas looks like a kettle. Someone should sit him.",
+  "I like a Match that still talks after.",
+  "Don't let Bram make it a sermon.",
+  "The Inn's got a spare chair with your name on it. Unofficially.",
+  "I forget who won last. That's the idea.",
+  "Come wander if you don't want a table yet.",
+  "Someone's new tin is very shiny. Poor thing.",
+  "I told a traveller the river-tables story. Hale would approve.",
+  "If we sit, we can still be friends after. That's allowed.",
+  "The Market smells like wet canvas. Reminds me of home.",
+  "Elira nodded at me. I think that's a conversation.",
+  "I'm terrible at pairings. I just like people.",
+  "Stay for a hand. Then stay for another.",
+  "Don't grind. The week's long enough already.",
+  "I waved at Beph's stall again. Still shut."
  ],
  Bram:[
   "Fair terms and I'll sit.",
@@ -1393,7 +1429,22 @@ const DOORSTEP_VOICE={
   "Someone asked me for a lucky card. I haven't got one.",
   "I walked the river twice. Helps the head.",
   "A match should feel earned.",
-  "Don't rush the shuffle. It notices."
+  "Don't rush the shuffle. It notices.",
+  "Tomas will sit anyone. I won't.",
+  "I'll explain a corner if you want it. I won't shout it.",
+  "The handshake is the match, not the afterthought.",
+  "Ugly terms make ugly winners.",
+  "I sanded a board at the Club last week. Someone had to.",
+  "Nessa's right about not making it grim. Mostly.",
+  "If the budget's tight, that's the craft.",
+  "I don't mind losing to a better placement.",
+  "Elira and I can share a quiet table. Tomas can't.",
+  "Measure twice. Put the card down once.",
+  "The river doesn't hurry. Neither should the first card.",
+  "I'll sit Standard. I said so.",
+  "A claim should be clean enough to repeat.",
+  "Coat's dry now. Wasn't, by the water.",
+  "If you're here to play, I'm here to play properly."
  ],
  Elira:[
   "The board can speak.",
@@ -1410,7 +1461,22 @@ const DOORSTEP_VOICE={
   "Tomorrow can wait.",
   "I came to look, not to chatter.",
   "The gilt's been polished. Distracting.",
-  "A worthwhile board is enough conversation."
+  "A worthwhile board is enough conversation.",
+  "Tomas fills the air. I don't.",
+  "I already know what that far table will do.",
+  "If you need talk, Nessa's nearer.",
+  "The opening matters more than the speech after.",
+  "I practice when the Club is empty. On purpose.",
+  "Don't ask me who won the Inn last night.",
+  "Bram will handshake. I'll just sit.",
+  "The pieces remember. People forget.",
+  "I watched three matches. One was worth it.",
+  "If you're loud, the corners get sloppy.",
+  "I don't owe the room a story.",
+  "Saturday will arrive whether we discuss it or not.",
+  "Your tin's open. That's information.",
+  "I prefer Standard. I prefer quiet more.",
+  "Nod if you mean to sit. That's enough."
  ],
  Merrin:[
   "Coach got in this morning. Legs still rattling.",
@@ -1427,53 +1493,75 @@ const DOORSTEP_VOICE={
   "Road dust on the plaque. Sorry.",
   "I play, I sleep at the Inn, I leave.",
   "Your champion's on the wall. Nice gilt.",
-  "One week. Then the next town."
+  "One week. Then the next town.",
+  "Don't tell me your life. I won't be here to keep it.",
+  "Northvale wouldn't leave a lamp this good unused.",
+  "I packed light. The tin's the heavy part.",
+  "Lythmere talks more than it plays. Fine by me.",
+  "If I lose a copy, that's the road.",
+  "Sunday morning I'm gone before the stew.",
+  "Your Tomas is loud. We have one like him.",
+  "I don't need a tour. I need a table.",
+  "Closed hand means closed. Stop peeking.",
+  "The Inn bed's softer than the coach. That's the review.",
+  "I'll learn your names if I last till Friday.",
+  "Don't hold a card for me. I won't be back.",
+  "Ordinary terms. I'm not here to invent rules.",
+  "The wall's pretty. The boards are why I stopped.",
+  "Next town will have a different gilt. Same game."
  ]
 };
-const DOORSTEP_PLACE={
- "Card Club":[
-  "Someone's already claimed the good lamp.",
-  "Far table's playing slow on purpose.",
-  "Smells like old oak and ink in here.",
-  "They've moved the spare chairs again.",
-  "Last week's champion is still on the wall."
- ],
- Market:[
-  "Beph's stall's still shut.",
-  "Fruit's dear this week. Cards aren't.",
-  "Carts keep blocking the good light.",
-  "Someone's shouting prices like they're claims.",
-  "The noticeboard's got a new scrap on it."
- ],
- Riverside:[
-  "River's high. Makes people talk softer.",
-  "A couple of travellers came off the coach.",
-  "Fog this morning. Cleared now.",
-  "Good spot if you don't want a crowd.",
-  "The water's louder than the talk. Fine by me."
- ],
- Inn:[
-  "The fire's doing more work than the players.",
-  "Heard them arguing a corner call last night.",
-  "Stew's better than the play at that table.",
-  "Someone left a tin on the mantel.",
-  "Inn's full of almost-matches."
- ]
-};
+function doorstepPlacePool(name){
+ const here=npcLocationNow(name)||(state.visual&&state.visual.location)||"";
+ if(here==="Card Club"){
+  if(name==="Tomas")return ["Someone's already claimed the good lamp. I'll take the other.","Far table's playing slow. I hate a dithering board.","Last week's champion is still on the wall. I'll move it."];
+  if(name==="Nessa")return ["Someone's claimed the good lamp. They can keep it.","Far table's playing slow. Let them enjoy it.","Smells like old oak and tea in here. I like it."];
+  if(name==="Bram")return ["Someone earned the good lamp. Fair.","Far table's slow on purpose. That's craft, sometimes.","I sanded one of these boards. Don't drag it."];
+  if(name==="Elira")return ["The good lamp is taken. The other table is quieter.","Far table is slow. I already know the ending.","The champion picture is loud. The boards aren't."];
+  return ["Club's warmer than the coach. I'll take it.","Don't mind me. I'm only borrowing a chair.","Your gilt's nice. The boards are why I stopped."];
+ }
+ if(here==="Market"){
+  if(name==="Tomas")return ["Beph's stall's still shut. Doesn't stop a match.","Carts blocking the light. I'll play in the shade.","Someone's shouting prices like they're claims. I like it."];
+  if(name==="Nessa")return ["Beph's stall's still shut. I waved anyway.","Carts keep blocking the good light. We'll manage.","Fruit's dear this week. Sit instead."];
+  if(name==="Bram")return ["Beph's stall's still shut. Pilgrimage, they said.","Noticeboard's got a new scrap. I'll read it properly.","Market's honest in the morning. Less so by noon."];
+  if(name==="Elira")return ["Beph's stall is shut. Noted.","The noticeboard talks more than I will.","Carts. Noise. I can still see a board."];
+  return ["Your market's louder than Northvale's. Fine.","I'm not buying fruit. I'm looking for a table.","Sunday I'm gone. Don't sell me a tin."];
+ }
+ if(here==="Riverside"){
+  if(name==="Tomas")return ["River's high. Won't stop me sitting.","Fog this morning. Cleared. Good.","Travellers off the coach. One of them can sit."];
+  if(name==="Nessa")return ["River's high. Makes people talk softer. I don't mind.","Fog this morning. Pretty, once it went.","Good spot if you don't want a crowd. Or if you do."];
+  if(name==="Bram")return ["I walked the river twice already.","Fog cleared. Helps the head.","Quiet water. That's the sort of table I like."];
+  if(name==="Elira")return ["The water's louder than the talk. Correct.","Fog went. I stayed.","I didn't come here to be found. But here you are."];
+  return ["River towns always smell the same.","Coach rattled. The water doesn't.","I'll sit if the terms are ordinary."];
+ }
+ if(here==="Inn"){
+  if(name==="Tomas")return ["Inn later. Table now. Or both.","Heard them arguing a corner call last night. I was right.","Someone left a tin on the mantel. Tempting."];
+  if(name==="Nessa")return ["The fire's doing more work than the players. Bless it.","Stew's better than the play at that table. Don't tell them.","Inn's full of almost-matches. We could finish one."];
+  if(name==="Bram")return ["Fire's honest. The play at that table isn't always.","Someone left a tin on the mantel. I'll keep an eye.","Heard a corner call last night. They settled it clean, eventually."];
+  if(name==="Elira")return ["The fire talks. I don't have to.","Last night's argument was noise. The board was the point.","I prefer the quiet corner. There isn't one."];
+  return ["Inn bed's softer than the coach. That's the review.","Stew's fine. I'm not staying for the stories.","I'll sleep here. I'll play at the Club."];
+ }
+ return [];
+}
 function doorstepGossipPool(name){
  const g=latestGossip();
  if(!g||!name)return [];
  const held=(state.npcs[name]||[]).includes(g.design);
- if(name===g.win&&held)return [
-  `Still got ${g.lose}'s ${g.name}.`,
-  `This ${g.name} hasn't cooled off yet.`,
-  `${g.lose} keeps looking at my tin.`
- ];
- if(name===g.lose)return [
-  `Lost ${g.name} to ${g.win}${g.place&&g.place!=="Lythmere"?" at the "+g.place:""}.`,
-  `I want that ${g.name} back.`,
-  `${g.win} can keep it warm. Not for long.`
- ];
+ const at=g.place&&g.place!=="Lythmere"?" at the "+g.place:"";
+ if(name===g.win&&held){
+  if(name==="Tomas")return [`Still got ${g.lose}'s ${g.name}.`,`Told you I'd take that ${g.name}.`,`${g.lose} can glare. It's mine.`];
+  if(name==="Nessa")return [`I've got ${g.lose}'s ${g.name}. I'll be kind with it.`,`This ${g.name} still feels a bit like ${g.lose}'s.`];
+  if(name==="Bram")return [`I took ${g.lose}'s ${g.name} cleanly.`,`This ${g.name} was earned. I'll look after it.`];
+  if(name==="Elira")return [`This ${g.name} is quieter now.`,`The board already moved. ${g.lose} will notice.`];
+  return [`Still got ${g.lose}'s ${g.name}.`,`This ${g.name} hasn't cooled off yet.`];
+ }
+ if(name===g.lose){
+  if(name==="Tomas")return [`Lost ${g.name} to ${g.win}${at}. I want it back.`,`${g.win} can keep ${g.name} warm. Not for long.`];
+  if(name==="Nessa")return [`${g.win} has my ${g.name}. I hope they're gentle with it.`,`I miss that ${g.name} already. We can sit for it later.`];
+  if(name==="Bram")return [`I lost ${g.name} to ${g.win}${at}. Fairly, if I'm honest.`,`I'll ask for that ${g.name} again. Properly.`];
+  if(name==="Elira")return [`${g.win} has the ${g.name}. The board allowed it.`,`I noticed. I don't need to discuss it.`];
+  return [`Lost ${g.name} to ${g.win}${at}.`,`I want that ${g.name} back.`];
+ }
  return [];
 }
 function doorstepRoomPool(name){
@@ -1484,18 +1572,55 @@ function doorstepRoomPool(name){
   const label=cardLabel(yours.design);
   const fromTin=/Grandfather/i.test(yours.origin||"")||yours.origin==="Starter collection";
   if(fromTin){
-   out.push(`This ${label} came from your grandfather's tin.`);
-   out.push(`I know whose tin this ${label} started in.`);
+   out.push(doorstepSaid(name,{
+    Tomas:`This ${label} came from your grandfather's tin. I'll sit it.`,
+    Nessa:`This ${label} came from your grandfather's tin. I'll be careful.`,
+    Bram:`This ${label} came from your grandfather's tin. I'll look after it.`,
+    Elira:`This ${label} started in your grandfather's tin. Noted.`,
+    else:`This ${label} came from your grandfather's tin.`
+   }));
+   out.push(doorstepSaid(name,{
+    Tomas:`I know whose tin this ${label} started in. Doesn't make it yours forever.`,
+    Nessa:`I know whose tin this ${label} started in. That's a nice thing, actually.`,
+    Bram:`I know whose tin this ${label} started in. I'll keep it honest.`,
+    Elira:`I know whose tin this ${label} started in. The board doesn't care.`,
+    else:`I know whose tin this ${label} started in.`
+   }));
   }else{
-   out.push(`This ${label} used to be yours.`);
-   out.push(`Funny, seeing your ${label} on my side of the table.`);
+   out.push(doorstepSaid(name,{
+    Tomas:`This ${label} used to be yours. Temporary.`,
+    Nessa:`This ${label} used to be yours. I'll keep it friendly.`,
+    Bram:`This ${label} used to be yours. You earned the first sit.`,
+    Elira:`This ${label} used to be yours. It isn't now.`,
+    else:`This ${label} used to be yours.`
+   }));
+   out.push(doorstepSaid(name,{
+    Tomas:`Funny, seeing your ${label} on my side. Suits me.`,
+    Nessa:`Funny, seeing your ${label} on my side of the table.`,
+    Bram:`Your ${label} sits well on my side. I'll treat it as such.`,
+    Elira:`Your ${label} is quieter on this side.`,
+    else:`Funny, seeing your ${label} on my side of the table.`
+   }));
   }
  }
  for(const cp of copies){
   const sig=copyForeignSignature(cp,name);
   if(!sig)continue;
-  out.push(`This ${cardLabel(cp.design)} still has ${sig.owner}'s name on it.`);
-  out.push(`${sig.owner} left a mark on this ${cardLabel(cp.design)}.`);
+  const card=cardLabel(cp.design);
+  out.push(doorstepSaid(name,{
+   Tomas:`This ${card} still has ${sig.owner}'s name on it. I'll play it anyway.`,
+   Nessa:`This ${card} still has ${sig.owner}'s name on it. Sort of sweet.`,
+   Bram:`This ${card} still has ${sig.owner}'s name on it. That's history, that.`,
+   Elira:`This ${card} still has ${sig.owner}'s name on it. I noticed.`,
+   else:`This ${card} still has ${sig.owner}'s name on it.`
+  }));
+  out.push(doorstepSaid(name,{
+   Tomas:`${sig.owner} left a mark on this ${card}. I'll leave a better one.`,
+   Nessa:`${sig.owner} left a mark on this ${card}. I'll be gentle with it.`,
+   Bram:`${sig.owner} left a mark on this ${card}. I'll keep it clean.`,
+   Elira:`${sig.owner} left a mark. The ${card} remembers. I don't have to.`,
+   else:`${sig.owner} left a mark on this ${card}.`
+  }));
   break;
  }
  return out;
@@ -1506,24 +1631,119 @@ function doorstepSaturdayPool(name){
  const here=npcLocationNow(name);
  const out=[];
  if(here==="Card Club"){
-  if(days===3)out.push("Practice. Saturday's coming.","Empty seats still, if you ask me.","I'm not thinking about pairings yet. That's a lie.");
-  else if(days===2)out.push("Been looking at Saturday's pairings.","Names going up. Some I expected.","Friday they'll post the wall. Always do.");
-  else out.push("Open's tomorrow.","Sleep if you can. I won't.","Travelling table's rumoured. Might be talk.");
+  if(days===3){
+   out.push(doorstepSaid(name,{
+    Tomas:"Practice. Saturday's coming. I want a table before then.",
+    Nessa:"Practice if you like. Saturday's coming either way.",
+    Bram:"Practice. Saturday's coming. Earn the seat.",
+    Elira:"Saturday will arrive. Practice is quieter today.",
+    else:"Practice. Saturday's coming."
+   }));
+   out.push(doorstepSaid(name,{
+    Tomas:"Empty seats still. I'll take one.",
+    Nessa:"Empty seats still, if you ask me. Nice, actually.",
+    Bram:"Empty seats still. That's time to get the corners right.",
+    Elira:"Empty seats. Good.",
+    else:"Empty seats still, if you ask me."
+   }));
+  }else if(days===2){
+   out.push(doorstepSaid(name,{
+    Tomas:"Been looking at Saturday's pairings. I want a loud one.",
+    Nessa:"Been looking at Saturday's pairings. Don't panic.",
+    Bram:"Been looking at Saturday's pairings. Properly.",
+    Elira:"Names going up. I already knew most of them.",
+    else:"Been looking at Saturday's pairings."
+   }));
+   out.push(doorstepSaid(name,{
+    Tomas:"Friday they'll post the wall. I'll be first to it.",
+    Nessa:"Friday they'll post the wall. We can look together if you like.",
+    Bram:"Friday they'll post the wall. Always do. Read it twice.",
+    Elira:"Friday's wall. I don't need to discuss it.",
+    else:"Friday they'll post the wall. Always do."
+   }));
+  }else{
+   out.push(doorstepSaid(name,{
+    Tomas:"Open's tomorrow. Sleep if you can. I won't.",
+    Nessa:"Open's tomorrow. Sleep if you can. I'll try.",
+    Bram:"Open's tomorrow. Rest is part of the craft.",
+    Elira:"Open's tomorrow. Talking won't change the draw.",
+    else:"Open's tomorrow."
+   }));
+   out.push(doorstepSaid(name,{
+    Tomas:"Travelling table's rumoured. I'll sit them.",
+    Nessa:"Travelling table's rumoured. Be kind if they look lost.",
+    Bram:"Travelling table's rumoured. Ordinary terms, I hope.",
+    Elira:"A travelling table, they say. The board won't care.",
+    else:"Travelling table's rumoured. Might be talk."
+   }));
+  }
  }
- if(days<=2&&here==="Inn")out.push("Heard a seating rumour for Saturday.","Inn talk says Saturday's already spoken for.");
- if(days===1&&here==="Market")out.push("Market's full of Saturday nerves already.");
+ if(days<=2&&here==="Inn"){
+  out.push(doorstepSaid(name,{
+   Tomas:"Heard a seating rumour for Saturday. Sounds like a fight.",
+   Nessa:"Heard a seating rumour for Saturday. Don't believe half of it.",
+   Bram:"Heard a seating rumour for Saturday. I'll wait for the wall.",
+   Elira:"Inn talk says Saturday's already spoken for. Inn talk is noise.",
+   else:"Heard a seating rumour for Saturday."
+  }));
+ }
+ if(days===1&&here==="Market"){
+  out.push(doorstepSaid(name,{
+   Tomas:"Market's full of Saturday nerves. Good. Keeps me mean.",
+   Nessa:"Market's full of Saturday nerves already. Tea helps.",
+   Bram:"Market's full of Saturday nerves. Walk it off.",
+   Elira:"Market nerves. I prefer the Club empty.",
+   else:"Market's full of Saturday nerves already."
+  }));
+ }
  return out;
 }
-function doorstepTimePool(){
+function doorstepTimePool(name){
  const day=visualWeekday();
  const phase=state.visual&&state.visual.phase||"";
  const out=[];
- if(phase==="Morning")out.push("Early yet.","Morning's for looking, not rushing.");
- if(phase==="Afternoon")out.push("Afternoon's for sitting.","Good light on the boards just now.");
- if(phase==="Evening")out.push("Evening play hits different.","People get honest after supper.");
- if(day==="Monday")out.push("Week's just started.");
- if(day==="Friday")out.push("Friday. People get sloppy.");
- if(day==="Sunday")out.push("Sunday. Even the Club's softer.");
+ if(phase==="Morning")out.push(doorstepSaid(name,{
+  Tomas:"Morning. Too early to be standing about.",
+  Nessa:"Early yet. Don't rush it.",
+  Bram:"Morning's for looking, not rushing.",
+  Elira:"Early. The Club's still honest.",
+  else:"Early yet. Coach morning."
+ }));
+ if(phase==="Afternoon")out.push(doorstepSaid(name,{
+  Tomas:"Afternoon. Sit or get out of the way.",
+  Nessa:"Afternoon's for sitting. Lovely light.",
+  Bram:"Good light on the boards just now. Use it.",
+  Elira:"Afternoon light. The corners show.",
+  else:"Afternoon. I'll take a table if it's free."
+ }));
+ if(phase==="Evening")out.push(doorstepSaid(name,{
+  Tomas:"Evening play hits different. I like it meaner.",
+  Nessa:"Evening's nicer. People get honest after supper.",
+  Bram:"Evening play should still be clean.",
+  Elira:"Evening. Fewer speeches. Better.",
+  else:"Evening. I'll sleep after one board."
+ }));
+ if(day==="Monday")out.push(doorstepSaid(name,{
+  Tomas:"Week's just started. Plenty of time to win one back.",
+  Nessa:"Week's just started. No need to grind yet.",
+  Bram:"Week's just started. Time to set the terms right.",
+  Elira:"Monday. The week will happen without commentary.",
+  else:"Week's just started. I'm only here till Sunday."
+ }));
+ if(day==="Friday")out.push(doorstepSaid(name,{
+  Tomas:"Friday. People get sloppy. I won't.",
+  Nessa:"Friday. People get sloppy. Be kind about it.",
+  Bram:"Friday. People get sloppy. That's when craft shows.",
+  Elira:"Friday. Sloppy boards. I notice.",
+  else:"Friday. If I'm in the Open, ask now."
+ }));
+ if(day==="Sunday")out.push(doorstepSaid(name,{
+  Tomas:"Sunday. Even the Club's softer. I'll still sit.",
+  Nessa:"Sunday. Even the Club's softer. Stay if you like.",
+  Bram:"Sunday. Softer Club. Still play it clean.",
+  Elira:"Sunday. The Club is quieter. Correct.",
+  else:"Sunday. Last coach. Don't hold a card for me."
+ }));
  return out;
 }
 function doorstepMemoryPool(name){
@@ -1564,39 +1784,70 @@ function doorstepMatchTalk(name,m){
   else if(name==="Nessa")out.push("You played really well last time we sat.");
   else if(name==="Bram")out.push("You played really well last time. You earned it.");
   else out.push("You played well last time. The board noticed.");
-  if(close)out.push("That was a tight one. Still thinking about it.");
+  if(close){
+   if(name==="Tomas")out.push("Tight one. Still chewing it.");
+   else if(name==="Nessa")out.push("That was a tight one. I'd sit it again.");
+   else if(name==="Bram")out.push("Close. That's the sort of board I like.");
+   else out.push("Narrow. I remember it.");
+  }
  }
  if(lm.result==="npc"){
   if(name==="Tomas")out.push("Knew I had you last time.");
   else if(name==="Nessa")out.push("Good one last time. I'd happily play that again.");
   else if(name==="Bram")out.push("You made me work for that last board.");
   else out.push("Last time was a worthwhile match.");
-  if(close)out.push("Close, though. You nearly had it.");
+  if(close){
+   if(name==="Tomas")out.push("Close, though. You nearly had it.");
+   else if(name==="Nessa")out.push("Close! I thought you'd take it.");
+   else if(name==="Bram")out.push("You nearly had it. Well played even so.");
+   else out.push("Narrow. You nearly had it.");
+  }
  }
  if(lm.result==="draw"){
   if(name==="Nessa")out.push("That draw still feels like unfinished business.");
+  else if(name==="Tomas")out.push("A draw. Rubbish. Sit again.");
+  else if(name==="Bram")out.push("We left it on a draw. That's unfinished craft.");
   else out.push("Last time we left it sitting on a draw.");
  }
  if(pBeats[1]&&pBeats[1].captures){
-  out.push("That was a great second move by you.");
   if(name==="Tomas")out.push("That second move of yours was cheeky.");
   else if(name==="Bram")out.push("Your second placement last time was the one that mattered.");
   else if(name==="Elira")out.push("Your second card last time did the real work.");
+  else if(name==="Nessa")out.push("That second card of yours made me laugh. In a good way.");
+  else out.push("That was a great second move by you.");
  }
- if(pBeats.some(b=>b.combo))out.push("That chain of yours was rude.");
+ if(pBeats.some(b=>b.combo)){
+  if(name==="Tomas")out.push("That chain of yours was rude.");
+  else if(name==="Elira")out.push("You chained it. The board allowed it.");
+  else if(name==="Nessa")out.push("That chain! I didn't see it coming.");
+  else out.push("That chain of yours did the work.");
+ }
  const beats=lm.beats||[];
  if(beats[0]&&beats[0].by==="p"&&beats[1]&&beats[1].by==="ai"&&beats[1].captures){
-  out.push("My counter to your opening caught you off guard, I think.");
   if(name==="Tomas")out.push("My answer to your opening caught you, I think.");
   else if(name==="Bram")out.push("I answered your opening. It seemed to surprise you.");
   else if(name==="Elira")out.push("I answered the opening. The board agreed.");
+  else out.push("I think my counter to your opening caught you.");
  }
  if(beats[0]&&beats[0].by==="ai"&&beats[1]&&beats[1].by==="p"&&beats[1].captures){
-  out.push("Your answer to my opening was sharp.");
+  if(name==="Tomas")out.push("Your answer to my opening was sharp. Annoyingly.");
+  else if(name==="Elira")out.push("You answered the opening. I noticed.");
+  else if(name==="Bram")out.push("Your answer to my opening was clean. I'll remember it.");
+  else out.push("Your answer to my opening was sharp.");
  }
  const open=beats[0]&&beats[0].card?cardLabel(beats[0].card):"";
- if(open&&beats[0].by==="p")out.push("You opened with the "+open+" last time.");
- if(open&&beats[0].by==="ai"&&beats[0].captures)out.push("I put my "+open+" down first. It worked.");
+ if(open&&beats[0].by==="p"){
+  if(name==="Elira")out.push("You opened with the "+open+". I noticed.");
+  else if(name==="Tomas")out.push("You opened with the "+open+". Cheeky.");
+  else if(name==="Bram")out.push("You opened with the "+open+". Sensible, that.");
+  else out.push("You opened with the "+open+". I liked that.");
+ }
+ if(open&&beats[0].by==="ai"&&beats[0].captures){
+  if(name==="Tomas")out.push("I put my "+open+" down first. Worked.");
+  else if(name==="Nessa")out.push("I led with the "+open+". It was a bit cheeky.");
+  else if(name==="Bram")out.push("I opened with the "+open+". It earned its keep.");
+  else out.push("I put my "+open+" down first. The board allowed it.");
+ }
  return out;
 }
 function doorstepCardTalk(name,m){
@@ -1625,7 +1876,14 @@ function doorstepCardTalk(name,m){
    out.push("That "+label+" will come back to me.");
   }
  }else if(won.length){
-  out.push("You took my "+cardLabel(won[won.length-1])+". I've not forgotten.");
+  const label=cardLabel(won[won.length-1]);
+  out.push(doorstepSaid(name,{
+   Tomas:"You took my "+label+". I've not forgotten.",
+   Nessa:"You took my "+label+". We can sit for it later.",
+   Bram:"You took my "+label+". I'll ask properly next time.",
+   Elira:"You took my "+label+". I noticed.",
+   else:"You took my "+label+". I've not forgotten."
+  }));
  }
  if(lastMine){
   const label=cardLabel(lastMine);
@@ -1636,16 +1894,42 @@ function doorstepCardTalk(name,m){
  }
  const g=latestGossip();
  if(g&&g.win==="You"&&g.lose!==name){
-  out.push("Did you really win "+doorstepA(g.name)+"?");
-  out.push("People are talking about you taking that "+g.name+".");
+  out.push(doorstepSaid(name,{
+   Tomas:"Did you really win "+doorstepA(g.name)+"? Sit me next.",
+   Nessa:"Did you really win "+doorstepA(g.name)+"? That's exciting.",
+   Bram:"Did you really win "+doorstepA(g.name)+"? Earn it twice.",
+   Elira:"You took "+doorstepA(g.name)+". I noticed.",
+   else:"Did you really win "+doorstepA(g.name)+"?"
+  }));
+  out.push(doorstepSaid(name,{
+   Tomas:"People are talking about you taking that "+g.name+". Let them.",
+   Nessa:"People are talking about you taking that "+g.name+".",
+   Bram:"People are talking about you taking that "+g.name+". Keep it clean.",
+   Elira:"People are talking. I don't.",
+   else:"People are talking about you taking that "+g.name+"."
+  }));
  }
- if(g&&g.lose==="You"&&g.win!==name)out.push("Heard you let "+doorstepA(g.name)+" go.");
+ if(g&&g.lose==="You"&&g.win!==name){
+  out.push(doorstepSaid(name,{
+   Tomas:"Heard you let "+doorstepA(g.name)+" go. Want it back?",
+   Nessa:"Heard you let "+doorstepA(g.name)+" go. I'm sorry.",
+   Bram:"Heard you let "+doorstepA(g.name)+" go. You'll sit for it again.",
+   Elira:"You let "+doorstepA(g.name)+" go. The board moved.",
+   else:"Heard you let "+doorstepA(g.name)+" go."
+  }));
+ }
  try{
   ensureCopies();
   (state.player||[]).forEach(d=>{
    const cp=getCopy("You",d);
    if(cp&&(cp.signatures||[]).some(s=>s.owner===name)&&!theirs.includes(d)){
-    out.push("That's my name still on your "+cardLabel(d)+".");
+    out.push(doorstepSaid(name,{
+     Tomas:"That's my name still on your "+cardLabel(d)+". Temporary.",
+     Nessa:"That's my name still on your "+cardLabel(d)+". Keep it if you like.",
+     Bram:"That's my name still on your "+cardLabel(d)+". Look after it.",
+     Elira:"My name is still on your "+cardLabel(d)+". I noticed.",
+     else:"That's my name still on your "+cardLabel(d)+"."
+    }));
    }
   });
  }catch(err){}
@@ -1676,18 +1960,29 @@ function doorstepCompanyPool(name){
  });
  const trav=weekTravellerName();
  if(trav&&trav!==name&&npcLocationNow(trav)===here){
-  out.push(trav+"'s only here the week.");
-  out.push(trav+" came in on the coach.");
+  out.push(doorstepSaid(name,{
+   Tomas:trav+"'s only here the week. Sit them before Sunday.",
+   Nessa:trav+"'s only here the week. Be kind.",
+   Bram:trav+"'s only here the week. Ordinary terms, then.",
+   Elira:trav+"'s only here the week. The board won't mind.",
+   else:trav+"'s only here the week."
+  }));
+  out.push(doorstepSaid(name,{
+   Tomas:trav+" came in on the coach. Loud wheels. Good.",
+   Nessa:trav+" came in on the coach. Poor thing looks rattly.",
+   Bram:trav+" came in on the coach. I'll handshake them properly.",
+   Elira:trav+" came in on the coach. I noticed.",
+   else:trav+" came in on the coach."
+  }));
  }
  return out;
 }
 function doorstepSpeakPool(name){
- const here=npcLocationNow(name)||(state.visual&&state.visual.location)||"";
  const out=[];
  const add=xs=>{(xs||[]).forEach(x=>{if(x)out.push(x)})};
  add(DOORSTEP_VOICE[name]||DOORSTEP_VOICE.Merrin||["Go on then."]);
- add(DOORSTEP_PLACE[here]||[]);
- add(doorstepTimePool());
+ add(doorstepPlacePool(name));
+ add(doorstepTimePool(name));
  add(doorstepSaturdayPool(name));
  add(doorstepGossipPool(name));
  add(doorstepRoomPool(name));
@@ -1720,13 +2015,32 @@ function doorstepOpenSpeak(name){
 function doorstepAskChoices(name){
  const rows=[];
  const add=(speak,fact)=>{if(speak)rows.push({speak,fact:fact||""})};
+ const said=map=>doorstepSaid(name,map);
  const g=latestGossip();
  if(g&&name!==g.win&&name!==g.lose){
   if(g.win==="You"){
-   add("I heard you took "+g.lose+"'s "+g.name+".",`${name} heard you took ${g.lose}'s ${g.name}.`);
+   add(said({
+    Tomas:"You took "+g.lose+"'s "+g.name+". Sit me next.",
+    Nessa:"I heard you took "+g.lose+"'s "+g.name+".",
+    Bram:"You took "+g.lose+"'s "+g.name+". Fairly, I hope.",
+    Elira:"You took "+g.lose+"'s "+g.name+". I noticed.",
+    else:"I heard you took "+g.lose+"'s "+g.name+"."
+   }),`${name} heard you took ${g.lose}'s ${g.name}.`);
   }else{
-   add(`I heard ${g.win} took ${g.lose}'s ${g.name}.`,`${name} heard ${g.win} took ${g.lose}'s ${g.name}.`);
-   add(`${g.win}'s still showing that ${g.name} about.`,`${name} says ${g.win} is still carrying ${g.lose}'s ${g.name}.`);
+   add(said({
+    Tomas:"I heard "+g.win+" took "+g.lose+"'s "+g.name+". I want that table.",
+    Nessa:"I heard "+g.win+" took "+g.lose+"'s "+g.name+".",
+    Bram:"I heard "+g.win+" took "+g.lose+"'s "+g.name+". Cleanly, I hope.",
+    Elira:g.win+" took "+g.lose+"'s "+g.name+". The board moved.",
+    else:"I heard "+g.win+" took "+g.lose+"'s "+g.name+"."
+   }),`${name} heard ${g.win} took ${g.lose}'s ${g.name}.`);
+   add(said({
+    Tomas:g.win+"'s still showing that "+g.name+" about. Rub it in.",
+    Nessa:g.win+"'s still showing that "+g.name+" about.",
+    Bram:g.win+"'s still carrying that "+g.name+". That's the match talking.",
+    Elira:g.win+" still has the "+g.name+". I noticed.",
+    else:g.win+"'s still showing that "+g.name+" about."
+   }),`${name} says ${g.win} is still carrying ${g.lose}'s ${g.name}.`);
   }
  }
  const here=state.visual&&state.visual.location;
@@ -1734,8 +2048,20 @@ function doorstepAskChoices(name){
  const elsewhere=localNpcNames().filter(n=>n!==name&&npcLocationNow(n)&&npcLocationNow(n)!==here);
  const trav=weekTravellerName();
  if(trav&&trav!==name&&npcLocationNow(trav)===here){
-  add(`${trav}'s only here the week.`,`${name} says ${trav} is only in town for the week.`);
-  add(`${trav} took the Northvale coach.`,`${name} says ${trav} came in on the Northvale coach.`);
+  add(said({
+   Tomas:trav+"'s only here the week. Sit them before Sunday.",
+   Nessa:trav+"'s only here the week. Be kind.",
+   Bram:trav+"'s only here the week. Ordinary terms, then.",
+   Elira:trav+"'s only here the week. The board won't mind.",
+   else:trav+"'s only here the week."
+  }),`${name} says ${trav} is only in town for the week.`);
+  add(said({
+   Tomas:trav+" took the Northvale coach. Loud wheels.",
+   Nessa:trav+" took the Northvale coach. Poor thing looks rattly.",
+   Bram:trav+" took the Northvale coach. I'll handshake them properly.",
+   Elira:trav+" took the Northvale coach. I noticed.",
+   else:trav+" took the Northvale coach."
+  }),`${name} says ${trav} came in on the Northvale coach.`);
  }
  if(name===trav){
   add("I'm only here till Sunday.",`${name} is only in town until Sunday.`);
@@ -1743,63 +2069,220 @@ function doorstepAskChoices(name){
  }
  const days=daysUntilSaturday();
  present.forEach(other=>{
-  if(days===1)add(`${other}'s already talking about tomorrow's Open.`,`${name} says ${other} is already talking about tomorrow's Open.`);
-  else if(days===2)add(`${other}'s name is on a pairing sheet.`,`${name} says ${other}'s name is on a pairing sheet.`);
-  else if(days===3)add(`${other}'s been putting in practice.`,`${name} says ${other} has been putting in practice.`);
-  if(other==="Tomas")add("Tomas has been asking for rematches all week.",`${name} says Tomas has been asking for rematches all week.`);
-  if(other==="Nessa")add("Nessa would rather a Match than a grind.",`${name} says Nessa would rather a friendly Match than a grind.`);
-  if(other==="Bram")add("Bram's handshake gets slower when the terms are ugly.",`${name} says Bram's handshake gets slower when the terms are ugly.`);
-  if(other==="Elira")add("Elira doesn't look up when he practices.",`${name} says Elira doesn't look up when he practices.`);
+  if(days===1)add(said({
+   Tomas:other+"'s already talking about tomorrow's Open. Good.",
+   Nessa:other+"'s already talking about tomorrow's Open. Don't panic.",
+   Bram:other+"'s already talking about tomorrow's Open. Read the wall.",
+   Elira:other+" is talking about tomorrow. I don't need to.",
+   else:other+"'s already talking about tomorrow's Open."
+  }),`${name} says ${other} is already talking about tomorrow's Open.`);
+  else if(days===2)add(said({
+   Tomas:other+"'s name is on a pairing sheet. Mine better be.",
+   Nessa:other+"'s name is on a pairing sheet. That's allowed to be exciting.",
+   Bram:other+"'s name is on a pairing sheet. Earn the seat.",
+   Elira:other+"'s name is on a pairing sheet. Noted.",
+   else:other+"'s name is on a pairing sheet."
+  }),`${name} says ${other}'s name is on a pairing sheet.`);
+  else if(days===3)add(said({
+   Tomas:other+"'s been putting in practice. I'll sit them anyway.",
+   Nessa:other+"'s been putting in practice. Good for them.",
+   Bram:other+"'s been putting in practice. That's the craft.",
+   Elira:other+" practices. I already knew.",
+   else:other+"'s been putting in practice."
+  }),`${name} says ${other} has been putting in practice.`);
+  if(other==="Tomas")add(said({
+   Nessa:"Tomas looks like a kettle. Someone should sit him.",
+   Bram:"Tomas will sit anyone. Fair warning.",
+   Elira:"Tomas wants rematches. He'll say so.",
+   else:"Tomas has been asking for rematches all week."
+  }),`${name} says Tomas has been asking for rematches all week.`);
+  if(other==="Nessa")add(said({
+   Tomas:"Nessa wants it friendly. Fine. Still a match.",
+   Bram:"Nessa would rather talk than grind. She's not wrong.",
+   Elira:"Nessa fills a room. I don't.",
+   else:"Nessa would rather a Match than a grind."
+  }),`${name} says Nessa would rather a friendly Match than a grind.`);
+  if(other==="Bram")add(said({
+   Tomas:"Bram's already thinking about terms. Handshake later.",
+   Nessa:"Bram will handshake you into next week.",
+   Elira:"Bram's measuring the far table. Typical.",
+   else:"Bram's handshake gets slower when the terms are ugly."
+  }),`${name} says Bram's handshake gets slower when the terms are ugly.`);
+  if(other==="Elira")add(said({
+   Tomas:"Elira's pretending I'm not here. Good. Let him.",
+   Nessa:"Elira will talk if the board does first.",
+   Bram:"Elira's working a quiet corner. As usual.",
+   else:"Elira doesn't look up when he practices."
+  }),`${name} says Elira doesn't look up when he practices.`);
  });
  elsewhere.forEach(other=>{
   const loc=npcLocationNow(other);
-  if(loc)add(`${other}'s over at the ${loc}.`,`${name} says ${other} is at the ${loc}.`);
+  if(loc)add(said({
+   Tomas:other+"'s over at the "+loc+". I'll go sit them later.",
+   Nessa:other+"'s over at the "+loc+". Wave if you pass.",
+   Bram:other+"'s over at the "+loc+". I'll look in if the terms are fair.",
+   Elira:other+" is at the "+loc+". I noticed.",
+   else:other+"'s over at the "+loc+"."
+  }),`${name} says ${other} is at the ${loc}.`);
  });
  const copies=npcHeldCopies(name);
  for(const cp of copies){
   const sig=copyForeignSignature(cp,name);
   if(sig){
-   add(`See this ${cardLabel(cp.design)}? ${sig.owner}'s name is still on it.`,`${name} turns ${cardLabel(cp.design)} — ${sig.owner}'s name is on it.`);
+   const card=cardLabel(cp.design);
+   add(said({
+    Tomas:"See this "+card+"? "+sig.owner+"'s name is still on it. I'll play it anyway.",
+    Nessa:"See this "+card+"? "+sig.owner+"'s name is still on it. Sort of sweet.",
+    Bram:"See this "+card+"? "+sig.owner+"'s name is still on it. That's history.",
+    Elira:"This "+card+" still has "+sig.owner+"'s name. I noticed.",
+    else:"See this "+card+"? "+sig.owner+"'s name is still on it."
+   }),`${name} turns ${card} — ${sig.owner}'s name is on it.`);
    break;
   }
  }
  const held=(state.npcs[name]||[]).filter(Boolean);
  if(held.length){
   const design=held[doorstepHash(name+"|card|"+(state.visual&&state.visual.date||""))%held.length];
-  add(`I've been carrying this ${cardLabel(design)} about.`,`${name} is still carrying ${cardLabel(design)}.`);
+  const card=cardLabel(design);
+  add(said({
+   Tomas:"I've been carrying this "+card+" about. Want it? Sit.",
+   Nessa:"I've been carrying this "+card+" about. It's good company.",
+   Bram:"I've been carrying this "+card+" about. It earned the walk.",
+   Elira:"This "+card+" is in my tin. That's information.",
+   else:"I've been carrying this "+card+" about."
+  }),`${name} is still carrying ${card}.`);
  }
  if(days===1){
-  add("Heard the Open draws a travelling table.",`${name} heard the Open draws a travelling table.`);
-  add("Tomorrow's going to smell like ink and nerves.",`${name} says tomorrow's Open will draw a crowd.`);
+  add(said({
+   Tomas:"Heard the Open draws a travelling table. I'll sit them.",
+   Nessa:"Heard the Open draws a travelling table. Be kind if they look lost.",
+   Bram:"Heard the Open draws a travelling table. Ordinary terms, I hope.",
+   Elira:"A travelling table, they say. The board won't care.",
+   else:"Heard the Open draws a travelling table."
+  }),`${name} heard the Open draws a travelling table.`);
+  add(said({
+   Tomas:"Tomorrow's going to smell like ink and nerves. Good.",
+   Nessa:"Tomorrow's going to smell like ink and nerves. Tea first.",
+   Bram:"Tomorrow will smell like ink and nerves. Walk it off tonight.",
+   Elira:"Tomorrow is the Open. Talking won't change the draw.",
+   else:"Tomorrow's going to smell like ink and nerves."
+  }),`${name} says tomorrow's Open will draw a crowd.`);
  }
  if(days===2){
-  add("They post pairings on the Club wall by Friday.",`${name} heard they post pairings on the Club wall by Friday.`);
-  add("Friday's wall is the one that matters.",`${name} says Friday's Club wall is the one that matters.`);
+  add(said({
+   Tomas:"They post pairings on the Club wall by Friday. I'll be first to it.",
+   Nessa:"They post pairings on the Club wall by Friday. We can look together.",
+   Bram:"They post pairings on the Club wall by Friday. Read it twice.",
+   Elira:"Friday's wall. I don't need to discuss it.",
+   else:"They post pairings on the Club wall by Friday."
+  }),`${name} heard they post pairings on the Club wall by Friday.`);
+  add(said({
+   Tomas:"Friday's wall is the one that matters. The rest is noise.",
+   Nessa:"Friday's wall is the one that matters. Don't panic.",
+   Bram:"Friday's wall is the one that matters. That's the craft of it.",
+   Elira:"Friday's wall. Noted.",
+   else:"Friday's wall is the one that matters."
+  }),`${name} says Friday's Club wall is the one that matters.`);
  }
  if(days===3){
-  add("Saturday still has empty seats.",`${name} heard Saturday still has empty seats.`);
-  add("Plenty of time to get a practice in.",`${name} says there is still time to practice before Saturday.`);
+  add(said({
+   Tomas:"Saturday still has empty seats. I'll take one.",
+   Nessa:"Saturday still has empty seats. Nice, actually.",
+   Bram:"Saturday still has empty seats. Time to get the corners right.",
+   Elira:"Empty seats. Good.",
+   else:"Saturday still has empty seats."
+  }),`${name} heard Saturday still has empty seats.`);
+  add(said({
+   Tomas:"Plenty of time to get a practice in. Or just sit me.",
+   Nessa:"Plenty of time to get a practice in. Or a walk.",
+   Bram:"Plenty of time to get a practice in. Earn the Saturday.",
+   Elira:"Practice is quieter today. Saturday will arrive.",
+   else:"Plenty of time to get a practice in."
+  }),`${name} says there is still time to practice before Saturday.`);
  }
- if(state.daily&&state.daily.lastNpcMatch)add(`Heard ${state.daily.lastNpcMatch}.`,`${name} mentioned ${state.daily.lastNpcMatch}.`);
- add("Beph's stall's still empty. Pilgrimage, they said.",`${name} says Beph's market stall is still shut while she is on pilgrimage.`);
- add("The noticeboard's busier than the tables.",`${name} says the noticeboard is busier than the tables.`);
+ if(state.daily&&state.daily.lastNpcMatch){
+  const heard=state.daily.lastNpcMatch;
+  add(said({
+   Tomas:"Heard "+heard+". I want that table next.",
+   Nessa:"Heard "+heard+". Hope they were kind.",
+   Bram:"Heard "+heard+". Fairly, I hope.",
+   Elira:"Heard "+heard+". I noticed.",
+   else:"Heard "+heard+"."
+  }),`${name} mentioned ${heard}.`);
+ }
+ add(said({
+  Tomas:"Beph's stall's still empty. Doesn't stop a match.",
+  Nessa:"Beph's stall's still empty. I waved anyway.",
+  Bram:"Beph's stall's still empty. Pilgrimage, they said.",
+  Elira:"Beph's stall is empty. Noted.",
+  else:"Beph's stall's still empty. Pilgrimage, they said."
+ }),`${name} says Beph's market stall is still shut while she is on pilgrimage.`);
+ add(said({
+  Tomas:"The noticeboard's busier than the tables. Sit someone.",
+  Nessa:"The noticeboard's busier than the tables. We'll manage.",
+  Bram:"The noticeboard's busier than the tables. I'll read it properly.",
+  Elira:"The noticeboard talks more than I will.",
+  else:"The noticeboard's busier than the tables."
+ }),`${name} says the noticeboard is busier than the tables.`);
  const m=typeof mem==="function"?mem(name):null;
  if(m&&m.lastMatch){
-  if(m.lastMatch.result==="player")add("You played really well last time we sat.",`${name} is still thinking about how well you played last time.`);
-  if(m.lastMatch.result==="npc")add("I keep replaying that last board.",`${name} is still replaying your last match.`);
+  if(m.lastMatch.result==="player")add(said({
+   Tomas:"You played really well last time. I hate that.",
+   Nessa:"You played really well last time we sat.",
+   Bram:"You played really well last time. You earned it.",
+   Elira:"You played well last time. The board noticed.",
+   else:"You played really well last time we sat."
+  }),`${name} is still thinking about how well you played last time.`);
+  if(m.lastMatch.result==="npc")add(said({
+   Tomas:"Knew I had you last time.",
+   Nessa:"Good one last time. I'd happily play that again.",
+   Bram:"You made me work for that last board.",
+   Elira:"Last time was a worthwhile match.",
+   else:"I keep replaying that last board."
+  }),`${name} is still replaying your last match.`);
   const pBeats=(m.lastMatch.beats||[]).filter(b=>b.by==="p");
-  if(pBeats[1]&&pBeats[1].captures)add("That was a great second move by you.",`${name} mentioned your second move from last time.`);
+  if(pBeats[1]&&pBeats[1].captures)add(said({
+   Tomas:"That second move of yours was cheeky.",
+   Nessa:"That second card of yours made me laugh. In a good way.",
+   Bram:"Your second placement last time was the one that mattered.",
+   Elira:"Your second card last time did the real work.",
+   else:"That was a great second move by you."
+  }),`${name} mentioned your second move from last time.`);
   const beats=m.lastMatch.beats||[];
-  if(beats[0]&&beats[0].by==="p"&&beats[1]&&beats[1].by==="ai"&&beats[1].captures)add("My counter to your opening caught you off guard, I think.",`${name} thinks their counter to your opening caught you last time.`);
+  if(beats[0]&&beats[0].by==="p"&&beats[1]&&beats[1].by==="ai"&&beats[1].captures)add(said({
+   Tomas:"My answer to your opening caught you, I think.",
+   Nessa:"I think my counter to your opening caught you.",
+   Bram:"I answered your opening. It seemed to surprise you.",
+   Elira:"I answered the opening. The board agreed.",
+   else:"My counter to your opening caught you off guard, I think."
+  }),`${name} thinks their counter to your opening caught you last time.`);
  }
  const taken=(m&&m.cardsWon||[]).filter(d=>(state.player||[]).includes(d));
  if(taken.length){
   const label=cardLabel(taken[taken.length-1]);
-  add("I hope you're taking care of my "+label+".",`${name} hopes you are taking care of their ${label}.`);
-  add("I'll be taking back my "+label+" soon!",`${name} says they will take back their ${label} soon.`);
+  add(said({
+   Tomas:"You looking after my "+label+"? Temporary, that.",
+   Nessa:"I hope you're taking care of my "+label+".",
+   Bram:"Look after that "+label+". I want it back in good order.",
+   Elira:"See that my "+label+" is not neglected.",
+   else:"I hope you're taking care of my "+label+"."
+  }),`${name} hopes you are taking care of their ${label}.`);
+  add(said({
+   Tomas:"I'll be taking back my "+label+" soon!",
+   Nessa:"Don't get too attached to my "+label+".",
+   Bram:"I'll be asking for my "+label+" again before long.",
+   Elira:"That "+label+" will come back to me.",
+   else:"I'll be taking back my "+label+" soon!"
+  }),`${name} says they will take back their ${label} soon.`);
  }
  const gYou=latestGossip();
- if(gYou&&gYou.win==="You"&&gYou.lose!==name)add("Did you really win "+doorstepA(gYou.name)+"?",`${name} asked whether you really won ${doorstepA(gYou.name)}.`);
+ if(gYou&&gYou.win==="You"&&gYou.lose!==name)add(said({
+  Tomas:"Did you really win "+doorstepA(gYou.name)+"? Sit me next.",
+  Nessa:"Did you really win "+doorstepA(gYou.name)+"? That's exciting.",
+  Bram:"Did you really win "+doorstepA(gYou.name)+"? Earn it twice.",
+  Elira:"You took "+doorstepA(gYou.name)+". I noticed.",
+  else:"Did you really win "+doorstepA(gYou.name)+"?"
+ }),`${name} asked whether you really won ${doorstepA(gYou.name)}.`);
  const seen=[...new Set(rows.map(r=>r.speak))];
  return seen.map(speak=>rows.find(r=>r.speak===speak));
 }
