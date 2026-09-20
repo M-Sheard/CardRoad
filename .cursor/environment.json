@@ -1,0 +1,13 @@
+{
+  "name": "Card Road",
+  "install": "test -f index.html && test -f manifest.webmanifest && test -f service-worker.js && echo 'Card Road static PWA — no build step, assets present'",
+  "terminals": [
+    {
+      "name": "static-server",
+      "command": "python3 -m http.server 8000"
+    }
+  ],
+  "ports": [
+    8000
+  ]
+}
