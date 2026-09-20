@@ -894,7 +894,15 @@ const NPC_CUTOUT={
  Bram:"./assets/npcs/bram_standee_bevel_v25.png",
  Elira:"./assets/npcs/elira_standee_bevel_v25.png",
  Beph:"./assets/npcs/beph_standee_bevel_v3.png",
- Merrin:"./assets/npcs/merrin_standee_bevel_v1.png"
+ Merrin:"./assets/npcs/merrin_standee_bevel_v1.png",
+ Willa:"./assets/npcs/willa_standee_bevel_v1.png",
+ Fen:"./assets/npcs/fen_standee_bevel_v1.png",
+ Sibley:"./assets/npcs/sibley_standee_bevel_v1.png",
+ Quill:"./assets/npcs/quill_standee_bevel_v1.png",
+ Ione:"./assets/npcs/ione_standee_bevel_v1.png",
+ Harlan:"./assets/npcs/harlan_standee_bevel_v1.png",
+ Lissa:"./assets/npcs/lissa_standee_bevel_v1.png",
+ Padraic:"./assets/npcs/padraic_standee_bevel_v1.png"
 };
 const NPC_BIO={
  Tomas:"A hot-blooded Market regular. He plays fast, takes risks, and hates leaving a loss on the table.",
@@ -915,7 +923,7 @@ const NPC_BIO={
  "Visitor B":"A travelling competitor in town for the Open. They will move on when the event ends.",
  "Visitor C":"A travelling competitor in town for the Open. They will move on when the event ends."
 };
-// Nine roaming players. Same tins stay when they later sit as residents. Cutouts still Merrin's board until each is painted.
+// Nine roaming players. Same tins stay when they later sit as residents. Cutouts are Tomas-bevel boards; the plaque is the name.
 const TRAVELLERS=[
  {name:"Merrin",home:"Northvale",tone:"coach",style:"closed-hand",warmth:.4,competitive:.55,skill:.50,risk:.52,terms:{rule:"Standard",tie:"draw",wager:"Claim One",budget:86},start:["C008","C018","C029","C040","C051","C061","C074","C090"],bio:"Northvale rover. Closed-hand, ordinary terms, gone by Sunday."},
  {name:"Willa",home:"Mill town",tone:"mill",style:"cautious",warmth:.55,competitive:.48,skill:.58,risk:.34,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:86},start:["C005","C012","C021","C034","C044","C060","C071","C088"],bio:"Mill-town regular. Cautious, no gossip, here for a clean Open."},
@@ -971,7 +979,7 @@ function syncBephStandee(scene){
 }
 function travellerStamp(name){
  const src=NPC_CUTOUT[name]||NPC_CUTOUT.Merrin;
- return {cls:"travellerCutout",src:src+"?v=bevel1"};
+ return {cls:"travellerCutout",src:src+"?v=bevel2"};
 }
 function syncTownStandees(){
  const scene=$("townScene")||document.querySelector(".townScene");
