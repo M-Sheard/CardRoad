@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v146-week-rotation';
+const CACHE_NAME = 'card-road-pwa-v147-open-time-lock';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
