@@ -3012,10 +3012,17 @@ function fillClubWall(){
  const plate=$("clubWallChamp"),note=$("clubWallNote"),art=$("clubWallArt");
  const when=champ.date?new Date(String(champ.date).slice(0,10)+"T12:00:00"):null;
  const dateLabel=when&&!Number.isNaN(when.getTime())?when.toLocaleDateString("en-GB",{day:"numeric",month:"long"}):"";
- if(plate)plate.textContent=clubChampLabel(champ.name);
+ const label=clubChampLabel(champ.name)||"Champion";
+ if(plate)plate.textContent=label;
  if(art){
   art.src="assets/ui/club_champ_elira_overlay.png";
-  art.alt=(clubChampLabel(champ.name)||"Champion")+" · Saturday Open";
+  art.alt=label+" · Saturday Open";
+ }
+ const hot=$("clubWallHotspot");
+ if(hot){
+  hot.setAttribute("aria-label",label+" on the Club wall");
+  const himg=hot.querySelector("img");
+  if(himg)himg.alt=label;
  }
  if(note){
   const openName=String(champ.event||"Saturday Open").replace(/^Lythmere\s+/i,"");
@@ -5477,7 +5484,10 @@ function renderWorldScene(){
  updateWorldRecordButton();
  $("eventHotspot").classList.toggle("hidden",!saturdayOpen);
  if($("eventHotspot"))$("eventHotspot").textContent="Saturday Open";
- if($("clubWallHotspot"))$("clubWallHotspot").classList.toggle("hidden",state.visual.location!=="Card Club");
+ if($("clubWallHotspot")){
+  $("clubWallHotspot").classList.toggle("hidden",state.visual.location!=="Card Club");
+  if(state.visual.location==="Card Club"&&typeof fillClubWall==="function")fillClubWall();
+ }
  if($("houseTinHotspot")){
   const atClub=state.visual.location==="Card Club";
   const short=houseTinTownPreview||houseTinNeedsCard();
