@@ -902,21 +902,30 @@ const NPC_BIO={
  Nessa:"Warm company at the Inn and Market. She would rather share a Match and a laugh than grind a rivalry.",
  Elira:"A reserved Card Club player. He lets the board talk; knowing him well takes time.",
  Beph:"Keeps a fruit stall in Lythmere Market. She is away on pilgrimage for now.",
- Merrin:"Took the Northvale coach. Tight closed-hand player; gone by Sunday.",
+ Merrin:"Northvale rover. Closed-hand, ordinary terms, gone by Sunday.",
+ Willa:"Mill-town regular. Cautious, no gossip, here for a clean Open.",
+ Fen:"River-road player with a heavier binder than most locals.",
+ Sibley:"Coastal player. Quiet at the table, quick with a claim.",
+ Quill:"Travelling binder-seller. Plays the Saturday he is in town.",
+ Ione:"County Club type. Fussy, treats a local Open as useful practice.",
+ Harlan:"Loud coat, louder luck. Will not still be in Lythmere on Monday.",
+ Lissa:"Saturday-circuit rider with a neat travelled tin.",
+ Padraic:"Hill-road player. Talks little and watches the other tables.",
  "Visitor A":"A travelling competitor in town for the Open. They will move on when the event ends.",
  "Visitor B":"A travelling competitor in town for the Open. They will move on when the event ends.",
  "Visitor C":"A travelling competitor in town for the Open. They will move on when the event ends."
 };
+// Nine roaming players. Same tins stay when they later sit as residents. Cutouts still Merrin's board until each is painted.
 const TRAVELLERS=[
- {name:"Merrin",skill:.50,risk:.52,start:["C008","C018","C029","C040","C051","C061","C074","C090"],bio:"Took the Northvale coach this morning. Tight closed-hand player; gone by Sunday."},
- {name:"Willa",skill:.58,risk:.34,start:["C005","C012","C021","C034","C044","C060","C071","C088"],bio:"A mill-town regular. She is here for the Open, not for gossip."},
- {name:"Fen",skill:.68,risk:.60,start:["C007","C015","C027","C038","C050","C062","C075","C098"],bio:"Plays the river-road tables with a heavier binder than most locals."},
- {name:"Sibley",skill:.54,risk:.45,start:["C010","C019","C030","C042","C053","C063","C077","C091"],bio:"Came up from the coast. Quiet at the table, quick with a claim."},
- {name:"Quill",skill:.63,risk:.57,start:["C009","C020","C033","C045","C055","C066","C080","C094"],bio:"A travelling binder-seller who plays the Saturday he is in town."},
- {name:"Ione",skill:.72,risk:.28,start:["C013","C022","C036","C047","C057","C068","C082","C096"],bio:"Measured, almost fussy. She treats a local Open as useful practice."},
- {name:"Harlan",skill:.47,risk:.70,start:["C004","C016","C025","C037","C048","C059","C073","C089"],bio:"Loud coat, louder luck. He will not still be in Lythmere on Monday."},
- {name:"Lissa",skill:.61,risk:.40,start:["C002","C017","C028","C039","C049","C064","C079","C093"],bio:"Follows the Saturday circuit with a neat, well-travelled tin."},
- {name:"Padraic",skill:.66,risk:.50,start:["C006","C014","C031","C041","C054","C070","C084","C097"],bio:"A hill-road player. He talks little and watches the other tables."}
+ {name:"Merrin",home:"Northvale",tone:"coach",style:"closed-hand",warmth:.4,competitive:.55,skill:.50,risk:.52,terms:{rule:"Standard",tie:"draw",wager:"Claim One",budget:86},start:["C008","C018","C029","C040","C051","C061","C074","C090"],bio:"Northvale rover. Closed-hand, ordinary terms, gone by Sunday."},
+ {name:"Willa",home:"Mill town",tone:"mill",style:"cautious",warmth:.55,competitive:.48,skill:.58,risk:.34,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:86},start:["C005","C012","C021","C034","C044","C060","C071","C088"],bio:"Mill-town regular. Cautious, no gossip, here for a clean Open."},
+ {name:"Fen",home:"River road",tone:"river",style:"competitive",warmth:.42,competitive:.78,skill:.68,risk:.60,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:92},start:["C007","C015","C027","C038","C050","C062","C075","C098"],bio:"River-road player with a heavier binder than most locals."},
+ {name:"Sibley",home:"Coast",tone:"coast",style:"quiet",warmth:.5,competitive:.52,skill:.54,risk:.45,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:86},start:["C010","C019","C030","C042","C053","C063","C077","C091"],bio:"Coastal player. Quiet at the table, quick with a claim."},
+ {name:"Quill",home:"The road",tone:"seller",style:"mercantile",warmth:.58,competitive:.6,skill:.63,risk:.57,terms:{rule:"Standard",tie:"draw",wager:"Claim One",budget:92},start:["C009","C020","C033","C045","C055","C066","C080","C094"],bio:"Travelling binder-seller. Plays the Saturday he is in town."},
+ {name:"Ione",home:"County town",tone:"fussy",style:"fussy",warmth:.48,competitive:.7,skill:.72,risk:.28,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:92},start:["C013","C022","C036","C047","C057","C068","C082","C096"],bio:"County Club type. Fussy, treats a local Open as useful practice."},
+ {name:"Harlan",home:"Festival towns",tone:"loud",style:"lucky",warmth:.62,competitive:.7,skill:.47,risk:.70,terms:{rule:"Standard",tie:"draw",wager:"Claim One",budget:86},start:["C004","C016","C025","C037","C048","C059","C073","C089"],bio:"Loud coat, louder luck. Will not still be in Lythmere on Monday."},
+ {name:"Lissa",home:"Saturday circuit",tone:"circuit",style:"neat",warmth:.7,competitive:.5,skill:.61,risk:.40,terms:{rule:"Standard",tie:"draw",wager:"Claim One",budget:86},start:["C002","C017","C028","C039","C049","C064","C079","C093"],bio:"Saturday-circuit rider with a neat travelled tin."},
+ {name:"Padraic",home:"Hill road",tone:"hill",style:"watchful",warmth:.38,competitive:.62,skill:.66,risk:.50,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:92},start:["C006","C014","C031","C041","C054","C070","C084","C097"],bio:"Hill-road player. Talks little and watches the other tables."}
 ];
 const TOWN_STAMP={
  Tomas:{cls:"tomasCutout",src:NPC_CUTOUT.Tomas+"?v=bevel3"},
@@ -1350,7 +1359,13 @@ function doorstepPick(list,salt,avoid){
 }
 function doorstepSaid(name,map){
  if(!map)return "";
- return map[name]||map.else||map.Merrin||"";
+ if(map[name])return map[name];
+ const v=(typeof TRAVELLERS!=="undefined"?TRAVELLERS:[]).find(x=>x.name===name);
+ if(v&&v.tone&&map[v.tone])return map[v.tone];
+ return map.else||map.Merrin||map.coach||"";
+}
+function doorstepSaidMany(name,rows){
+ return (rows||[]).map(row=>doorstepSaid(name,row)).filter(Boolean);
 }
 // Voice follows locked personalities (bible): Tomas hot-blooded; Nessa warm; Bram respectful/craft; Elira reserved; Merrin one-week closed-hand.
 // Friend/rival/respect stance waits. Do not pour a shared pile into every mouth.
@@ -1514,6 +1529,262 @@ const DOORSTEP_VOICE={
   "Ordinary terms. I'm not here to invent rules.",
   "The wall's pretty. The boards are why I stopped.",
   "Next town will have a different gilt. Same game."
+ ],
+ Willa:[
+  "Mill towns don't gossip. We play.",
+  "I'm here for the Open, not the stories.",
+  "Flour on my cuffs. Occupational.",
+  "If the terms are clean, I'll sit.",
+  "Don't ask me who likes whom. I don't keep that.",
+  "Our mill table is quieter than this Club.",
+  "I packed a cautious tin. That's the point.",
+  "Claim One is enough. Don't dress it up.",
+  "Saturday's the reason I took the coach.",
+  "I won't sit ugly budget. I said so.",
+  "Lythmere's kind. Kind isn't the same as easy.",
+  "Keep your rumours. I'll keep my corners.",
+  "If I lose a copy, I earned the loss.",
+  "Don't peek. I'm not showing mill hands.",
+  "The wheels rattled. I'm still here.",
+  "I like a final capture. Draws feel unfinished.",
+  "Your Tomas would last ten minutes at the mill.",
+  "Ordinary week. Extraordinary Saturday, if I play it right.",
+  "I didn't come to make friends. I might anyway.",
+  "Sit Standard. I didn't ride for Match chatter.",
+  "The mill bell's meaner than your Saturday bell.",
+  "I'll be gone Monday. The Open is enough.",
+  "No gossip. I already said.",
+  "Clean terms or I walk.",
+  "I counted my tin twice on the coach.",
+  "Someone tried to sell me a lucky card. I don't buy luck.",
+  "If you're loud, sit someone else.",
+  "Mill water, mill hours, mill patience.",
+  "I came to play a proper Open. That's the whole letter.",
+  "Don't hold a chair for me after Sunday."
+ ],
+ Fen:[
+  "River-road tables run heavier than this.",
+  "I brought the bigger binder. On purpose.",
+  "If you sit me, sit me proper.",
+  "Pike weather. Makes people honest.",
+  "I don't travel light. The tin's the point.",
+  "Lythmere's pretty. The river-road isn't.",
+  "Claim it or don't sit.",
+  "I like a board that fights back.",
+  "Your Club gilt is polite. Fine.",
+  "I've got copies that have seen worse inns.",
+  "Don't waste my week on a dither.",
+  "Saturday's why the coach stopped.",
+  "I'll sit 92. That's the road.",
+  "Fog follows the water. I follow the tables.",
+  "If I take a copy, it rides with me.",
+  "Nessa would call this grim. Good.",
+  "Heavier binder, heavier terms. That's Fen.",
+  "I watched your far table. Too slow.",
+  "River towns don't clap. They claim.",
+  "One week. Then the next bend.",
+  "Don't ask about the scar on the tin. Coach.",
+  "I play Standard. I play it mean enough.",
+  "Your champion picture's neat. I've seen messier walls.",
+  "Sit if you've got a hand. Else move.",
+  "The river-road taught me not to explain.",
+  "I'm not here to be liked. I'm here to sit.",
+  "Quiet water, loud corners. That's the game.",
+  "If you wanted friendly, Nessa's nearer.",
+  "I'll be on the morning coach unless Saturday keeps me.",
+  "Deal. The binder's open."
+ ],
+ Sibley:[
+  "Coastal table. We don't talk while the tide's working.",
+  "Quick with a claim. Slow with a story.",
+  "Salt on the tin. Sorry.",
+  "I came up from the coast this week.",
+  "Nod if you mean to sit. That's plenty.",
+  "The sea doesn't chatter. Neither do I.",
+  "I'll take ordinary terms.",
+  "Kingfishers back home. Otters here. Same game.",
+  "Don't fill the air. The board hates it.",
+  "Saturday, if you'll have me.",
+  "I claim when it's there. I don't announce it.",
+  "Your Inn stew's fine. The Club's why I stopped.",
+  "Quiet is not the same as kind.",
+  "One week of inland air. I'll live.",
+  "If I win it, it goes in the coast tin.",
+  "Don't ask me for rumours. I didn't collect any.",
+  "The coach smelled of wet wool. The tin didn't.",
+  "I watch the corners. I don't narrate them.",
+  "Sit. Or don't. The tide won't wait either.",
+  "Lythmere talks. The coast plays.",
+  "I'll be gone before you learn my middle name. I haven't got one to give.",
+  "Final capture's cleaner. Like a low tide.",
+  "Someone laughed at the far table. I didn't.",
+  "Pack light except the cards.",
+  "I'm not unsociable. I'm busy.",
+  "If you're loud, I'll still sit. I just won't answer.",
+  "Coastal claim. Inland table. Same snap.",
+  "Don't hold supper. I eat after the board.",
+  "Monday I'm salt again.",
+  "Deal quietly."
+ ],
+ Quill:[
+  "Binders, sleeves, a Saturday if I'm still in town.",
+  "I sell the book. I play the cards inside.",
+  "Don't buy a tin you won't sit.",
+  "I can look at your binder. I won't peek at the faces.",
+  "Road dust, leather dust. Occupational.",
+  "If the Open's on, I'm in. If not, I still sell.",
+  "Your gilt's nice. My stock's nicer. Bias.",
+  "I'll sit Claim One. I already carry enough copies.",
+  "Someone asked for a lucky binder. I sold them an ordinary one.",
+  "Terms first. Inventory after.",
+  "I know every ring on a good hoop.",
+  "Lythmere's a decent stall town. Temporary.",
+  "Don't let me talk you into a binder before a match. After's fine.",
+  "The coach takes stock and a player. That's me twice.",
+  "I play the Saturday I'm standing on.",
+  "If I take a copy, it might end up in the tray. Honest.",
+  "Your Tomas would haggle. I don't, at the table.",
+  "Neat rings, messy road. That's the job.",
+  "Sit if you like. Browse if you don't.",
+  "I came to sell and to sit. Both are true.",
+  "Don't crease the pages. That's all I ask.",
+  "Monday the stall folds. The tin doesn't.",
+  "I've got a spare chair and a spare hoop. Pick.",
+  "The Club wall's pretty. The binders travel.",
+  "I won't gossip. I'll recommend a grain of leather.",
+  "Budget 92 if we're being grown-up.",
+  "Road's long. Saturday's short. Sit.",
+  "If you need a binder, I'm here. If you need a board, I'm here too.",
+  "Don't ask me who won Northvale. Ask me about brass rings.",
+  "Deal, then we can talk stock."
+ ],
+ Ione:[
+  "A local Open is useful practice. That's all.",
+  "Don't rush the shuffle. I can hear it from here.",
+  "I prefer Standard. I prefer it done properly.",
+  "Fussy, they say. Correct.",
+  "Your lamps are uneven. I'll live.",
+  "I didn't come to be entertained.",
+  "Measure the corner. Then sit.",
+  "County tables would send this far table home.",
+  "I'll sit final capture. Draws are sloppy.",
+  "Practice is not the same as a lecture. Bram's nearer for that.",
+  "Don't tap the gilt. It's already loud.",
+  "I packed a careful tin. It stays careful.",
+  "Saturday is a tool. Use it.",
+  "If your terms are messy, I won't.",
+  "I notice when the opening is late.",
+  "Lythmere is charming. Charm isn't craft.",
+  "One week of useful boards. Then the county again.",
+  "Don't tell me a story. Show me a placement.",
+  "I won't sit Match. I said so.",
+  "The champion picture is crooked. Slightly.",
+  "Quiet, please. The corners are thinking.",
+  "I treat luck as a rumour.",
+  "If you came to chatter, Nessa's warmer.",
+  "Coach was punctual. Good.",
+  "I'll be in the Open. Obviously.",
+  "Don't slouch the cards. They remember.",
+  "Budget 92. We're not children.",
+  "I came to practise against strangers. That's you.",
+  "Monday I take the notes home. Not the gossip.",
+  "Nod. Sit. That's the whole conversation."
+ ],
+ Harlan:[
+  "Loud coat, louder luck. That's the review.",
+  "I won't still be here Monday. Sit now.",
+  "Someone has to make a noise. I volunteered.",
+  "Lucky card? Every card's lucky if you slam it.",
+  "Your Club's too polite. I'll fix that.",
+  "Deal. I'm already talking.",
+  "If I lose, we play again. Coat says so.",
+  "Festival towns taught me to arrive loud.",
+  "Don't look at the lining. It's worse.",
+  "Claim One, obviously. What else is it for?",
+  "I sat three Opens last month. Won one. That's luck.",
+  "Lythmere can hear me from the Market. Good.",
+  "Your Tomas is amateur loud. Respectfully.",
+  "I don't practice. I arrive.",
+  "The coach complained. I didn't.",
+  "Sit ugly, sit pretty, sit.",
+  "I'll take a draw if it's an argument.",
+  "Don't hide the tin. I want to see the luck.",
+  "Saturday's a party if I'm in it.",
+  "If you're quiet, I'll still sit you. I'll just be me.",
+  "Coat's warmer than the Inn. That's a lie. Sit anyway.",
+  "I brought luck and eight cards. In that order.",
+  "Northvale told me to pipe down. I took the next coach.",
+  "One week of me. You're welcome.",
+  "Don't count on me for gossip. I'll invent it.",
+  "The gilt shook. That was me sitting down.",
+  "If I win a copy, I'll show everyone. Sorry.",
+  "Ordinary terms. Extraordinary coat.",
+  "Gone Monday. Stories stay.",
+  "Come on then. Luck hates a queue."
+ ],
+ Lissa:[
+  "Another Saturday, another neat tin.",
+  "I follow the circuit. Lythmere's a nice stop.",
+  "Don't smudge the lid. I just wiped it.",
+  "I'll sit. Then I'll pack. That's the week.",
+  "The coach timetable lives in my head. Sadly.",
+  "Friendly enough. Still a proper board.",
+  "I like a Match that still leaves the tin tidy.",
+  "Your Club smells like polish. I approve.",
+  "I keep copies in order. The road doesn't.",
+  "If the Open's posted, I'm already looking.",
+  "Don't grind. The next town is Thursday.",
+  "I brought a travelled tin, not a messy one.",
+  "Nessa would like the circuit. Too many coaches, maybe.",
+  "I'll claim cleanly. Then I'll wipe the card.",
+  "One week. I already know the leaving bell.",
+  "Sit Standard. I can do friendly after.",
+  "Someone left a ring off a hoop. I noticed. Occupational.",
+  "Lythmere's kinder than last week's mill town.",
+  "I don't gossip. I compare Opens.",
+  "Pack the tin the same way every night. That's how you last.",
+  "If I take a copy, it gets a proper sleeve. I hope.",
+  "Budget 86. I'm not showing off.",
+  "The circuit is the point. Not the gilt.",
+  "I'll wave on Monday. From the coach.",
+  "Don't hold a chair. I'll find the same one tomorrow.",
+  "Quiet tin, loud Saturday. Balance.",
+  "I came to play the Open and to keep the lid straight.",
+  "Your river's pretty. I still prefer a timetable.",
+  "Deal, then tea, then pack.",
+  "Neat travelling. That's the whole personality."
+ ],
+ Padraic:[
+  "Hill-road. We watch first.",
+  "I talk little. The tables talk.",
+  "Cold coming down. Your Club's a relief.",
+  "I sat on the hill benches. This chair is luxury.",
+  "Don't fill the quiet. I brought my own.",
+  "I'll sit when I've seen two boards.",
+  "Hills don't hurry. Neither do first cards.",
+  "Your Tomas would echo. I wouldn't.",
+  "I came for Saturday. I stayed for the watching.",
+  "If I claim, you'll hear the card, not me.",
+  "Heavier air down here. Fine.",
+  "I packed for weather, not for chatter.",
+  "Standard. Final. That's enough words.",
+  "The hill-road taught me to wait.",
+  "Don't ask me for a story. Watch with me.",
+  "One week of low country. Then up again.",
+  "I like a corner that hasn't been explained.",
+  "Lythmere talks. The hills listen.",
+  "I'll be in the Open. I already looked at the wall.",
+  "If you're loud, I'll still sit. I'll just sit further.",
+  "Ram weather at home. Gilt weather here.",
+  "I don't sell luck. I don't buy it.",
+  "The coach climbed more than it rolled.",
+  "Nod is a conversation.",
+  "If I take a copy, it goes quiet in the tin.",
+  "Budget 92. Hills aren't cheap.",
+  "I watched three matches. Two were noise.",
+  "Monday I go back up. Don't write.",
+  "Deal. I'll watch the opening. Then I'll play it.",
+  "That's enough from me."
  ]
 };
 function doorstepPlacePool(name){
@@ -1523,28 +1794,44 @@ function doorstepPlacePool(name){
   if(name==="Nessa")return ["Someone's claimed the good lamp. They can keep it.","Far table's playing slow. Let them enjoy it.","Smells like old oak and tea in here. I like it."];
   if(name==="Bram")return ["Someone earned the good lamp. Fair.","Far table's slow on purpose. That's craft, sometimes.","I sanded one of these boards. Don't drag it."];
   if(name==="Elira")return ["The good lamp is taken. The other table is quieter.","Far table is slow. I already know the ending.","The champion picture is loud. The boards aren't."];
-  return ["Club's warmer than the coach. I'll take it.","Don't mind me. I'm only borrowing a chair.","Your gilt's nice. The boards are why I stopped."];
+  return doorstepSaidMany(name,[
+   {coach:"Club's warmer than the coach. I'll take it.",mill:"Mill tables are quieter. This Club will do.",river:"Club gilt is polite. I'll still sit heavy.",coast:"Quiet corner if you've got one.",seller:"Pretty wall. I came for boards and binders.",fussy:"Your lamps are uneven. I'll live.",loud:"Club's too polite. I'll fix that.",circuit:"Smells like polish. I approve.",hill:"Cold coming down. Your Club's a relief.",else:"Club's warmer than the coach. I'll take it."},
+   {coach:"Don't mind me. I'm only borrowing a chair.",mill:"I'll take an empty chair. I won't gossip in it.",river:"Spare chair. Spare fight. Sit.",coast:"Nod me a chair. That's plenty.",seller:"Spare chair and a hoop if you need one.",fussy:"I'll sit where the opening isn't late.",loud:"Chair. Coat. Luck. In that order.",circuit:"I'll find the same chair tomorrow.",hill:"I'll sit when I've seen two boards.",else:"Don't mind me. I'm only borrowing a chair."},
+   {coach:"Your gilt's nice. The boards are why I stopped.",mill:"I'm here for the Open, not the gilt.",river:"Pretty wall. Meaner tin.",coast:"Club's why I stopped. The gilt can wait.",seller:"The wall's pretty. The binders travel.",fussy:"Champion picture is crooked. Slightly.",loud:"Gilt shook. That was me sitting down.",circuit:"The circuit is the point. Not the gilt.",hill:"I already looked at the wall.",else:"Your gilt's nice. The boards are why I stopped."}
+  ]);
  }
  if(here==="Market"){
   if(name==="Tomas")return ["Beph's stall's still shut. Doesn't stop a match.","Carts blocking the light. I'll play in the shade.","Someone's shouting prices like they're claims. I like it."];
   if(name==="Nessa")return ["Beph's stall's still shut. I waved anyway.","Carts keep blocking the good light. We'll manage.","Fruit's dear this week. Sit instead."];
   if(name==="Bram")return ["Beph's stall's still shut. Pilgrimage, they said.","Noticeboard's got a new scrap. I'll read it properly.","Market's honest in the morning. Less so by noon."];
   if(name==="Elira")return ["Beph's stall is shut. Noted.","The noticeboard talks more than I will.","Carts. Noise. I can still see a board."];
-  return ["Your market's louder than Northvale's. Fine.","I'm not buying fruit. I'm looking for a table.","Sunday I'm gone. Don't sell me a tin."];
+  return doorstepSaidMany(name,[
+   {coach:"Your market's louder than Northvale's. Fine.",mill:"Market talk is gossip. I'm buying nothing.",river:"Market noise. Doesn't stop a heavy tin.",coast:"Too much air. I'll still claim.",seller:"Decent stall town. Temporary.",fussy:"Market is not practice. The Club is.",loud:"Lythmere can hear me from the Market. Good.",circuit:"Market's a stop. Saturday's the point.",hill:"Heavier air down here. Fine.",else:"Your market's louder than Northvale's. Fine."},
+   {coach:"I'm not buying fruit. I'm looking for a table.",mill:"Don't sell me rumours. I'm looking for a board.",river:"Fruit's not the binder. Move.",coast:"Not shopping. Sitting.",seller:"I sell binders, not apples.",fussy:"This is not a county Club. Unfortunately.",loud:"Carts, noise, luck. Sit anyway.",circuit:"I didn't come for fruit. I came for a pairing.",hill:"I packed for weather, not the stalls.",else:"I'm not buying fruit. I'm looking for a table."},
+   {coach:"Sunday I'm gone. Don't sell me a tin.",mill:"Monday I go. Don't hold a chair.",river:"One week. Then the next bend.",coast:"Monday I'm salt again.",seller:"Monday the stall folds.",fussy:"Monday I take the notes home.",loud:"Won't still be here Monday. Sit now.",circuit:"I'll wave Monday. From the coach.",hill:"Monday I go back up.",else:"Sunday I'm gone. Don't sell me a tin."}
+  ]);
  }
  if(here==="Riverside"){
   if(name==="Tomas")return ["River's high. Won't stop me sitting.","Fog this morning. Cleared. Good.","Travellers off the coach. One of them can sit."];
   if(name==="Nessa")return ["River's high. Makes people talk softer. I don't mind.","Fog this morning. Pretty, once it went.","Good spot if you don't want a crowd. Or if you do."];
   if(name==="Bram")return ["I walked the river twice already.","Fog cleared. Helps the head.","Quiet water. That's the sort of table I like."];
   if(name==="Elira")return ["The water's louder than the talk. Correct.","Fog went. I stayed.","I didn't come here to be found. But here you are."];
-  return ["River towns always smell the same.","Coach rattled. The water doesn't.","I'll sit if the terms are ordinary."];
+  return doorstepSaidMany(name,[
+   {coach:"River towns always smell the same.",mill:"Mill water's meaner. This is pretty.",river:"Pike weather. Makes people honest.",coast:"Inland river. Same snap as tide.",seller:"Pretty water. Stock still needs a dry table.",fussy:"Charming river. Charm isn't craft.",loud:"River's quiet. I'll fix that.",circuit:"Pretty river. I still prefer a timetable.",hill:"Low country water. Fine.",else:"River towns always smell the same."},
+   {coach:"Coach rattled. The water doesn't.",mill:"Wheels rattled. I'm still here.",river:"Fog follows the water. I follow the tables.",coast:"Wet wool on the coach. The tin didn't.",seller:"Coach takes stock and a player.",fussy:"Coach was punctual. The river wasn't invited.",loud:"Coach complained. I didn't.",circuit:"Timetable lives in my head. The river doesn't.",hill:"Coach climbed more than it rolled.",else:"Coach rattled. The water doesn't."},
+   {coach:"I'll sit if the terms are ordinary.",mill:"Clean terms or I walk.",river:"Sit me proper or don't sit.",coast:"Ordinary terms. Quiet ones.",seller:"Terms first. Inventory after.",fussy:"Messy terms, I won't.",loud:"Ordinary terms. Extraordinary coat.",circuit:"Sit Standard. Friendly after.",hill:"Standard. Final. That's enough.",else:"I'll sit if the terms are ordinary."}
+  ]);
  }
  if(here==="Inn"){
   if(name==="Tomas")return ["Inn later. Table now. Or both.","Heard them arguing a corner call last night. I was right.","Someone left a tin on the mantel. Tempting."];
   if(name==="Nessa")return ["The fire's doing more work than the players. Bless it.","Stew's better than the play at that table. Don't tell them.","Inn's full of almost-matches. We could finish one."];
   if(name==="Bram")return ["Fire's honest. The play at that table isn't always.","Someone left a tin on the mantel. I'll keep an eye.","Heard a corner call last night. They settled it clean, eventually."];
   if(name==="Elira")return ["The fire talks. I don't have to.","Last night's argument was noise. The board was the point.","I prefer the quiet corner. There isn't one."];
-  return ["Inn bed's softer than the coach. That's the review.","Stew's fine. I'm not staying for the stories.","I'll sleep here. I'll play at the Club."];
+  return doorstepSaidMany(name,[
+   {coach:"Inn bed's softer than the coach. That's the review.",mill:"Inn's fine. I didn't come for the fire stories.",river:"Worse inns. This one's adequate.",coast:"Stew's fine. Club's why I stopped.",seller:"Inn's a bed. Stall's the work.",fussy:"I didn't come to be entertained.",loud:"Coat's warmer than the Inn. That's a lie. Sit anyway.",circuit:"Sleep, pack, same tin order.",hill:"This chair is luxury. The Inn's almost too much.",else:"Inn bed's softer than the coach. That's the review."},
+   {coach:"Stew's fine. I'm not staying for the stories.",mill:"Keep your rumours. I'll keep my corners.",river:"I don't stay for Inn talk.",coast:"Don't hold supper. I eat after the board.",seller:"After the match we can talk stock.",fussy:"Don't tell me a story. Show me a placement.",loud:"Inn talk? I'll invent it.",circuit:"Deal, then tea, then pack.",hill:"Don't ask me for a story.",else:"Stew's fine. I'm not staying for the stories."},
+   {coach:"I'll sleep here. I'll play at the Club.",mill:"Sleep, then a clean Open.",river:"Sleep if you want. I came to sit.",coast:"Inn stew, Club claim.",seller:"Sleep, then Saturday if I'm standing.",fussy:"The Inn is not practice.",loud:"Sleep later. Luck now.",circuit:"I'll find the same chair tomorrow.",hill:"I'll be in the Open. I already looked.",else:"I'll sleep here. I'll play at the Club."}
+  ]);
  }
  return [];
 }
@@ -1642,6 +1929,15 @@ function doorstepSaturdayPool(name){
     Nessa:"Practice if you like. Saturday's coming either way.",
     Bram:"Practice. Saturday's coming. Earn the seat.",
     Elira:"Saturday will arrive. Practice is quieter today.",
+    coach:"Practice. Saturday's coming.",
+    mill:"Practice if the terms stay clean. Saturday's coming.",
+    river:"Practice. Saturday's why the coach stopped.",
+    coast:"Saturday, if you'll have me. Practice is quiet.",
+    seller:"Practice. If the Open's on, I'm in.",
+    fussy:"Saturday is a tool. Practice today.",
+    loud:"Practice? I arrive. Saturday's coming anyway.",
+    circuit:"Another Saturday coming. Tin's already neat.",
+    hill:"I came for Saturday. Practice is watching.",
     else:"Practice. Saturday's coming."
    }));
    out.push(doorstepSaid(name,{
@@ -1649,6 +1945,15 @@ function doorstepSaturdayPool(name){
     Nessa:"Empty seats still, if you ask me. Nice, actually.",
     Bram:"Empty seats still. That's time to get the corners right.",
     Elira:"Empty seats. Good.",
+    coach:"Empty seats still, if you ask me.",
+    mill:"Empty seats. I'll take a clean one.",
+    river:"Empty seats. Sit one.",
+    coast:"Empty seats. Quiet's fine.",
+    seller:"Empty seats. Browse or sit.",
+    fussy:"Empty seats. The opening can be on time.",
+    loud:"Empty seats. I'll fill the air.",
+    circuit:"Empty seats. I'll find the same one tomorrow.",
+    hill:"Empty seats. I'll watch first.",
     else:"Empty seats still, if you ask me."
    }));
   }else if(days===2){
@@ -1657,6 +1962,15 @@ function doorstepSaturdayPool(name){
     Nessa:"Been looking at Saturday's pairings. Don't panic.",
     Bram:"Been looking at Saturday's pairings. Properly.",
     Elira:"Names going up. I already knew most of them.",
+    coach:"Been looking at Saturday's pairings.",
+    mill:"Pairings. I want a clean one.",
+    river:"Pairings. I want a heavy one.",
+    coast:"Pairings. I noticed.",
+    seller:"Pairings. I play the Saturday I'm standing on.",
+    fussy:"Pairings. Useful practice.",
+    loud:"Pairings. Put me somewhere loud.",
+    circuit:"If the Open's posted, I'm already looking.",
+    hill:"I already looked at the wall.",
     else:"Been looking at Saturday's pairings."
    }));
    out.push(doorstepSaid(name,{
@@ -1664,6 +1978,15 @@ function doorstepSaturdayPool(name){
     Nessa:"Friday they'll post the wall. We can look together if you like.",
     Bram:"Friday they'll post the wall. Always do. Read it twice.",
     Elira:"Friday's wall. I don't need to discuss it.",
+    coach:"Friday they'll post the wall. Always do.",
+    mill:"Friday's wall. I'll read it once. That's enough.",
+    river:"Friday's wall. I want the heavy table.",
+    coast:"Friday's wall. I don't need to discuss it.",
+    seller:"Friday's wall. Then I sit or I sell.",
+    fussy:"Friday's wall. Obviously I'll be on it.",
+    loud:"Friday's wall. Put my coat on it.",
+    circuit:"Friday's wall. I already know the leaving bell.",
+    hill:"Friday's wall. I already looked.",
     else:"Friday they'll post the wall. Always do."
    }));
   }else{
@@ -1672,6 +1995,15 @@ function doorstepSaturdayPool(name){
     Nessa:"Open's tomorrow. Sleep if you can. I'll try.",
     Bram:"Open's tomorrow. Rest is part of the craft.",
     Elira:"Open's tomorrow. Talking won't change the draw.",
+    coach:"Open's tomorrow.",
+    mill:"Open's tomorrow. Clean terms, I hope.",
+    river:"Open's tomorrow. Sit me proper.",
+    coast:"Open's tomorrow. I'll claim when it's there.",
+    seller:"Open's tomorrow. I play the Saturday I'm on.",
+    fussy:"Open's tomorrow. Useful practice.",
+    loud:"Open's tomorrow. Party if I'm in it.",
+    circuit:"Open's tomorrow. Tin's packed the same way.",
+    hill:"Open's tomorrow. I already looked.",
     else:"Open's tomorrow."
    }));
    out.push(doorstepSaid(name,{
@@ -1679,6 +2011,15 @@ function doorstepSaturdayPool(name){
     Nessa:"Travelling table's rumoured. Be kind if they look lost.",
     Bram:"Travelling table's rumoured. Ordinary terms, I hope.",
     Elira:"A travelling table, they say. The board won't care.",
+    coach:"Travelling table's rumoured. Might be talk.",
+    mill:"Travelling table's rumoured. I don't gossip about it.",
+    river:"Travelling table. I'll sit them heavy.",
+    coast:"A travelling table. I noticed.",
+    seller:"Another stall player, maybe. I'll sit them.",
+    fussy:"Travelling table. Practice against strangers.",
+    loud:"Travelling table. I'll be louder.",
+    circuit:"Travelling table. I compare Opens. That's allowed.",
+    hill:"Travelling table. I'll watch first.",
     else:"Travelling table's rumoured. Might be talk."
    }));
   }
@@ -1689,6 +2030,15 @@ function doorstepSaturdayPool(name){
    Nessa:"Heard a seating rumour for Saturday. Don't believe half of it.",
    Bram:"Heard a seating rumour for Saturday. I'll wait for the wall.",
    Elira:"Inn talk says Saturday's already spoken for. Inn talk is noise.",
+   coach:"Heard a seating rumour for Saturday.",
+   mill:"Seating rumour. I don't keep that.",
+   river:"Seating rumour. I'll sit whoever.",
+   coast:"Inn talk. I didn't collect it.",
+   seller:"Seating rumour. Terms first.",
+   fussy:"Inn talk is not a pairing sheet.",
+   loud:"Seating rumour. Sounds like a fight. Good.",
+   circuit:"Seating rumour. I'll wait for the posted wall.",
+   hill:"Inn talk. I'll wait for the wall.",
    else:"Heard a seating rumour for Saturday."
   }));
  }
@@ -1698,6 +2048,15 @@ function doorstepSaturdayPool(name){
    Nessa:"Market's full of Saturday nerves already. Tea helps.",
    Bram:"Market's full of Saturday nerves. Walk it off.",
    Elira:"Market nerves. I prefer the Club empty.",
+   coach:"Market's full of Saturday nerves already.",
+   mill:"Saturday nerves. I didn't come for that.",
+   river:"Saturday nerves. Doesn't stop a heavy tin.",
+   coast:"Market nerves. I'll still claim.",
+   seller:"Saturday nerves. Good for a stall. I still sit.",
+   fussy:"Market nerves. The Club is for practice.",
+   loud:"Saturday nerves. Good. Keeps me loud.",
+   circuit:"Saturday nerves. Pairings, then polish.",
+   hill:"Market nerves. I prefer watching.",
    else:"Market's full of Saturday nerves already."
   }));
  }
@@ -1712,6 +2071,15 @@ function doorstepTimePool(name){
   Nessa:"Early yet. Don't rush it.",
   Bram:"Morning's for looking, not rushing.",
   Elira:"Early. The Club's still honest.",
+  coach:"Early yet. Coach morning.",
+  mill:"Mill hours. I'm already up.",
+  river:"Fog morning. Sit anyway.",
+  coast:"Tide's working. I don't chatter.",
+  seller:"Morning's for stock. And a board.",
+  fussy:"Early. The opening isn't late yet.",
+  loud:"Too early to be quiet.",
+  circuit:"Morning timetable. Then a table.",
+  hill:"Watch first. Then sit.",
   else:"Early yet. Coach morning."
  }));
  if(phase==="Afternoon")out.push(doorstepSaid(name,{
@@ -1719,6 +2087,15 @@ function doorstepTimePool(name){
   Nessa:"Afternoon's for sitting. Lovely light.",
   Bram:"Good light on the boards just now. Use it.",
   Elira:"Afternoon light. The corners show.",
+  coach:"Afternoon. I'll take a table if it's free.",
+  mill:"Afternoon. Clean terms if you've got them.",
+  river:"Afternoon. Sit me proper.",
+  coast:"Afternoon light. Claim if it's there.",
+  seller:"Afternoon. Browse or sit.",
+  fussy:"Afternoon. Useful practice.",
+  loud:"Afternoon. Luck's awake.",
+  circuit:"Afternoon. Pairings, then polish.",
+  hill:"Afternoon. I've seen one board. Maybe two.",
   else:"Afternoon. I'll take a table if it's free."
  }));
  if(phase==="Evening")out.push(doorstepSaid(name,{
@@ -1726,6 +2103,15 @@ function doorstepTimePool(name){
   Nessa:"Evening's nicer. People get honest after supper.",
   Bram:"Evening play should still be clean.",
   Elira:"Evening. Fewer speeches. Better.",
+  coach:"Evening. I'll sleep after one board.",
+  mill:"Evening. I still want a clean sit.",
+  river:"Evening. Heavier light. Good.",
+  coast:"Evening. Quiet's better.",
+  seller:"Evening. Stock's closed. Cards aren't.",
+  fussy:"Evening. Fewer sloppy shuffles, one hopes.",
+  loud:"Evening. Louder luck.",
+  circuit:"Evening. Pack after one board.",
+  hill:"Evening. I'll watch one more board.",
   else:"Evening. I'll sleep after one board."
  }));
  if(day==="Monday")out.push(doorstepSaid(name,{
@@ -1733,6 +2119,15 @@ function doorstepTimePool(name){
   Nessa:"Week's just started. No need to grind yet.",
   Bram:"Week's just started. Time to set the terms right.",
   Elira:"Monday. The week will happen without commentary.",
+  coach:"Week's just started. I'm only here till Sunday.",
+  mill:"Week's started. Saturday's the reason.",
+  river:"Monday. The binder's already open.",
+  coast:"Monday inland. One week of it.",
+  seller:"Monday. Stall's up if the Open's coming.",
+  fussy:"Monday. Notes start now.",
+  loud:"Monday. Plenty of time to be loud.",
+  circuit:"Monday. Next town is already in my head.",
+  hill:"Monday. Low country week.",
   else:"Week's just started. I'm only here till Sunday."
  }));
  if(day==="Friday")out.push(doorstepSaid(name,{
@@ -1740,6 +2135,15 @@ function doorstepTimePool(name){
   Nessa:"Friday. People get sloppy. Be kind about it.",
   Bram:"Friday. People get sloppy. That's when craft shows.",
   Elira:"Friday. Sloppy boards. I notice.",
+  coach:"Friday. If I'm in the Open, ask now.",
+  mill:"Friday. Clean Open tomorrow, I hope.",
+  river:"Friday. Sit me before the wall fills.",
+  coast:"Friday. I'll claim without a speech.",
+  seller:"Friday. Saturday if I'm still in town.",
+  fussy:"Friday. I'll be in the Open. Obviously.",
+  loud:"Friday. Party if I'm in it.",
+  circuit:"Friday. If it's posted, I'm looking.",
+  hill:"Friday. I already looked at the wall.",
   else:"Friday. If I'm in the Open, ask now."
  }));
  if(day==="Sunday")out.push(doorstepSaid(name,{
@@ -1747,6 +2151,15 @@ function doorstepTimePool(name){
   Nessa:"Sunday. Even the Club's softer. Stay if you like.",
   Bram:"Sunday. Softer Club. Still play it clean.",
   Elira:"Sunday. The Club is quieter. Correct.",
+  coach:"Sunday. Last coach. Don't hold a card for me.",
+  mill:"Sunday. Don't hold a chair after.",
+  river:"Sunday. Morning coach unless Saturday kept me.",
+  coast:"Sunday. Monday I'm salt.",
+  seller:"Sunday. Stall folds tomorrow.",
+  fussy:"Sunday. Notes go home, not gossip.",
+  loud:"Sunday. Gone Monday. Stories stay.",
+  circuit:"Sunday. I'll wave from the coach.",
+  hill:"Sunday. Tomorrow I go back up.",
   else:"Sunday. Last coach. Don't hold a card for me."
  }));
  return out;
@@ -2069,8 +2482,30 @@ function doorstepAskChoices(name){
   }),`${name} says ${trav} came in on the Northvale coach.`);
  }
  if(name===trav){
-  add("I'm only here till Sunday.",`${name} is only in town until Sunday.`);
-  add("You'll find me at the Club this week.",`${name} is staying at the Club this week.`);
+  add(said({
+   coach:"I'm only here till Sunday.",
+   mill:"I'll be gone Monday. The Open is enough.",
+   river:"One week. Then the next bend.",
+   coast:"Monday I'm salt again.",
+   seller:"Monday the stall folds. The tin doesn't.",
+   fussy:"One week of useful boards. Then the county again.",
+   loud:"I won't still be here Monday. Sit now.",
+   circuit:"One week. I already know the leaving bell.",
+   hill:"Monday I go back up. Don't write.",
+   else:"I'm only here till Sunday."
+  }),`${name} is only in town until Sunday.`);
+  add(said({
+   coach:"You'll find me at the Club this week.",
+   mill:"I'll be at the Club if the terms stay clean.",
+   river:"Club or riverside. I'll sit either.",
+   coast:"Club. Quiet corner if you've got one.",
+   seller:"Club for the board. Market if you need a binder.",
+   fussy:"The Club. Obviously.",
+   loud:"Club. You can hear me from the Market.",
+   circuit:"Club. Same chair if I can help it.",
+   hill:"Club. I already looked at the wall.",
+   else:"You'll find me at the Club this week."
+  }),`${name} is staying at the Club this week.`);
  }
  const days=daysUntilSaturday();
  present.forEach(other=>{
@@ -2643,14 +3078,43 @@ function onWorldRecord(){
 function readNoticeboard(){absorbPublicNoticesHere();openJournalView();}
 function isSaturdayEventNow(){return state.visual.phase==="Afternoon"&&eventsOnDate(state.visual.date).some(e=>e.tier==="Local"&&e.place==="Lythmere Card Club")}
 function shuffledList(arr){return [...arr].sort(()=>Math.random()-.5)}
+function travellerRecord(v){
+ if(!v||!v.name)return null;
+ return {
+  name:v.name,
+  home:v.home,
+  tone:v.tone,
+  style:v.style,
+  warmth:v.warmth,
+  competitive:v.competitive,
+  skill:v.skill,
+  risk:v.risk,
+  terms:v.terms?{rule:v.terms.rule,tie:v.terms.tie,wager:v.terms.wager,budget:v.terms.budget}:undefined,
+  start:[...(v.start||[])],
+  bio:v.bio
+ };
+}
 function ensureTraveller(v){
  if(!v||!v.name)return;
- npcDefs[v.name]={visitor:true,skill:v.skill,risk:v.risk,terms:{rule:"Standard",tie:"final",wager:"Claim One",budget:92},start:[...(v.start||[])]};
- NPC_BIO[v.name]=v.bio||`${v.name} is in town for the Open.`;
+ const rec=travellerRecord(v)||{name:v.name,skill:v.skill,risk:v.risk,start:[...(v.start||[])],bio:v.bio};
+ const terms=rec.terms?{...rec.terms}:{rule:"Standard",tie:"final",wager:"Claim One",budget:92};
+ npcDefs[v.name]={
+  visitor:true,
+  skill:rec.skill,
+  risk:rec.risk,
+  warmth:rec.warmth,
+  competitive:rec.competitive,
+  style:rec.style,
+  tone:rec.tone,
+  home:rec.home,
+  terms,
+  start:[...(rec.start||[])]
+ };
+ NPC_BIO[v.name]=rec.bio||`${v.name} is in town for the Open.`;
  if(!state.npcs)state.npcs={};
- if(!Array.isArray(state.npcs[v.name])||state.npcs[v.name].length<5)state.npcs[v.name]=[...(v.start||[])];
+ if(!Array.isArray(state.npcs[v.name])||state.npcs[v.name].length<5)state.npcs[v.name]=[...(rec.start||[])];
  if(!state.seenByNpc)state.seenByNpc={};
- if(!state.seenByNpc[v.name])state.seenByNpc[v.name]=(v.start||[]).slice(0,2);
+ if(!state.seenByNpc[v.name])state.seenByNpc[v.name]=(rec.start||[]).slice(0,2);
  if(!state.memory)state.memory={};
  if(!state.memory[v.name])state.memory[v.name]={playerWins:0,npcWins:0,draws:0,declines:0,cardsWon:[],cardsLost:[],affinity:0,rivalry:0,respect:0,meetings:0,lastReaction:"",moments:[]};
 }
@@ -2664,10 +3128,9 @@ function pickSaturdayTravellers(){
  const used=new Set(localNpcNames());
  if(week)used.add(week);
  const pool=shuffledList(TRAVELLERS.filter(v=>v&&v.name&&!used.has(v.name)));
- const extra=pool.slice(0,week?2:3).map(v=>({name:v.name,skill:v.skill,risk:v.risk,start:[...v.start],bio:v.bio}));
+ const extra=pool.slice(0,week?2:3).map(travellerRecord).filter(Boolean);
  if(!week)return extra;
- const home=TRAVELLERS.find(v=>v.name===week);
- const first=home?{name:home.name,skill:home.skill,risk:home.risk,start:[...home.start],bio:home.bio}:null;
+ const first=travellerRecord(TRAVELLERS.find(v=>v.name===week));
  return [first,...extra].filter(Boolean).slice(0,3);
 }
 function weekMondayIso(from){
