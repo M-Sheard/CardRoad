@@ -518,6 +518,16 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <button type="button" id="closeBephStall">Close</button>
   </div>
 </div>
+<div id="openMissWarn" class="bephStall hidden" role="dialog" aria-modal="true" aria-labelledby="openMissWarnTitle">
+  <div class="bephStallCard">
+    <h2 id="openMissWarnTitle">Saturday Open</h2>
+    <p id="openMissWarnText">If you sit this match, you'll miss this afternoon's Saturday Open.</p>
+    <div class="openMissWarnActions">
+      <button type="button" id="openMissGoOpen">Go to the Open</button>
+      <button type="button" id="openMissPlayAnyway">Sit this match</button>
+    </div>
+  </div>
+</div>
 </section>
 
 <div id="journalOverlay" class="journalOverlay hidden">
@@ -2865,8 +2875,65 @@ function askDoorstepTalk(){
  save();
  updateWorldRecordButton();
 }
+function casualMatchMissesOpen(){
+ if(typeof isSaturdayEventNow!=="function"||!isSaturdayEventNow())return false;
+ if(window._tournamentMatch)return false;
+ const t=state&&state.activeTournament;
+ if(t&&t.type==="saturdayOpen"){
+  if(t.status==="complete")return false;
+  if(typeof saturdayOpenSeated==="function"&&saturdayOpenSeated(t))return false;
+ }
+ return true;
+}
+let pendingOpenMiss=null;
+function closeOpenMissWarn(){
+ const el=$("openMissWarn");
+ if(el)el.classList.add("hidden");
+}
+function warnOpenMiss(next){
+ pendingOpenMiss=next||null;
+ closeDoorstepTalk();
+ closeBephStall();
+ const el=$("openMissWarn");
+ if(!el){
+  confirmOpenMissPlay();
+  return;
+ }
+ const line=$("openMissWarnText");
+ const who=next&&next.name;
+ if(line)line.textContent=who
+  ?`If you sit ${who} now, you'll miss this afternoon's Saturday Open.`
+  :"If you sit this match, you'll miss this afternoon's Saturday Open.";
+ el.classList.remove("hidden");
+}
+function confirmOpenMissPlay(){
+ const next=pendingOpenMiss;
+ pendingOpenMiss=null;
+ closeOpenMissWarn();
+ if(!next)return;
+ if(next.kind==="incoming"){
+  if(!state||!state.incoming)return;
+  state.seasonStats.incomingAccepted++;
+  buildTerms(state.incoming.npc);
+  return;
+ }
+ if(next.name)openChallenge(next.name,{ignoreOpenMiss:true});
+}
+function goOpenInstead(){
+ pendingOpenMiss=null;
+ closeOpenMissWarn();
+ ensureVisualState();
+ state.visual.location="Card Club";
+ save();
+ renderHome();
+ openSaturdayTournament();
+}
 function challengeDoorstepTalk(){
  const name=doorstepTalkName;
+ if(casualMatchMissesOpen()){
+  warnOpenMiss({kind:"challenge",name});
+  return;
+ }
  closeDoorstepTalk();
  if(name)openChallenge(name);
 }
@@ -5800,7 +5867,13 @@ $("proposeTerms").onclick=()=>{
  openMatchDeckChoice();refreshFullRules();
 };
 $("cancelTerms").onclick=()=>{show("home");renderHome()};
-$("acceptIncoming").onclick=()=>{state.seasonStats.incomingAccepted++;buildTerms(state.incoming.npc)};
+$("acceptIncoming").onclick=()=>{
+ if(casualMatchMissesOpen()){
+  warnOpenMiss({kind:"incoming",name:state.incoming&&state.incoming.npc});
+  return;
+ }
+ state.seasonStats.incomingAccepted++;buildTerms(state.incoming.npc)
+};
 $("declineIncoming").onclick=()=>{let n=state.incoming.npc,m=mem(n);m.declines++;state.seasonStats.incomingDeclined++;m.affinity=clampRel(m.affinity-(m.declines>2?2:1));rememberMoment(n,"You declined a challenge.");news(`You declined ${n}'s challenge.`);state.incoming=null;save();renderHome()};
 function setChallengePlaque(label, person){
  const el=$("challengeTitle");
@@ -5826,7 +5899,11 @@ $("challengeTitle").onclick=()=>{
  if($("challengeTitle").classList.contains("isPerson") && currentNpc) openNpcDossier(currentNpc);
 };
 if($("dossierBack"))$("dossierBack").onclick=()=>{show("challenge");scheduleScreenLayout("challenge")};
-function openChallenge(name){
+function openChallenge(name,opts){
+ if(name&&!(opts&&opts.ignoreOpenMiss)&&casualMatchMissesOpen()){
+  warnOpenMiss({kind:"challenge",name});
+  return;
+ }
  $("acceptTerms").classList.remove("hidden");$("backHome").classList.remove("hidden");
  if($("acceptTerms"))$("acceptTerms").textContent="Accept";
  currentNpc=name;state.seasonStats.playerChallenges++;challengeDirection="outgoing";seriesTarget=1;seriesWins={p:0,ai:0};seriesGame=0;namedWagers=null;currentTerms={...npcDefs[name].terms};
@@ -7506,6 +7583,9 @@ if($("gazetteStage")){
 }
 if($("closeBephStall"))$("closeBephStall").onclick=closeBephStall;
 if($("bephStall"))$("bephStall").addEventListener("click",e=>{if(e.target===$("bephStall"))closeBephStall()});
+if($("openMissGoOpen"))$("openMissGoOpen").onclick=goOpenInstead;
+if($("openMissPlayAnyway"))$("openMissPlayAnyway").onclick=confirmOpenMissPlay;
+if($("openMissWarn"))$("openMissWarn").addEventListener("click",e=>{if(e.target===$("openMissWarn")){pendingOpenMiss=null;closeOpenMissWarn()}});
 
 $("reset").onclick=()=>{if(confirm("Reset prototype save?")){state=fresh();save();bootTownOrTutorial()}};
 load();syncDevControls();
@@ -12218,6 +12298,15 @@ html,body,#visualShell{color-scheme:only light}
   font:800 12px Georgia,serif;
   letter-spacing:.06em;
   text-transform:uppercase;
+}
+.openMissWarnActions{
+  display:flex;
+  flex-wrap:wrap;
+  gap:8px;
+}
+.openMissWarnActions button{
+  flex:1 1 140px;
+  min-width:0;
 }
 </style>
 <style>
