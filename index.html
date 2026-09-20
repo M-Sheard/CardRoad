@@ -2877,11 +2877,14 @@ function askDoorstepTalk(){
 }
 function casualMatchMissesOpen(){
  if(typeof isSaturdayEventNow!=="function"||!isSaturdayEventNow())return false;
- if(window._tournamentMatch)return false;
  const t=state&&state.activeTournament;
- if(t&&t.type==="saturdayOpen"){
+ const today=state.visual&&state.visual.date;
+ const sameDay=t&&t.type==="saturdayOpen"&&(!t.date||t.date===today);
+ const seated=sameDay&&typeof saturdayOpenSeated==="function"&&saturdayOpenSeated(t);
+ if(window._tournamentMatch&&seated)return false;
+ if(sameDay){
   if(t.status==="complete")return false;
-  if(typeof saturdayOpenSeated==="function"&&saturdayOpenSeated(t))return false;
+  if(seated)return false;
  }
  return true;
 }
@@ -3319,7 +3322,9 @@ function competitorTag(n){
 }
 function openSaturdayTournament(){
  let ev=eventsOnDate(state.visual.date).find(e=>e.tier==="Local")||{name:"Lythmere Saturday Open"};
- if(!state.activeTournament||state.activeTournament.status==="complete")createSaturdayOpen(ev);
+ const t=state.activeTournament;
+ const stale=t&&t.type==="saturdayOpen"&&t.date&&t.date!==state.visual.date;
+ if(!t||t.status==="complete"||stale)createSaturdayOpen(ev);
  show("tournament");renderTournament();
 }
 function backgroundV6Day(){
@@ -3359,10 +3364,17 @@ function tournamentBlocksTime(){
 function expireUnseatedSaturdayOpen(){
  const t=state&&state.activeTournament;
  if(!t||t.type!=="saturdayOpen")return;
+ const today=state.visual&&state.visual.date;
+ const sameDay=!t.date||t.date===today;
+ if(!sameDay){
+  state.activeTournament=null;
+  window._tournamentMatch=null;
+  return;
+ }
  if(t.status!=="intro"&&t.status!=="bracket")return;
- const sameDay=!t.date||t.date===(state.visual&&state.visual.date);
- if(sameDay&&typeof isSaturdayEventNow==="function"&&isSaturdayEventNow())return;
+ if(typeof isSaturdayEventNow==="function"&&isSaturdayEventNow())return;
  state.activeTournament=null;
+ window._tournamentMatch=null;
 }
 function advanceVisualTime(){
  ensureVisualState();
@@ -5043,6 +5055,7 @@ function saturdayOpenRules(round="Quarterfinal"){
  return championshipTournamentRules(round);
 }
 function createSaturdayOpen(ev){
+ window._tournamentMatch=null;
  hydrateTournamentVisitors();
  const visitors=pickSaturdayTravellers();
  visitors.forEach(ensureTraveller);

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v148-open-miss-warn';
+const CACHE_NAME = 'card-road-pwa-v149-open-week-reset';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
