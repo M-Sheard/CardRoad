@@ -614,6 +614,8 @@ Reputation is **hidden and multidimensional**. There is no simple visible reputa
 
 The player infers reputation through NPC reactions, invitations, challenge behaviour, tournament access, social opportunities, Card News, recognition, and competitive standing.
 
+When reputation is designed, doorstep talk should **follow** it: respected players get looking-up lines, dismissed players get cooler or shorter ones, still in that NPC’s voice. Reputation is not shown as a meter on the talk UI.
+
 ---
 
 # 36. RANKING VS REPUTATION
@@ -645,6 +647,8 @@ This allows **Friendly Rival** relationships.
 Raw numerical relationship values remain hidden.
 
 Players instead observe relationships through qualitative descriptions, dialogue/reactions, challenge frequency, willingness to accept rules, rematch behaviour, remembered history, and card-related behaviour.
+
+Doorstep talk is a **voice bag** (one short spoken line), not a conversation tree. Variety comes from more lines in each person’s voice plus live world facts. When friendship and rivalry are fully designed, stance-filtered lines go in the **same bag**: friends, rivals, and friendly rivals speak differently without a new dialogue system. Catchphrases may repeat; that is character. Do not generate NPC speech live. The greeting/middle/sign-off mixer is for Grandfather’s letters, not doorstep talk.
 
 ---
 
@@ -722,6 +726,8 @@ Relationships should influence behaviour rather than merely change profile text.
 Examples already explored: friends more willing to accept unusual match terms; friendly rivals seeking another close contest; rivals wanting decisive longer series; NPCs seeking rematches; NPCs trying to recover cards previously lost; repeated declined challenges cooling relationships.
 
 Continue moving toward behavioural consequences rather than excessive dialogue.
+
+Stance-colored talk is a later pass on the existing doorstep bag, not a new conversation feature. It should land **with** the relationship/reputation design, so rivals and friends already *act* differently (sit, rematch, terms) and the line they speak matches that. Do not write a full stance vocabulary before those systems are locked.
 
 ---
 

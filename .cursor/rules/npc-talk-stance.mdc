@@ -1,0 +1,16 @@
+---
+description: NPC doorstep talk stays a voice bag; stance lines wait for relationship/reputation design
+alwaysApply: true
+---
+
+# NPC talk and later stance (locked intent)
+
+Doorstep talk is **one short spoken line**, not a letter and not a chat tree. Keep it that way.
+
+**Now:** variety is more lines in each person’s voice (`DOORSTEP_VOICE`) plus world facts already in the bag (place, time, Saturday, gossip, cards, last match). Catchphrases are character. Do not add a live generator.
+
+**Later, when relationship and reputation systems are designed** (not before): pour extra lines into the **same bag**, filtered by stance. Friends, rivals, and friendly rivals say different things in that person’s voice. Reputation (respect / looking up vs dismissive) also filters the bag. Do not invent a visible reputation meter in the dialogue.
+
+Talk **follows behaviour**. The same stance should change whether they sit, rematch, or haggle terms — not only what they say. Prefer behavioural consequences over more chatter.
+
+**Do not** assemble NPC speech from greeting + filler + sign-off (that mixer is for Grandfather’s letters). Do not build a new conversation UI for this. Do not flesh out stance lists until Marc has locked those systems.
