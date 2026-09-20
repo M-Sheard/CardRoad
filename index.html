@@ -3560,9 +3560,29 @@ function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
 }
 const HOUSE_TIN_FLOOR=7;
+const HOUSE_TIN_SIT_CAP=86;
 let houseTinPreview=false,houseTinPreviewCount=5,houseTinLast=null,houseTinTownPreview=false;
 function houseTinHeld(){
  return houseTinPreview?houseTinPreviewCount:(Array.isArray(state.player)?state.player.length:0);
+}
+function cheapestLegalDeck(cap){
+ cap=cap||HOUSE_TIN_SIT_CAP;
+ const pool=(state.player||[]).filter(n=>C[n]).sort((a,b)=>C[a].budget-C[b].budget);
+ const out=[];
+ let sum=0;
+ for(const n of pool){
+  if(out.length>=5)break;
+  if(sum+C[n].budget<=cap){out.push(n);sum+=C[n].budget;}
+ }
+ return out.length===5?out:null;
+}
+function canSitTable(cap){
+ return !!cheapestLegalDeck(cap||HOUSE_TIN_SIT_CAP);
+}
+function houseTinNeedsCard(){
+ if(houseTinPreview)return houseTinPreviewCount<HOUSE_TIN_FLOOR;
+ if(houseTinHeld()<HOUSE_TIN_FLOOR)return true;
+ return !canSitTable(HOUSE_TIN_SIT_CAP);
 }
 function pickHouseCommon(){
  const commons=Object.keys(C).filter(d=>C[d]&&C[d].budget<=16);
@@ -3581,14 +3601,16 @@ function issueHouseCommon(){
 }
 function renderHouseTin(){
  const n=houseTinHeld();
- const short=n<HOUSE_TIN_FLOOR;
+ const short=houseTinNeedsCard();
  const cap=$("houseTinCaption"),count=$("houseTinCount"),take=$("houseTinTake"),held=$("houseTinCard");
  if(cap){
-  cap.textContent=short
-   ?"The club keeps ordinary cards so a table can still sit. These are house commons, not the copies you lost. Take until you have seven."
-   :houseTinLast
-    ?"That's seven. Enough for a table. The tin stays shut."
-    :"You already have enough for a table. The house tin stays shut until you drop below seven.";
+  cap.textContent=short&&n>=HOUSE_TIN_FLOOR
+   ?"Seven cards, but they will not sit an ordinary table. Take a house common."
+   :short
+    ?"The club keeps ordinary cards so a table can still sit. These are house commons, not the copies you lost. Take until you have seven."
+    :houseTinLast
+     ?"That's seven. Enough for a table. The tin stays shut."
+     :"You already have enough for a table. The house tin stays shut until you drop below seven.";
  }
  if(count)count.textContent=n===1?"You have 1 card.":`You have ${n} cards.`;
  if(take){
@@ -3621,7 +3643,7 @@ function closeHouseTin(){
  renderHome();
 }
 function takeHouseCard(){
- if(houseTinHeld()>=HOUSE_TIN_FLOOR)return;
+ if(!houseTinNeedsCard())return;
  if(houseTinPreview){
   houseTinLast=pickHouseCommon();
   houseTinPreviewCount++;
@@ -3840,7 +3862,7 @@ function noteHouseTinIfNeeded(opts){
  ensureInbox();
  if(!preview&&state.houseTinNoted)return;
  const n=Array.isArray(state.player)?state.player.length:0;
- if(!preview&&n>=HOUSE_TIN_FLOOR)return;
+ if(!preview&&n>=HOUSE_TIN_FLOOR&&(typeof houseTinNeedsCard!=="function"||!houseTinNeedsCard()))return;
  if(!preview)state.houseTinNoted=true;
  postInbox(HOUSE_TIN_MAIL,{preview});
 }
@@ -5458,7 +5480,7 @@ function renderWorldScene(){
  if($("clubWallHotspot"))$("clubWallHotspot").classList.toggle("hidden",state.visual.location!=="Card Club");
  if($("houseTinHotspot")){
   const atClub=state.visual.location==="Card Club";
-  const short=houseTinTownPreview||((Array.isArray(state.player)?state.player.length:0)<HOUSE_TIN_FLOOR);
+  const short=houseTinTownPreview||houseTinNeedsCard();
   $("houseTinHotspot").classList.toggle("hidden",!(atClub&&short));
  }
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
