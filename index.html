@@ -536,6 +536,9 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devHouseTin" type="button" style="margin-top:8px">Preview house tin (5 cards)</button>
         <button id="devInbox" type="button" style="margin-top:8px">Preview tin inbox</button>
         <button id="devGrandpaLetter" type="button" style="margin-top:8px">Preview Grandfather letter</button>
+        <button id="devGrandpaWin" type="button" style="margin-top:8px">Preview Grandfather win letter</button>
+        <button id="devGrandpaEnter" type="button" style="margin-top:8px">Preview Grandfather big-table letter</button>
+        <button id="devGrandpaChat" type="button" style="margin-top:8px">Preview Grandfather ramble</button>
         <button id="devOvernightGossip" type="button" style="margin-top:8px">Preview overnight gossip</button>
         <button id="devCopyInRoom" type="button" style="margin-top:8px">Preview copy in the room</button>
         <button id="devThursdayClub" type="button" style="margin-top:8px">Jump to Thursday Club</button>
@@ -1097,6 +1100,7 @@ function syncCalendarState(){
 }
 function shiftWorldPhase(steps=1){
  ensureVisualState();
+ const from=state.visual.date;
  const phases=["Morning","Afternoon","Evening"];
  while(steps-->0){
   let i=phases.indexOf(state.visual.phase);
@@ -1104,6 +1108,7 @@ function shiftWorldPhase(steps=1){
   else{let d=visualDateObj();d.setDate(d.getDate()+1);state.visual.date=d.toISOString().slice(0,10);state.visual.phase="Morning";state.worldStep++;backgroundV6Day()}
  }
  syncCalendarState();
+ if(state.visual.date!==from)maybeGrandpaChatter();
 }
 function scheduleActivityTime(kind){ensureVisualState();state.visual.pendingTimeCost=kind}
 function consumePendingActivityTime(){
@@ -2786,7 +2791,7 @@ function economyNpcNames(){return localNpcNames()}
 const starter=["C001", "C002", "C007", "C008", "C014", "C015", "C022", "C023", "C031", "C032", "C041", "C052", "C064", "C076", "C087"];
 let state, currentNpc=null, selectedDeck=[], deckEdit=null, playerHand=[], aiHand=[], board=[], turn=0, chosen=null,lastCapture=null,aiVisibleCounts={},lastComboCount=0,currentTerms=null,finishScheduled=false,matchAnimating=false,deckSelectAnimating=false,deckSelectPage=14,seriesPlayerCopyDeck=[],seriesAiCopyDeck=[],aiPlayed=[],startingPlayer="p",pendingLossCard=null,incomingNpc=null,incomingReason=null,challengeDirection="outgoing",seriesTarget=1,seriesWins={p:0,ai:0},seriesGame=0,namedWagers=null,seriesPlayerDeck=null,seriesAiDeck=null,seriesWinner=null,pendingSeriesClaim=null,seriesInitialStarter="p",seriesPlayerExposed=[],seriesAiExposed=[],seriesResults=[],pendingCounter=null,matchBeats=[];
 function fresh(){
- let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false,grandpaLetterNoted:false};
+ let s={schema:"v1.2.1",player:[...starter],npcs:Object.fromEntries(Object.entries(npcDefs).map(([n,d])=>[n,[...d.start]])),log:["Grandfather's collection became yours."],matches:0,history:{},worldStep:0,season:{day:1,year:1,champion:null,eventsDone:{},records:{You:{w:0,l:0},Tomas:{w:0,l:0},Bram:{w:0,l:0},Nessa:{w:0,l:0},Elira:{w:0,l:0}},history:[],tournamentHistory:[]},seenByNpc:{},news:["The local card scene is quiet."],gazette:[],gazetteReady:true,memory:{},incoming:null,daily:{lastNpcMatch:null,lastCardMove:null,gossip:null,asked:{}},seasonStats:{playerChallenges:0,incomingAccepted:0,incomingDeclined:0},savedDecks:[[],[],[],[],[]],grandpaTutorial:false,inbox:[],houseTinNoted:false,grandpaLetterNoted:false,grandpaMail:null};
  [...new Set([...starter,...Object.values(npcDefs).flatMap(d=>d.start)])].forEach(c=>s.history[c]=[]);
  starter.forEach(c=>s.history[c].push("Inherited from Grandfather."));
  Object.entries(npcDefs).forEach(([n,d])=>{
@@ -2840,6 +2845,7 @@ function ensureWorldDefaults(){
  if(!Array.isArray(state.inbox))state.inbox=[];
  if(state.houseTinNoted==null)state.houseTinNoted=false;
  if(state.grandpaLetterNoted==null)state.grandpaLetterNoted=false;
+ ensureGrandpaMail();
 }
 function ensureOwnerCopies(owner){
  try{
@@ -2910,7 +2916,16 @@ function wantsInboxPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])inbox=1(?:&|$)/.test(location.search);
 }
 function wantsLetterPreview(){
- return typeof location!=="undefined"&&/(?:^|[?&])letter=1(?:&|$)/.test(location.search);
+ return !!letterPreviewKind();
+}
+function letterPreviewKind(){
+ if(typeof location==="undefined")return null;
+ const m=String(location.search||"").match(/[?&]letter=([^&]*)/);
+ if(!m)return null;
+ const v=decodeURIComponent(m[1]||"").toLowerCase();
+ if(v==="1"||v==="open")return "open";
+ if(v==="win"||v==="enter"||v==="chat")return v;
+ return null;
 }
 function wantsGossipPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])gossip=1(?:&|$)/.test(location.search);
@@ -3016,6 +3031,7 @@ function ensureInbox(){
  if(!Array.isArray(state.inbox))state.inbox=[];
  if(state.houseTinNoted==null)state.houseTinNoted=false;
  if(state.grandpaLetterNoted==null)state.grandpaLetterNoted=false;
+ ensureGrandpaMail();
 }
 function unreadInboxCount(){
  ensureInbox();
@@ -3046,6 +3062,105 @@ const GRANDPA_LETTER={
   "These cards remember more of the old tables than I do. Keep them moving."
  ]
 };
+const GRANDPA_BIG_TIERS=["Regional","Major","Continental","World"];
+const GRANDPA_WIN_LETTERS=[
+ {title:"Grandfather heard you won",greeting:"So you took the {event}.",body:["Hale will say he taught you. He did not. I told the cat anyway. She already knew, which I resent.","Don't let the cards sit in a tin now. And don't let Tomas talk you into a second wager on the way out."]},
+ {title:"Grandfather heard you won",greeting:"Champion, they said.",body:["I had to ask twice. My ears are worse than my eyes. Then I knocked the kettle. Then I sat down.","Keep counting the sides. Pretty pictures never held a board."]},
+ {title:"Grandfather heard you won",greeting:"I heard the Club shouted your name.",body:["Or someone with a name like yours. Hale mumbles. Either way I put the good cup out and nobody came.","Bring the cards home when the corners go soft. Not before."]},
+ {title:"Grandfather heard you won",greeting:"Well then.",body:["I was a fair player when my eyes were sharp. These cards remember more of that than I do. Sounds as if they remembered you too.","Don't get clever. Get even. Then get home before the Inn starts the second jug."]}
+];
+const GRANDPA_ENTER_LETTERS=[
+ {title:"Grandfather heard you're sitting",greeting:"Someone said the {event} is on.",body:["Or a Major. I get them mixed up. Sit straight. Count the sides. Don't watch the pretty pictures.","If Hale is there, don't let him tell the river-tables story. You've heard it. I've heard it. The cat has heard it."]},
+ {title:"Grandfather heard you're sitting",greeting:"A longer name than Saturday, they said.",body:["I said that's a lot of walking. They said it's cards. I said that's worse.","Pack a clean shirt if you remember how. I never did. The cards don't care."]},
+ {title:"Grandfather heard you're sitting",greeting:"The {event}, is it.",body:["I used to know a card by the feel of the corners. Not now. You still can. That's the whole trick.","If you lose, come anyway. If you win, come anyway. The tin lid still doesn't sit right."]}
+];
+const GRANDPA_CHAT_LETTERS=[
+ {greeting:"Hale came by.",body:["He swore the river tables still run until dawn. I told him I can't see the board. He talked for an hour anyway.","I nodded in the wrong places. He didn't notice. He never does."]},
+ {greeting:"I found an old Otter in the drawer.",body:["Corners gone. Thought it was a biscuit. The cat disagrees. We had words.","Don't you start collecting crumbs in the tin. I packed it once. That was enough."]},
+ {greeting:"Mrs. Pell asked if you'd won anything yet.",body:["I said I hadn't heard. Then I heard. Then I forgot what I'd heard. Then I told her about the wallpaper instead.","There are forty-eight flowers unless I counted the doorway twice. I probably did."]},
+ {greeting:"Rain all week.",body:["I counted the spoons. There are five. There used to be six. Hale probably.","If the Market smells like wet canvas, that's a good day for a quiet table. Tomas hates the damp. Use that."]},
+ {greeting:"The tin lid still doesn't sit right.",body:["I packed it wrong. Or you packed it wrong. One of us. I tapped it twice, the way Tomas's father used to before a wager.","The cat thinks I'm calling her. I am not. I am arguing with a lid."]},
+ {greeting:"I dreamed I could still read the corners.",body:["Woke up and put my hand on a saucer. Not the same. Don't laugh.","Keep them moving. Write if the Club still puts the banners up on a Thursday. I like knowing."]},
+ {greeting:"I wrote this twice.",body:["The first one had a tea ring. This one might too. I can't tell from here.","If two arrive, keep the cleaner one. Or the other one. I forget which I meant."]},
+ {greeting:"Lost my glasses.",body:["They were on my head. Hale found them by laughing. I told him the Otter in the drawer is not for eating.","Write when you can. Large letters if you remember."]},
+ {greeting:"Saturday already?",body:["I had Thursday in my bones. The bells disagree. I disagree with the bells.","If you're sitting a table, sit it. If you're not, don't let Tomas decide for you."]}
+];
+function ensureGrandpaMail(){
+ if(!state)return;
+ if(!state.grandpaMail||typeof state.grandpaMail!=="object")state.grandpaMail={nextChatter:null,lastWin:-1,lastEnter:-1,lastChat:-1};
+ if(state.grandpaMail.nextChatter===undefined)state.grandpaMail.nextChatter=null;
+ if(state.grandpaMail.lastWin==null)state.grandpaMail.lastWin=-1;
+ if(state.grandpaMail.lastEnter==null)state.grandpaMail.lastEnter=-1;
+ if(state.grandpaMail.lastChat==null)state.grandpaMail.lastChat=-1;
+}
+function grandpaCanWrite(){
+ if(typeof inHomeTutorial==="function"&&inHomeTutorial())return false;
+ return !!(state&&(state.grandpaTutorial||state.tutorialDone));
+}
+function addDaysIso(iso,days){
+ const d=new Date((iso||state.visual?.date||"2026-03-02")+"T12:00:00");
+ if(Number.isNaN(d.getTime()))d.setTime(new Date("2026-03-02T12:00:00").getTime());
+ d.setDate(d.getDate()+days);
+ return d.toISOString().slice(0,10);
+}
+function scheduleGrandpaChatter(fromIso){
+ ensureGrandpaMail();
+ const gap=28+Math.floor(Math.random()*8);
+ state.grandpaMail.nextChatter=addDaysIso(fromIso||state.visual?.date,gap);
+}
+function hushGrandpaChatter(days){
+ ensureGrandpaMail();
+ const quiet=addDaysIso(state.visual?.date,days||2);
+ if(!state.grandpaMail.nextChatter||quiet>state.grandpaMail.nextChatter)state.grandpaMail.nextChatter=quiet;
+}
+function pickGrandpaPool(pool,key){
+ ensureGrandpaMail();
+ if(!pool||!pool.length)return {greeting:"Well.",body:["I forget what I meant to say."],sign:"— Grandfather"};
+ let idx=Math.floor(Math.random()*pool.length);
+ if(pool.length>1&&idx===state.grandpaMail[key])idx=(idx+1)%pool.length;
+ state.grandpaMail[key]=idx;
+ return pool[idx];
+}
+function fillGrandpaTemplate(spec,vars){
+ vars=vars||{};
+ const fill=s=>String(s||"").replace(/\{(\w+)\}/g,(_,k)=>vars[k]??"");
+ return {
+  title:fill(spec.title||"A letter from Grandfather"),
+  greeting:fill(spec.greeting||""),
+  sign:spec.sign||"— Grandfather",
+  body:(spec.body||[]).map(fill)
+ };
+}
+function shortContestName(name){
+ return String(name||"the Open").replace(/^Lythmere\s+/i,"");
+}
+function contestLetterName(t){
+ const date=(t&&t.date)||state.visual?.date;
+ const big=eventsOnDate(date).find(e=>GRANDPA_BIG_TIERS.includes(e.tier));
+ if(big)return shortContestName(big.name);
+ return shortContestName(t&&t.name);
+}
+function tournamentIsBig(t){
+ if(!t)return false;
+ if(t.type==="saturdayOpen")return false;
+ if(t.type==="championship")return true;
+ if(GRANDPA_BIG_TIERS.includes(t.tier))return true;
+ const date=t.date||state.visual?.date;
+ return eventsOnDate(date).some(e=>GRANDPA_BIG_TIERS.includes(e.tier));
+}
+function postGrandpaLetter(spec,opts){
+ if(!(opts&&opts.preview)&&!grandpaCanWrite())return null;
+ const filled=fillGrandpaTemplate(spec,opts&&opts.vars);
+ return postInbox({
+  id:spec.id,
+  kind:"letter",
+  title:filled.title,
+  from:"Grandfather",
+  greeting:filled.greeting,
+  sign:filled.sign,
+  body:filled.body
+ },opts);
+}
 function postInbox(msg,opts){
  ensureInbox();
  if(!msg)return null;
@@ -3132,19 +3247,68 @@ function noteGrandpaLetterIfNeeded(opts){
   if(state.log&&!state.log.some(x=>/letter from Grandfather/i.test(x))){
    state.log.push("A letter from Grandfather was packed with the tin.");
   }
+  if(!state.grandpaMail||!state.grandpaMail.nextChatter)scheduleGrandpaChatter();
  }
- postInbox(GRANDPA_LETTER,{preview});
+ return postInbox(GRANDPA_LETTER,{preview});
 }
-function bootGrandpaLetter(){
+function maybeGrandpaChatter(opts){
+ const preview=!!(opts&&opts.preview);
+ if(!preview&&!grandpaCanWrite())return null;
+ if(!preview&&!state.grandpaLetterNoted)return null;
+ ensureGrandpaMail();
+ const today=state.visual?.date;
+ if(!preview){
+  if(!state.grandpaMail.nextChatter){scheduleGrandpaChatter();save();return null;}
+  if(!today||today<state.grandpaMail.nextChatter)return null;
+ }
+ const spec=pickGrandpaPool(GRANDPA_CHAT_LETTERS,"lastChat");
+ const mail=postGrandpaLetter({id:preview?"grandpa-chat-preview":("grandpa-chat-"+today),title:"A letter from Grandfather",...spec},{preview});
+ if(!preview){scheduleGrandpaChatter();save()}
+ return mail;
+}
+function noteGrandpaWinIfNeeded(opts){
+ const preview=!!(opts&&opts.preview);
+ const t=state&&state.activeTournament;
+ if(!preview&&!grandpaCanWrite())return null;
+ if(!preview&&!(t&&t.finalWinner==="You"))return null;
+ const event=preview?(opts&&opts.event)||"Saturday Open":contestLetterName(t);
+ const id=preview?"grandpa-win-preview":("grandpa-win-"+(t.date||state.visual?.date||"")+"-"+(t.type||t.name||"open"));
+ const spec=pickGrandpaPool(GRANDPA_WIN_LETTERS,"lastWin");
+ const mail=postGrandpaLetter({id,...spec},{preview,vars:{event}});
+ if(!preview&&mail){hushGrandpaChatter(3);save()}
+ return mail;
+}
+function noteGrandpaEnterIfNeeded(opts){
+ const preview=!!(opts&&opts.preview);
+ const t=state&&state.activeTournament;
+ if(!preview){
+  if(!grandpaCanWrite()||!t||t.grandpaEnterNoted)return null;
+  if(!tournamentIsBig(t))return null;
+  t.grandpaEnterNoted=true;
+ }
+ const event=preview?(opts&&opts.event)||"Northvale Regional Championship":contestLetterName(t);
+ const id=preview?"grandpa-enter-preview":("grandpa-enter-"+(t.date||state.visual?.date||"")+"-"+(t.type||"open"));
+ const spec=pickGrandpaPool(GRANDPA_ENTER_LETTERS,"lastEnter");
+ const mail=postGrandpaLetter({id,...spec},{preview,vars:{event}});
+ if(!preview&&mail){hushGrandpaChatter(2);save()}
+ return mail;
+}
+function bootGrandpaLetter(kind){
+ kind=kind||letterPreviewKind()||"open";
  ensureVisualState();
  state.grandpaTutorial=true;
  state.tutorialDone=true;
  state.visual.location="Market";
- noteGrandpaLetterIfNeeded({preview:true});
+ let mail=null;
+ if(kind==="win")mail=noteGrandpaWinIfNeeded({preview:true,event:"Saturday Open"});
+ else if(kind==="enter")mail=noteGrandpaEnterIfNeeded({preview:true,event:"Northvale Regional Championship"});
+ else if(kind==="chat")mail=maybeGrandpaChatter({preview:true});
+ else mail=noteGrandpaLetterIfNeeded({preview:true})||inboxById("grandpa-letter");
  renderHome();
  show("home");
  openJournalView("inbox");
- openInboxMessage("grandpa-letter");
+ if(mail&&mail.id)openInboxMessage(mail.id);
+ else if(kind==="open")openInboxMessage("grandpa-letter");
 }
 let gazettePages=[],gazetteIndex=0,gazetteFlipping=false,gazetteSwipeX=null,gazetteFitGen=0;
 function gazetteEventName(title){
@@ -3385,6 +3549,7 @@ function jumpVisualToSaturdayOpen(){
  state.visual.phase="Afternoon";
  state.visual.location="Card Club";
  syncCalendarState();
+ maybeGrandpaChatter();
 }
 function jumpVisualToOpenWeek(weekday){
  ensureVisualState();
@@ -3397,6 +3562,7 @@ function jumpVisualToOpenWeek(weekday){
  state.visual.phase="Afternoon";
  state.visual.location="Card Club";
  syncCalendarState();
+ maybeGrandpaChatter();
 }
 function bootOvernightGossip(){
  ensureVisualState();
@@ -3689,6 +3855,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  if(ensureJournalSeen())save();
  noteHouseTinIfNeeded();
  noteGrandpaLetterIfNeeded();
+ maybeGrandpaChatter();
 }
 const $=x=>document.getElementById(x);
 const LEFTOVER_SCREENS=["game","challenge","npcDossier","result","deckSelect","savedDecks","starter","tournament","newsGazette","houseTin","clubWall","seriesSummary","cardInspector"];
@@ -4208,6 +4375,7 @@ function beginLocalChampionship(){
  t.qf2Winner=q2.winner;t.qf3Winner=q3.winner;t.qf4Winner=q4.winner;
  t.status="awaitingPlayerQuarter";t.round="Quarterfinal";
  news(`The Local Championship quarterfinals are underway.`,{h:"Championship quarterfinals",p:"The Local Championship quarterfinals are underway."});
+ noteGrandpaEnterIfNeeded();
  save();renderTournament();
 }
 function completeChampionshipNpcFinal(a,b){
@@ -4254,6 +4422,7 @@ function finalizeChampionshipPlayerResult(playerWon){
      state.season.champion="You";
      state.season.history.push(`You became Local Champion, Year ${state.season.year}.`);
      news(`You are the Year ${state.season.year} Local Champion.`,{h:"You are Local Champion",p:`You are the Year ${state.season.year} Local Champion.`});
+     noteGrandpaWinIfNeeded();
    }else{
      stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
      state.season.champion=m.opponent;
@@ -4469,6 +4638,7 @@ function finalizeSaturdayOpenPlayerResult(playerWon){
   if(playerWon){
    stampTournamentWinner("You",t.name,playerFinalCopies);
    reportContestWin("You",m.opponent,t.name,t.scores?.final,"Final");
+   noteGrandpaWinIfNeeded();
   }else{
    stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
    reportContestWin(m.opponent,"You",t.name,t.scores?.final,"Final");
@@ -4570,6 +4740,7 @@ function beginTournamentPlayerMatch(opponent,resultField,round){
  t.rules=(t.type==="championship"||t.type==="saturdayOpen")?championshipTournamentRules(round):warmupTournamentRules(round);
  configureTournamentTerms(t);currentNpc=opponent;window._tournamentMatch={resultField,round,opponent};
  challengeDirection="outgoing";selectedDeck=[];seriesGame=0;seriesWins={p:0,ai:0};seriesWinner=null;namedWagers=null;
+ noteGrandpaEnterIfNeeded();
  renderKnownCollection(opponent);setChallengePlaque(`${t.type==="saturdayOpen"?"Saturday Open":t.name} — ${round}`);$("challengeMsg").textContent=`${round} against ${opponent}.`;
  $("seriesSetup").textContent=`${round} · tournament rules are fixed.`;$("terms").innerHTML=tournamentRulesSummary(t);
  const sit=t.type==="saturdayOpen";
@@ -4597,7 +4768,10 @@ function finalizeTournamentPlayerResult(playerWon){
    }
  }else{
    t.finalWinner=playerWon?"You":m.opponent;t.status="complete";
-   if(playerWon)stampTournamentWinner("You",t.name,playerFinalCopies);
+   if(playerWon){
+     stampTournamentWinner("You",t.name,playerFinalCopies);
+     noteGrandpaWinIfNeeded();
+   }
    else stampTournamentWinner(m.opponent,t.name,npcFinalCopies);
    reportContestWin(playerWon?"You":m.opponent,playerWon?m.opponent:"You",t.name,playerWon?`${seriesWins.p}-${seriesWins.ai}`:`${seriesWins.ai}-${seriesWins.p}`,"Final");
  }
@@ -6737,7 +6911,19 @@ if($("devInbox"))$("devInbox").onclick=()=>{
 };
 if($("devGrandpaLetter"))$("devGrandpaLetter").onclick=()=>{
  $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
- bootGrandpaLetter();
+ bootGrandpaLetter("open");
+};
+if($("devGrandpaWin"))$("devGrandpaWin").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootGrandpaLetter("win");
+};
+if($("devGrandpaEnter"))$("devGrandpaEnter").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootGrandpaLetter("enter");
+};
+if($("devGrandpaChat"))$("devGrandpaChat").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootGrandpaLetter("chat");
 };
 if($("devOvernightGossip"))$("devOvernightGossip").onclick=()=>bootOvernightGossip();
 if($("devCopyInRoom"))$("devCopyInRoom").onclick=()=>bootCopyInRoom();

@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v141-talk-lines';
+const CACHE_NAME = 'card-road-pwa-v142-grandpa-mail';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
