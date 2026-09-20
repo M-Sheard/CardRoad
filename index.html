@@ -547,6 +547,7 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
         <button id="devDoorstepTalk" type="button" style="margin-top:8px">Preview doorstep talk</button>
         <button id="devClubWall" type="button" style="margin-top:8px">Preview Club champion picture</button>
         <button id="devWeekTraveller" type="button" style="margin-top:8px">Preview week traveller</button>
+        <button id="devIncoming" type="button" style="margin-top:8px">Preview incoming challenge</button>
       </div>
       <div class="small" style="margin-top:6px">Debug/test controls remain in the source for development but are not part of the normal game surface.</div>
     </details>
@@ -2306,17 +2307,75 @@ function doorstepAskSpeak(name){
  return (row&&row.speak)||"";
 }
 let doorstepTalkName=null;
+function incomingNpcName(){
+ return (state&&state.incoming&&state.incoming.npc)||"";
+}
+function incomingIs(name){
+ return !!(name&&incomingNpcName()===name);
+}
+function incomingSpeak(name){
+ if(!incomingIs(name))return "";
+ const m=typeof mem==="function"?mem(name):null;
+ const reclaim=(m&&m.cardsWon||[]).filter(c=>(state.player||[]).includes(c));
+ const card=reclaim.length?cardLabel(reclaim[reclaim.length-1]):"";
+ if(card){
+  return doorstepSaid(name,{
+   Tomas:"I'll have my "+card+" back. Sit.",
+   Nessa:"I miss my "+card+". Sit for it? I'd like that.",
+   Bram:"I'd like a proper chance at my "+card+" again.",
+   Elira:"That "+card+" is still yours. The board can move it.",
+   else:"I want my "+card+" back. Sit."
+  });
+ }
+ const rel=typeof relationshipLabel==="function"?relationshipLabel(name):"";
+ if(rel==="Friend")return doorstepSaid(name,{
+  Tomas:"Come on. Friendly or not, I want a board.",
+  Nessa:"Got time for a Match? I was hoping you'd wander through.",
+  Bram:"A proper sit, if you're willing. I'd enjoy that.",
+  Elira:"Sit, if you came to play.",
+  else:"Got time for a board?"
+ });
+ if(rel==="Friendly rival")return doorstepSaid(name,{
+  Tomas:"Another close one. Sit. I mean it.",
+  Nessa:"We're not done. Another Match?",
+  Bram:"Another close board. That's the sort I like.",
+  Elira:"Another sit. The last one was worthwhile.",
+  else:"Another close one. Sit."
+ });
+ if(m&&m.playerWins>m.npcWins)return doorstepSaid(name,{
+  Tomas:"You still owe me one. Sit.",
+  Nessa:"You had me last time. I'd like to try again.",
+  Bram:"You earned that last one. I'll sit for it properly.",
+  Elira:"You had the last board. Sit again.",
+  else:"You had me last time. Sit."
+ });
+ if(m&&m.npcWins>m.playerWins)return doorstepSaid(name,{
+  Tomas:"I had you. I'll have you again. Sit.",
+  Nessa:"I'm still buzzing from last time. Another?",
+  Bram:"Last one went my way. I'll sit you fairly again.",
+  Elira:"Last time was instructive. Sit.",
+  else:"I'm after another board."
+ });
+ return doorstepSaid(name,{
+  Tomas:"I'm after a table. Sit.",
+  Nessa:"I've time, if you do.",
+  Bram:"Fair terms and I'll sit.",
+  Elira:"Sit, if you came to play.",
+  else:"Shall we play?"
+ });
+}
 function fillDoorstepTalk(name){
  const el=$("doorstepTalk"),line=$("doorstepLine"),ask=$("doorstepAsk");
  if(!el||!name)return;
- const heard=doorstepAskedLine(name);
- if(line)line.textContent=heard||doorstepTalkLine||"";
+ const incoming=incomingIs(name);
+ const heard=incoming?"":doorstepAskedLine(name);
+ if(line)line.textContent=(incoming?incomingSpeak(name):"")||heard||doorstepTalkLine||"";
  if(ask){
-  const canAsk=!heard&&!!doorstepAskChoice(name);
+  const canAsk=!incoming&&!heard&&!!doorstepAskChoice(name);
   ask.hidden=!canAsk;
   ask.disabled=!canAsk;
  }
- el.setAttribute("aria-label",name+" speaking");
+ el.setAttribute("aria-label",incoming?name+" wants a sit":name+" speaking");
  positionDoorstepTalk();
 }
 function positionDoorstepTalk(){
@@ -2391,14 +2450,14 @@ function closeDoorstepTalk(){
  if(scene)scene.removeAttribute("data-talk-npc");
  document.body.classList.remove("isTalking");
 }
-function openDoorstepTalk(name){
+function openDoorstepTalk(name,opts){
  if(!name)return;
- if(doorstepTalkName===name){closeDoorstepTalk();return}
+ if((!opts||!opts.force)&&doorstepTalkName===name){closeDoorstepTalk();return}
  closeBephStall();
  closeNoticeView();
  if($("journalOverlay"))$("journalOverlay").classList.add("hidden");
  doorstepTalkName=name;
- doorstepTalkLine=doorstepAskedLine(name)||doorstepFreshSpeak(name);
+ doorstepTalkLine=incomingIs(name)?incomingSpeak(name):(doorstepAskedLine(name)||doorstepFreshSpeak(name));
  fillDoorstepTalk(name);
  const el=$("doorstepTalk");
  if(el){el.classList.remove("hidden");el.hidden=false}
@@ -2422,8 +2481,32 @@ function askDoorstepTalk(){
 }
 function challengeDoorstepTalk(){
  const name=doorstepTalkName;
+ if(incomingIs(name)){acceptIncomingChallenge();return}
  closeDoorstepTalk();
  if(name)openChallenge(name);
+}
+function leaveDoorstepTalk(){
+ const name=doorstepTalkName;
+ if(incomingIs(name)){declineIncomingChallenge();return}
+ closeDoorstepTalk();
+}
+function maybePromptIncomingDoorstep(){
+ if(typeof inHomeTutorial==="function"&&inHomeTutorial())return;
+ if(typeof journalOverlayOpen==="function"&&journalOverlayOpen())return;
+ const home=$("home");
+ if(!home||home.classList.contains("hidden"))return;
+ if(typeof leftoverScreenId==="function"&&leftoverScreenId())return;
+ const n=incomingNpcName();
+ if(!n||!state.incoming)return;
+ const here=state.visual&&state.visual.location;
+ if(npcLocationNow(n)!==here&&!(n===weekTravellerName()&&here==="Card Club"))return;
+ const key=[state.visual.date,state.visual.phase,here].join("|");
+ if(state.incoming.prompted===key){
+  if(doorstepTalkName===n)fillDoorstepTalk(n);
+  return;
+ }
+ state.incoming.prompted=key;
+ openDoorstepTalk(n,{force:true});
 }
 function seedDoorstepHistoryPreview(){
  const bram=mem("Bram");
@@ -2700,6 +2783,14 @@ function announceWeekTraveller(t,opts){
  news(line,{h:`${t.name} in town`,p:line});
  if(!(opts&&opts.silent))save();
 }
+function pickWeekTraveller(arrive, lastName){
+ const last=lastName||"";
+ if(!last)return travellerByName("Merrin");
+ const names=TRAVELLERS.map(v=>v.name).filter(n=>n&&n!==last);
+ const use=names.length?names:TRAVELLERS.map(v=>v.name).filter(Boolean);
+ if(!use.length)return travellerByName("Merrin");
+ return travellerByName(use[doorstepHash(String(arrive)+"|"+last)%use.length]);
+}
 function ensureWeekTraveller(opts){
  if(!state)return;
  ensureVisualState();
@@ -2712,12 +2803,14 @@ function ensureWeekTraveller(opts){
    news(`${t.name} took the morning coach.`);
    t.departedNews=true;
   }
+  state.weekTravellerLast=t.name;
   state.weekTravellerDone=t.arrive;
   state.weekTraveller=null;
  }
  if(!state.weekTraveller){
-  if(state.weekTravellerDone)return;
-  const v=travellerByName("Merrin");
+  const last=state.weekTravellerLast||(state.weekTravellerDone?"Merrin":"");
+  const v=pickWeekTraveller(arrive, last);
+  if(!v||!v.name)return;
   state.weekTraveller={name:v.name,arrive,leave,announced:false};
  }
  const live=state.weekTraveller;
@@ -2728,11 +2821,27 @@ function ensureWeekTraveller(opts){
 }
 function bootWeekTraveller(){
  jumpVisualToOpenWeek("Thursday");
- if(state.weekTravellerDone&&!weekTravellerName()){
-  state.weekTravellerDone=null;
-  state.weekTraveller=null;
- }
  ensureWeekTraveller({silent:true});
+ save();
+ renderHome();
+ show("home");
+}
+function bootIncomingChallenge(){
+ if(typeof finishTutorialToTown==="function")finishTutorialToTown();
+ else{
+  homeTutorial=null;
+  state.grandpaTutorial=true;
+  state.tutorialDone=true;
+ }
+ state.matches=Math.max(state.matches||0,1);
+ const here=(state.visual&&state.visual.location)||"Market";
+ state.visual.location=here;
+ let who=localNpcNames().find(n=>npcLocationNow(n)===here);
+ if(!who){
+  who="Tomas";
+  state.visual.location=npcLocationNow(who)||"Market";
+ }
+ state.incoming={npc:who,reason:"Looking for a competitive match"};
  save();
  renderHome();
  show("home");
@@ -4845,6 +4954,7 @@ function renderWorldScene(){
  let today=eventsOnDate(state.visual.date);let known=today.filter(e=>playerKnowsEvent(e.id));
  $("worldStatus").innerHTML=`<span>${state.player.length} physical cards</span><span>${state.matches} matches</span>${known.map(e=>`<span>${e.name} · today</span>`).join("")}`;
  syncTownStandees();
+ maybePromptIncomingDoorstep();
  if(doorstepTalkName)requestAnimationFrame(positionDoorstepTalk);
 }
 function renderJournal(tab){
@@ -4883,10 +4993,7 @@ function renderHome(){
  ensureCopies();ensureVisualState();seedProvenance();renderWorldScene();renderJournal();syncDevControls();
  // Legacy dashboard remains hidden in the DOM only so stable match/economy code can reference it safely.
  if($("playerStats"))$("playerStats").textContent=`${state.player.length} cards · ${state.matches} completed matches`;
- if(state.incoming){
-  $("incomingPanel").classList.remove("hidden");let n=state.incoming.npc;const talk=challengeTalkLine(n);$("incomingText").innerHTML=`<b>${n} challenges you.</b><br><span class="small">Reason: ${state.incoming.reason}</span>${talk?`<br><span class="small">${talk}</span>`:""}`;$("incomingKnown").innerHTML="";
-  (state.npcs[n]||[]).forEach(c=>{let d=document.createElement("div");d.className="npc";let known=(state.seenByNpc[n]||[]).includes(c);d.innerHTML=known?`<b>${c}</b><div class="small">N ${C[c].n} · E ${C[c].e} · S ${C[c].s} · W ${C[c].w}</div>`:`<b>Unknown</b>`;$("incomingKnown").appendChild(d)});
- }else $("incomingPanel").classList.add("hidden");
+ if($("incomingPanel"))$("incomingPanel").classList.add("hidden");
 }
 
 function hist(card,text){if(!state.history[card])state.history[card]=[];state.history[card].push(text)}
@@ -5177,6 +5284,7 @@ $("profileBack").onclick=()=>{show("home");renderHome()};
 
 function maybeIncoming(trigger=null){
  if(state.incoming||state.matches<1)return;
+ if(typeof inHomeTutorial==="function"&&inHomeTutorial())return;
  let candidates=localNpcNames().filter(n=>state.npcs[n].length>=5);
  if(!candidates.length)return;
 
@@ -5193,17 +5301,39 @@ function maybeIncoming(trigger=null){
  });
  scored.sort((a,b)=>b[0]-a[0]);
  let [chance,n,reclaim]=scored[0];
- if(Math.random()>Math.min(.82,chance))return;
+ if(!(trigger&&trigger.force)&&Math.random()>Math.min(.82,chance))return;
 
  let m=mem(n);
- let reason=reclaim.length?`Rematch — wants a chance to recover ${reclaim[0]}`:
+ const card=reclaim.length?cardLabel(reclaim[0]):"";
+ let reason=card?`Rematch — wants a chance to recover ${card}`:
             (relationshipLabel(n)==="Friend"?"Friendly game — enjoys playing you":
              relationshipLabel(n)==="Friendly rival"?"Friendly rivalry — wants another close game":
              m.playerWins>m.npcWins?"Rematch after recent losses":
              m.npcWins>m.playerWins?"Confident after previous results":"Looking for a competitive match");
+ const loc=npcLocationNow(n);
  state.incoming={npc:n,reason};
- news(`${n} has challenged you. ${reason}.`);
+ news(`${n} wants a sit${loc?" at the "+loc:""}. ${reason}.`);
  save();
+}
+function acceptIncomingChallenge(){
+ if(!state.incoming)return;
+ const n=state.incoming.npc;
+ state.seasonStats.incomingAccepted++;
+ closeDoorstepTalk();
+ buildTerms(n);
+}
+function declineIncomingChallenge(){
+ if(!state.incoming)return;
+ const n=state.incoming.npc,m=mem(n);
+ m.declines++;
+ state.seasonStats.incomingDeclined++;
+ m.affinity=clampRel(m.affinity-(m.declines>2?2:1));
+ rememberMoment(n,"You declined a challenge.");
+ news(`You declined ${n}'s challenge.`);
+ state.incoming=null;
+ closeDoorstepTalk();
+ save();
+ renderHome();
 }
 function acceptance(n,terms){
  let d=npcDefs[n],m=mem(n),rel=relationshipLabel(n),score=.55,reasons=[];
@@ -5261,8 +5391,8 @@ $("proposeTerms").onclick=()=>{
  openMatchDeckChoice();refreshFullRules();
 };
 $("cancelTerms").onclick=()=>{show("home");renderHome()};
-$("acceptIncoming").onclick=()=>{state.seasonStats.incomingAccepted++;buildTerms(state.incoming.npc)};
-$("declineIncoming").onclick=()=>{let n=state.incoming.npc,m=mem(n);m.declines++;state.seasonStats.incomingDeclined++;m.affinity=clampRel(m.affinity-(m.declines>2?2:1));rememberMoment(n,"You declined a challenge.");news(`You declined ${n}'s challenge.`);state.incoming=null;save();renderHome()};
+$("acceptIncoming").onclick=()=>{acceptIncomingChallenge()};
+$("declineIncoming").onclick=()=>{declineIncomingChallenge()};
 function setChallengePlaque(label, person){
  const el=$("challengeTitle");
  if(!el)return;
@@ -6946,9 +7076,13 @@ if($("devWeekTraveller"))$("devWeekTraveller").onclick=()=>{
  $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
  bootWeekTraveller();
 };
+if($("devIncoming"))$("devIncoming").onclick=()=>{
+ $("journalOverlay")&&$("journalOverlay").classList.add("hidden");
+ bootIncomingChallenge();
+};
 if($("doorstepAsk"))$("doorstepAsk").onclick=askDoorstepTalk;
 if($("doorstepChallenge"))$("doorstepChallenge").onclick=challengeDoorstepTalk;
-if($("doorstepLeave"))$("doorstepLeave").onclick=closeDoorstepTalk;
+if($("doorstepLeave"))$("doorstepLeave").onclick=leaveDoorstepTalk;
 if($("townScene"))$("townScene").addEventListener("pointerdown",e=>{
  if(!doorstepTalkName)return;
  if(e.target.closest&&e.target.closest("#doorstepTalk,#eventHotspot,#houseTinHotspot,#clubWallHotspot"))return;
@@ -13193,8 +13327,22 @@ body[data-saturday-week="1"] .locationStrip [data-loc="Card Club"]{
 .journalOverlay .journalDev{
   position:relative;
   z-index:1;
+  flex:0 1 auto;
+  min-height:0;
   margin-top:8px;
   color:#e8d7b6;
+  overflow:auto;
+  -webkit-overflow-scrolling:touch;
+  overscroll-behavior:contain;
+  max-height:min(42vh, 280px);
+}
+.journalOverlay .journalDev[open]{
+  flex:1 1 auto;
+  max-height:min(52vh, 100%);
+}
+.journalOverlay .journalWell:has(.journalDev[open]) .journalSheet{
+  flex:0 1 28%;
+  min-height:72px;
 }
 .journalOverlay .journalActions{
   display:flex;
