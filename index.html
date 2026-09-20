@@ -3691,6 +3691,9 @@ function wantsWallPreview(){
 function wantsTravellerPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])traveller=1(?:&|$)/.test(location.search);
 }
+function wantsIncomingPreview(){
+ return typeof location!=="undefined"&&/(?:^|[?&])incoming=1(?:&|$)/.test(location.search);
+}
 function wantsNoticesPreview(){
  return typeof location!=="undefined"&&/(?:^|[?&])notices=1(?:&|$)/.test(location.search);
 }
@@ -4387,6 +4390,7 @@ function bootTownOrTutorial(){
  if(wantsTalkPreview()){bootDoorstepTalk();return}
  if(wantsWallPreview()){bootClubWall();return}
  if(wantsTravellerPreview()){bootWeekTraveller();return}
+ if(wantsIncomingPreview()){bootIncomingChallenge();return}
  if(wantsThursdayPreview()){jumpVisualToOpenWeek("Thursday");save();renderHome();show("home");return}
  if(wantsFridayPreview()){jumpVisualToOpenWeek("Friday");save();renderHome();show("home");return}
  if(wantsHouseTinPreview()){renderHome();openHouseTin({preview:true});return}
