@@ -3171,24 +3171,59 @@ function announceWeekTraveller(t,opts){
  news(line,{h:`${t.name} in town`,p:line});
  if(!(opts&&opts.silent))save();
 }
+function noteWeekTravellerSeen(name){
+ if(!name)return;
+ if(!Array.isArray(state.weekTravellerSeen))state.weekTravellerSeen=[];
+ if(!state.weekTravellerSeen.includes(name))state.weekTravellerSeen.push(name);
+}
+function pickWeekTravellerName(opts){
+ const last=(opts&&opts.exclude)||"";
+ const seen=new Set((opts&&opts.seen)||[]);
+ const names=TRAVELLERS.map(v=>v.name).filter(n=>n&&n!==last);
+ const use=names.length?names:TRAVELLERS.map(v=>v.name).filter(Boolean);
+ if(!use.length)return "Merrin";
+ const weights=use.map(n=>seen.has(n)?1:3);
+ const total=weights.reduce((a,b)=>a+b,0)||use.length;
+ let roll=(typeof (opts&&opts.roll)==="number"?opts.roll:Math.random())*total;
+ if(roll<0)roll=0;
+ if(roll>=total)roll=total-1e-9;
+ for(let i=0;i<use.length;i++){
+  roll-=weights[i];
+  if(roll<0)return use[i];
+ }
+ return use[use.length-1];
+}
+function pickWeekTravellerRecord(exclude){
+ const name=pickWeekTravellerName({
+  exclude,
+  seen:Array.isArray(state.weekTravellerSeen)?state.weekTravellerSeen:[]
+ });
+ return travellerByName(name);
+}
 function ensureWeekTraveller(opts){
  if(!state)return;
  ensureVisualState();
+ if(!Array.isArray(state.weekTravellerSeen))state.weekTravellerSeen=[];
  const today=state.visual.date;
  const arrive=weekMondayIso(today);
  const leave=nextMondayIso(today);
  const t=state.weekTraveller;
+ if(t&&t.name)noteWeekTravellerSeen(t.name);
  if(t&&t.leave&&today>=t.leave){
   if(t.announced&&!t.departedNews){
    news(`${t.name} took the morning coach.`);
    t.departedNews=true;
   }
+  state.weekTravellerLast=t.name;
   state.weekTravellerDone=t.arrive;
   state.weekTraveller=null;
  }
  if(!state.weekTraveller){
-  if(state.weekTravellerDone)return;
-  const v=travellerByName("Merrin");
+  const last=state.weekTravellerLast||(state.weekTravellerDone?"Merrin":"");
+  const v=pickWeekTravellerRecord(last);
+  if(!v||!v.name)return;
+  noteWeekTravellerSeen(v.name);
+  state.weekTravellerLast=v.name;
   state.weekTraveller={name:v.name,arrive,leave,announced:false};
  }
  const live=state.weekTraveller;
@@ -3199,10 +3234,6 @@ function ensureWeekTraveller(opts){
 }
 function bootWeekTraveller(){
  jumpVisualToOpenWeek("Thursday");
- if(state.weekTravellerDone&&!weekTravellerName()){
-  state.weekTravellerDone=null;
-  state.weekTraveller=null;
- }
  ensureWeekTraveller({silent:true});
  save();
  renderHome();

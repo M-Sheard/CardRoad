@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v145-rover-cutouts';
+const CACHE_NAME = 'card-road-pwa-v146-week-rotation';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
