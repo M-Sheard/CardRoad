@@ -4588,7 +4588,34 @@ function runNpcEconomy(){
 
 function seedProvenance(){ensureCopies();if(state.provenanceSeeded)return;let n=localNpcNames();let a=getCopy(n[0],state.npcs[n[0]][0]);if(a)a.signatures.push({owner:"Edda",date:"2025-09-14",reason:"Local wager"});let c=getCopy(n[2],state.npcs[n[2]][0]);if(c)c.signatures.push({owner:"Hale",date:"2025-12-02",reason:"Trade"});state.provenanceSeeded=true;save()}
 
-function save(){localStorage.setItem("cardRoadV120",JSON.stringify(state))}
+function trimSave(){
+ if(!state)return;
+ if(Array.isArray(state.log)&&state.log.length>48)state.log=state.log.slice(-48);
+ if(Array.isArray(state.news)&&state.news.length>48)state.news=state.news.slice(-48);
+ if(Array.isArray(state.gazette)&&state.gazette.length>36)state.gazette=state.gazette.slice(-36);
+ if(Array.isArray(state.inbox)&&state.inbox.length>36)state.inbox=state.inbox.slice(-36);
+ if(state.history){
+  Object.keys(state.history).forEach(k=>{
+   const h=state.history[k];
+   if(Array.isArray(h)&&h.length>12)state.history[k]=h.slice(-12);
+  });
+ }
+ if(state.copies){
+  Object.values(state.copies).forEach(cp=>{
+   if(cp&&Array.isArray(cp.signatures)&&cp.signatures.length>8)cp.signatures=cp.signatures.slice(-8);
+  });
+ }
+ if(state.visual&&Array.isArray(state.visual.history)&&state.visual.history.length>40){
+  state.visual.history=state.visual.history.slice(-40);
+ }
+ if(state.visual&&Array.isArray(state.visual.discoveredEvents)&&state.visual.discoveredEvents.length>80){
+  const today=state.visual.date||"";
+  const keep=state.visual.discoveredEvents.filter(e=>e&&e.date&&e.date>=today);
+  const past=state.visual.discoveredEvents.filter(e=>!(e&&e.date&&e.date>=today));
+  state.visual.discoveredEvents=past.slice(-Math.max(0,80-keep.length)).concat(keep);
+ }
+}
+function save(){trimSave();localStorage.setItem("cardRoadV120",JSON.stringify(state))}
 function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!state||typeof state!=="object")state=fresh()}catch{state=fresh()}
  // v21 wrote schema v1.2.1 but previously wiped any save that was not v1.2.0.
  if(!Array.isArray(state.player))state=fresh();
@@ -4623,6 +4650,7 @@ function load(){try{state=JSON.parse(localStorage.getItem("cardRoadV120"));if(!s
  ensureVisualState();
  ensureInbox();
  ensureWeekTraveller();
+ trimSave();
  if(ensureJournalSeen())save();
  noteHouseTinIfNeeded();
  noteGrandpaLetterIfNeeded();
