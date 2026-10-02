@@ -1,37 +1,24 @@
-# Market sit — colour and people in the same world
+# Market sit — 2.5D objects and different blocking
 
-Last round (grey lithograph, odd cameras) put oak standees on the wrong painting. This round locks to **Card Road’s real materials** and plants people on a stage at stall height.
+Card Road colour (oak, forest felt, brass, cream plaster). People stand **in front of and behind** the furniture that is already in the painting.
 
-## Colour (from the game, not from mood)
+## 2.5D
 
-- Honey oak (standee bevel, hall beams, stall wood)
-- Forest-green felt (Nessa’s shawl, match table, stall cloth)
-- Antique brass (lanterns, gilt signs)
-- Cream parchment plaster
-- Muted terracotta roofs
-- Tomas cobalt as an accent, not a cyan sky
+Stalls, barrel, millstone, crate, sideboard, tree trunk, lamp, trestle, club column, and card table are cut from the painting and pasted back as layers. A vendor’s chest clears the counter; a walker can pass in front.
 
-No grey print, no candy bunting, no postcard water.
+## Blocking (not a reskin)
 
-## How people sit
+Each still uses a different grouping:
 
-- Eye-level portrait stage (the camera the game already uses)
-- Furniture at adult height so a standee can stand beside a stall
-- Front pair with a gap; one person at the stall; one further back
-- Contact shadow under the oak plaque
-- Five pads; four occupied in these stills
-
-## Ten layouts (same paint, different place)
-
-1. Facing felt stalls, cobble aisle
-2. Stall and gilt mill sign
-3. Warm market cross
-4. Mill yard (stall + millstone)
-5. Oak-beam covered hall
-6. Oak tree and stall
-7. Warm quay (crate in front)
-8. Inn yard
-9. Club portico and felt stall
-10. Felt card table and stall
+1. Vendors in both stalls; shoppers on opposite sides of the aisle; centre path open
+2. Shopper close-left at the stall; one behind the barrel; one far up the street
+3. Two talking mid-right on the square; one in the gazebo; empty lower-left
+4. Walker in front of the fruit stall; one behind the millstone; one in the mill door
+5. One talking at the sideboard; one walking toward the arch; no giant front pair
+6. One tucked behind the oak trunk; a pair walking right toward the stall
+7. One behind the crate; one on the quay edge; one further down the water
+8. One behind the lamp; one walking toward the inn; empty lower-centre
+9. One at the club stall; one entering right; gap in the middle shows the portico
+10. One at the card table; one entering from the right; empty lower-left
 
 Empty / people / pads + compare grids live in this folder.
