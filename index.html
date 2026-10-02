@@ -461,6 +461,12 @@ button,select{font-family:system-ui;background:#6a5949;color:#fff;border-color:#
     <div class="sceneGround"></div>
     <div class="sceneLabel"><span id="locationTitle">Lythmere Market</span><small id="locationSubtitle">A riverside market where local players drift in and out through the day.</small></div>
     <div id="npcHotspots"></div>
+    <img class="townOccluder townOccluder-mid" data-for="Market" src="./assets/locations/market_occlude_mid.webp" alt="" aria-hidden="true">
+    <img class="townOccluder townOccluder-front" data-for="Market" src="./assets/locations/market_occlude_front.webp" alt="" aria-hidden="true">
+    <img class="townOccluder townOccluder-front" data-for="Riverside" src="./assets/locations/riverside_occlude_front.webp" alt="" aria-hidden="true">
+    <img class="townOccluder townOccluder-mid" data-for="Inn" src="./assets/locations/inn_occlude_mid.webp" alt="" aria-hidden="true">
+    <img class="townOccluder townOccluder-front" data-for="Inn" src="./assets/locations/inn_occlude_front.webp" alt="" aria-hidden="true">
+    <img class="townOccluder townOccluder-front" data-for="Card Club" src="./assets/locations/club_occlude_front.webp" alt="" aria-hidden="true">
     <button id="eventHotspot" class="worldObject eventHotspot hidden">Tournament Today</button>
   </div>
   <nav class="locationStrip scrollPlaque scrollPlaque-wide" id="locationStrip" aria-label="Lythmere locations">
@@ -4685,6 +4691,33 @@ if ('serviceWorker' in navigator) {
     max-width:200px!important;
   }
 }
+</style>
+<style>
+/* v54 — planted walk-behind. Furniture stays in the painting. A copied
+   strip of the same pixels sits at a fixed z so people pads can stand
+   in front of or behind it. Pointer-events none; Mark spots unchanged. */
+.townOccluder{
+  display:none;
+  position:absolute;
+  inset:0;
+  width:100%;
+  height:100%;
+  margin:0;
+  padding:0;
+  border:0;
+  object-fit:cover;
+  object-position:center center;
+  pointer-events:none;
+  z-index:20;
+}
+.townOccluder-mid{z-index:19}
+.townOccluder-front{z-index:24}
+.townScene[data-location="Inn"] .townOccluder-mid{z-index:20}
+.townScene[data-location="Card Club"] .townOccluder-front{z-index:21}
+.townScene[data-location="Market"] .townOccluder[data-for="Market"],
+.townScene[data-location="Riverside"] .townOccluder[data-for="Riverside"],
+.townScene[data-location="Inn"] .townOccluder[data-for="Inn"],
+.townScene[data-location="Card Club"] .townOccluder[data-for="Card Club"]{display:block}
 </style>
 <script>
 (function(){

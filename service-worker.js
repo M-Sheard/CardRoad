@@ -1,4 +1,4 @@
-const CACHE_NAME = 'card-road-pwa-v53-challenge-tips';
+const CACHE_NAME = 'card-road-pwa-v54-town-occlude';
 const CORE_ASSETS = [
   './index.html',
   './manifest.webmanifest',
@@ -8,6 +8,12 @@ const CORE_ASSETS = [
   './assets/locations/riverside.webp',
   './assets/locations/inn.webp',
   './assets/locations/card_club.webp',
+  './assets/locations/market_occlude_front.webp',
+  './assets/locations/market_occlude_mid.webp',
+  './assets/locations/riverside_occlude_front.webp',
+  './assets/locations/inn_occlude_front.webp',
+  './assets/locations/inn_occlude_mid.webp',
+  './assets/locations/club_occlude_front.webp',
   './assets/npcs/tomas.webp',
   './assets/npcs/nessa_standee_final_v14.png'
 ,
