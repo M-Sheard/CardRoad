@@ -11,6 +11,7 @@ const CORE_ASSETS = [
   './assets/locations/market_occlude_front.webp',
   './assets/locations/market_occlude_mid.webp',
   './assets/locations/riverside_occlude_front.webp',
+  './assets/locations/riverside_occlude_mid.webp',
   './assets/locations/inn_occlude_front.webp',
   './assets/locations/inn_occlude_mid.webp',
   './assets/locations/club_occlude_front.webp',
