@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lythmere Market</title>
+<style>
+  html,body{margin:0;height:100%;background:#1c1612;overflow:hidden}
+  #visualShell{
+    position:relative;
+    width:100%;
+    height:100dvh;
+    height:100vh;
+    overflow:hidden;
+    background:#2a241e;
+  }
+  .townScene{
+    position:absolute;
+    inset:0;
+    background:#2a241e url("./lythmere-market-scene.jpg") center / cover no-repeat;
+  }
+  .worldTopbar{
+    position:absolute;z-index:40;left:0;right:0;top:0;
+    display:flex;flex-direction:row;flex-wrap:nowrap;
+    align-items:flex-start;justify-content:space-between;gap:10px;
+    padding:max(16px, env(safe-area-inset-top, 0px) + 10px) max(16px, env(safe-area-inset-right, 0px) + 10px) 0 max(16px, env(safe-area-inset-left, 0px) + 10px);
+    box-sizing:border-box;pointer-events:none;background:transparent;border:0;
+  }
+  .worldTopbar #advanceTime,.worldTopbar .worldActions{pointer-events:auto}
+  .scrollPlaque{
+    display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:0;
+    padding:0;margin:0;border:0;border-radius:0;background:none;box-shadow:none;
+    overflow:visible;box-sizing:border-box;filter:drop-shadow(0 8px 14px rgba(0,0,0,.55));
+  }
+  .scrollCap{display:block;position:relative;z-index:2;height:58px;width:auto;flex:0 0 auto;object-fit:contain}
+  .scrollWell{
+    flex:1 1 auto;min-width:0;position:relative;z-index:1;
+    display:flex;align-items:center;justify-content:center;gap:6px;
+    margin:0;padding:0 6px;border:0;
+    background:transparent url("../../assets/ui/date_frame_mid.png") center / auto 100% repeat-x;
+  }
+  #advanceTime.scrollPlaque{
+    flex:1 1 auto;width:auto;min-width:0;max-width:min(224px, calc(100% - 110px));
+    height:58px;min-height:58px;
+  }
+  .scrollSun{width:18px;height:18px;flex:0 0 auto;object-fit:cover;object-position:center;border-radius:50%}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  #visualDate{
+    font:700 12px/1.1 Georgia,serif;color:#1a120c;max-width:100%;
+    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  #visualPhase{
+    font:500 10px/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.08em;
+    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
+  }
+  .worldActions{flex:0 0 auto;display:flex}
+  #worldRecord.scrollPlaque{
+    width:auto;min-width:0;height:50px;min-height:50px;
+    font:800 11px/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
+  }
+  #worldRecord .scrollCap{height:50px}
+  .locationStrip.scrollPlaque{
+    position:absolute;z-index:32;left:50%;right:auto;bottom:max(10px, env(safe-area-inset-bottom, 0px));
+    width:min(620px, calc(100% - 24px));height:64px;min-height:64px;
+    transform:translateX(-50%);padding:0;
+  }
+  .locationWell{
+    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;height:100%;padding:0;gap:0;
+  }
+  .locationWell button{
+    position:relative;min-height:0;height:100%;margin:0;padding:18px 2px 6px;
+    background:transparent;color:#3d2b1a;border:0;border-right:1px solid rgba(90,62,38,.22);
+    border-radius:0;font:700 9px/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;
+    text-shadow:0 1px 0 rgba(255,244,214,.7);
+  }
+  .locationWell button:last-child{border-right:0}
+  .locationWell button.active{color:#1a120c;font-weight:800;padding-top:26px}
+  .locationWell button.active:after{
+    content:"";position:absolute;top:4px;left:50%;width:22px;height:22px;margin-left:-11px;
+    border-radius:50%;overflow:hidden;
+    background:#7a1c18 url("../../assets/ui/wax_seal.png") center/cover no-repeat;
+  }
+</style>
+</head>
+<body>
+<section id="visualShell">
+  <div class="townScene" data-location="Market"></div>
+  <div class="worldTopbar">
+    <button type="button" id="advanceTime" class="scrollPlaque" aria-label="Pass time">
+      <img class="scrollCap" src="../../assets/ui/date_frame_left.png" alt="">
+      <span class="scrollWell">
+        <img class="scrollSun" src="../../assets/ui/date_frame_probe_sun.png" alt="">
+        <span class="scrollCopy">
+          <b id="visualDate">Monday, 2 March · Year 1</b>
+          <span id="visualPhase">Morning</span>
+        </span>
+      </span>
+      <img class="scrollCap" src="../../assets/ui/date_frame_right.png" alt="">
+    </button>
+    <div class="worldActions">
+      <button id="worldRecord" class="scrollPlaque" type="button">
+        <img class="scrollCap" src="../../assets/ui/date_frame_left.png" alt="">
+        <span class="scrollWell"><span>Journal</span></span>
+        <img class="scrollCap" src="../../assets/ui/date_frame_right.png" alt="">
+      </button>
+    </div>
+  </div>
+  <nav class="locationStrip scrollPlaque" aria-label="Lythmere locations">
+    <img class="scrollCap" src="../../assets/ui/date_frame_left.png" alt="">
+    <div class="scrollWell locationWell">
+      <button type="button" class="active">Market</button>
+      <button type="button">Riverside</button>
+      <button type="button">Inn</button>
+      <button type="button">Club</button>
+    </div>
+    <img class="scrollCap" src="../../assets/ui/date_frame_right.png" alt="">
+  </nav>
+</section>
+</body>
+</html>
