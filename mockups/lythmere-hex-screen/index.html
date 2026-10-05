@@ -33,7 +33,7 @@
   }
   .townScene{
     position:absolute;inset:0;z-index:0;
-    background:#2a241e url("./opt/01.jpg") center / cover no-repeat;
+    background:#2a241e url("./05-empty-aligned.jpg") center / cover no-repeat;
   }
   #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
   .worldTopbar{
@@ -75,18 +75,6 @@
   .locationWell button{position:relative;min-width:0;min-height:0;height:100%;margin:0;padding:8px 4px;color:#3d2b1a;border-right:1px solid rgba(90,62,38,.22);font:700 clamp(8px,2.4cqw,11px)/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,244,214,.7);pointer-events:auto}
   .locationWell button:last-child{border-right:0}
   .locationWell button.active{color:#1a120c;font-weight:800}
-  #paints{
-    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
-    top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));
-    display:grid;grid-template-columns:repeat(2,32px);gap:4px;pointer-events:auto;
-  }
-  #paints button{
-    min-width:0;width:32px;height:28px;padding:0;
-    font:700 11px/1 system-ui,sans-serif;color:#241a13;
-    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:4px;
-    box-shadow:0 4px 12px #0007;
-  }
-  #paints button[aria-pressed="true"]{background:#e8c27a}
 </style>
 </head>
 <body>
@@ -131,25 +119,6 @@
       </div>
     </nav>
   </div>
-  <div id="paints"></div>
 </section>
-<script>
-const scene = document.getElementById("townScene");
-const paints = document.getElementById("paints");
-const files = Array.from({length:10}, (_,i) => `./opt/${String(i+1).padStart(2,"0")}.jpg`);
-files.forEach((file,i) => {
-  const b = document.createElement("button");
-  b.type = "button";
-  b.dataset.file = file;
-  b.textContent = String(i+1);
-  b.addEventListener("click", () => paint(file));
-  paints.appendChild(b);
-});
-function paint(file){
-  scene.style.backgroundImage = 'url("' + file + '")';
-  [...paints.querySelectorAll("button")].forEach(b => b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"));
-}
-paint(files[0]);
-</script>
 </body>
 </html>
