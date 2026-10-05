@@ -1,54 +1,49 @@
 # Lythmere — 2.5D town screen (look-test)
 
-Designed from scratch rather than patched onto the old hex map. One layout brief,
-eight art finishes, all four landmarks on screen.
+Open `index.html`. The buttons under the phone swap the scene and toggle the
+name tags; `?art=concepts/v5-close-iso-square` picks one straight from the URL.
+`contact.html` lines them all up side by side.
 
-Open `index.html`. The buttons under the phone swap the art and toggle the name
-tags. `?art=g-safe-diorama` picks a finish straight from the URL.
-`contact.html` lines all eight up side by side.
+## Two passes, and why the first one missed
 
-## The layout brief
+**First pass (A–H)** varied the *paint finish* — clean iso, toy render, gouache,
+flocked mat, golden hour — across one shared **bird's-eye aerial camera**. That
+was the mistake. An aerial map has no background plane, because the ground is the
+entire picture, so nothing can stand *against* anything. It was also the same
+composition the hex map already had, which is not "from scratch".
 
-Every option was generated against the same spec, which is what makes them
-comparable:
+**Second pass (V1–V6)** varies the **camera** instead. Four of the six give you a
+flat background plane with solid pieces standing in front of it.
 
-- True isometric (2:1), one camera, one warm sun from the upper left so every
-  shadow falls the same way.
-- Four landmarks in four separate zones — **Inn** upper left, **Market** upper
-  right, **Club** lower left, **Riverside** lower right — joined by dirt lanes.
-- Buildings read as painted models with a contact shadow on flat ground, not as
-  terrain carved out of the ground.
-- No people anywhere. NPCs belong inside the location screens.
-- Top ~15% and bottom ~12% kept calm (plain grass or water) so the date plaque,
-  Journal button and location strip stay legible without dimming the painting.
+## V1–V6
 
-## Options
-
-| | finish | notes |
+| | concept | what it is |
 |---|---|---|
-| **G** | diorama | lead pick — biggest readable landmarks, survives the tall-phone crop |
-| **H** | flocked mat | runner-up — strongest "models sitting on a flat mat" read |
-| E | close diorama | lovely, but composed too tight; clips on tall phones |
-| D | flocked mat, first pass | good, landmarks smaller |
-| B | toy render | |
-| A | clean iso | |
-| F | golden hour | warm evening mood, glowing windows |
-| C | gouache | reads flat, more drawing than model |
+| **V1** | backdrop + table | Flat painted sky-and-hills board behind; four models on a flat green mat in front. Low camera, ~20°. The literal read of "3D models on a flat surface against a flat backdrop". |
+| **V5** | town square | Street scale. You see fronts, doors, signs and steps. Four landmarks around one cobbled square. Reads most like a finished game screen. |
+| **V2** | street level | Looking down a lane, landmarks stepping back through layers of depth to a hazy flat horizon. |
+| **V4** | floating slab | One solid block of land against plain sky. The hardest separation of object from background of the six. |
+| **V3** | paper theatre | Separate flat cut layers standing one behind another with visible gaps between them. Literal 2.5D in the technical sense. |
+| **V6** | four pieces | Four based models against a seamless backdrop. Reads as a place picker rather than a town. |
 
-## Why G and H hold up and the rest do not
+Every one of them keeps all four landmarks — Inn, Market, Club, Riverside — in
+frame, with no people on screen; NPCs belong inside the location views.
 
-The art is 9:16. A real phone is taller than that (390×844 is 0.46, not 0.56),
-so a `cover` backdrop crops about 9% off each side. G and H were regenerated
-with a deliberate band of empty grass down both edges, so nothing important is
-inside the crop. The earlier options put the Market and the dock near the edge
-and lose them.
+## Known rough edges
+
+None of V1–V6 has been composed for the tall-phone crop yet. The art is 9:16 but
+a phone is taller than that (390×844 is 0.46, not 0.56), so a full-bleed backdrop
+loses about 9% off each side. In V1 that clips the Inn and the Market, and in V2
+the dock sits uncomfortably close to the right edge. That is a one-line fix in
+the prompt — a band of empty ground down both edges, as `g-safe-diorama.jpg`
+already does — and it is worth doing only to whichever camera gets picked.
 
 ## Landmark anchors
 
-The art sits on a `.scenePlane` that keeps its own 9:16 geometry and covers
-whatever shape the handset is, so anchors expressed as a percentage of the
-painting stay glued to the buildings on every phone. Anchors live in the `ART`
-map in `index.html`, one set per finish: `[x%, y%, width%]`.
+The art rides a `.scenePlane` that keeps its own 9:16 geometry while covering
+whatever shape the handset is, so anchors written as a percentage of the painting
+stay glued to the buildings. They live in the `ART` map in `index.html`, one set
+per scene: `[x%, y%, width%]`.
 
 This is a town painting, so it follows `phone-scale.mdc`: the scene is the
 viewport, chrome stays planted, and there is no leftover-space board scaler —
@@ -57,5 +52,6 @@ NPCs show up in the location views via **Mark spots**.
 
 ## Checked at
 
-`shots/fit-320x568.jpg`, `shots/fit-390x844.jpg`, `shots/fit-430x932.jpg` —
-nothing clipped, no horizontal scroll, all four tags on open ground.
+`shots/fit-320x568.jpg`, `shots/fit-390x844.jpg`, `shots/fit-430x932.jpg` for
+the aerial pass, and `shots/concepts/` for V1–V6 at 390×844. No horizontal
+scroll anywhere.

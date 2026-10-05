@@ -152,7 +152,7 @@
 <section id="visualShell">
   <div class="townScene">
     <div class="scenePlane">
-      <img id="sceneArt" src="./g-safe-diorama.jpg" alt="Lythmere seen from above as a 2.5D diorama">
+      <img id="sceneArt" src="./concepts/v1-backdrop-table.jpg" alt="Lythmere as a 2.5D scene">
       <div class="landmarks" id="landmarks"></div>
     </div>
     <div class="sceneVeil" aria-hidden="true"></div>
@@ -206,17 +206,18 @@
 </div>
 
 <script>
-/* Each art option carries its own landmark anchors, measured as a % of the
-   9:16 painting, so swapping the backdrop keeps the tags on the buildings. */
+/* Each option carries its own landmark anchors, measured as a % of the 9:16
+   painting, so swapping the art keeps the tags on the buildings.
+   V1-V6 vary the CAMERA. A-H vary only the paint, all on one aerial camera. */
 const ART = {
-  "g-safe-diorama":{ label:"G · diorama",       spots:{ Inn:[34,28,30], Market:[72,33,28], Club:[28,52,30], Riverside:[72,59,28] } },
-  "h-safe-flocked":{ label:"H · flocked mat",   spots:{ Inn:[28,25,28], Market:[73,27,28], Club:[25,50,28], Riverside:[70,58,28] } },
-  "e-tight-crop":  { label:"E · close diorama", spots:{ Inn:[30,19,34], Market:[75,31,32], Club:[26,52,34], Riverside:[77,66,32] } },
-  "d-flocked-mat": { label:"D · flocked mat",   spots:{ Inn:[28,19,30], Market:[70,38,28], Club:[26,56,30], Riverside:[78,62,28] } },
-  "b-toy-render":  { label:"B · toy render",    spots:{ Inn:[37,24,28], Market:[72,37,26], Club:[24,54,28], Riverside:[78,64,26] } },
-  "a-clean-iso":   { label:"A · clean iso",     spots:{ Inn:[37,20,28], Market:[66,42,26], Club:[24,50,28], Riverside:[76,73,26] } },
-  "f-golden-hour": { label:"F · golden hour",   spots:{ Inn:[32,20,28], Market:[65,40,26], Club:[23,45,28], Riverside:[76,61,26] } },
-  "c-gouache":     { label:"C · gouache",       spots:{ Inn:[37,22,28], Market:[64,39,26], Club:[21,46,28], Riverside:[73,69,26] } }
+  "concepts/v1-backdrop-table":   { label:"V1 · backdrop + table", spots:{ Inn:[24,35,26], Market:[75,39,26], Club:[26,57,26], Riverside:[73,70,26] } },
+  "concepts/v5-close-iso-square": { label:"V5 · town square",      spots:{ Inn:[28,29,26], Market:[76,32,24], Club:[23,60,26], Riverside:[78,63,24] } },
+  "concepts/v2-street-level":     { label:"V2 · street level",     spots:{ Inn:[19,52,28], Market:[78,58,24], Club:[57,42,24], Riverside:[86,46,20] } },
+  "concepts/v4-floating-slab":    { label:"V4 · floating slab",    spots:{ Inn:[32,26,24], Market:[69,32,24], Club:[26,46,24], Riverside:[76,53,24] } },
+  "concepts/v3-paper-theatre":    { label:"V3 · paper theatre",    spots:{ Inn:[80,47,24], Market:[21,49,24], Club:[78,68,24], Riverside:[31,75,24] } },
+  "concepts/v6-shelf-of-four":    { label:"V6 · four pieces",      spots:{ Inn:[50,22,30], Market:[50,42,30], Club:[50,62,30], Riverside:[50,78,30] } },
+  "g-safe-diorama":{ label:"aerial G",          spots:{ Inn:[34,28,30], Market:[72,33,28], Club:[28,52,30], Riverside:[72,59,28] } },
+  "h-safe-flocked":{ label:"aerial H",          spots:{ Inn:[28,25,28], Market:[73,27,28], Club:[25,50,28], Riverside:[70,58,28] } }
 };
 
 const art       = document.getElementById("sceneArt");
@@ -224,7 +225,7 @@ const marks     = document.getElementById("landmarks");
 const artBar    = document.getElementById("artBar");
 const tagToggle = document.getElementById("tagToggle");
 const asked = new URLSearchParams(location.search).get("art");
-let current = (asked && ART[asked]) ? asked : "g-safe-diorama";
+let current = (asked && ART[asked]) ? asked : "concepts/v1-backdrop-table";
 
 function drawLandmarks(key){
   const spots = ART[key].spots;
