@@ -1,7 +1,18 @@
 # Full-screen hex Lythmere (look-test)
 
-Physical wargame table: flocked hex mat filling the phone, 3D terrain pieces sitting on it.
+Ten options of a **flat 2D hex board** with **3D models sitting on it**.
 
-Default `09-wargame.jpg` uses Marc’s hobby-table photos as the style lock. Inn / Market / Club / Riverside are models on the board, not a painted map.
+Open `index.html` and tap 1–10.
 
-Open `index.html`. Paints: Terrain / Alt hex / Empty mat / Last hex.
+| # | What it is |
+|---|------------|
+| 1 | Painted 2D map + buildings on round mini bases |
+| 2 | Same map, pieces composited on |
+| 3 | Painted map + terrain kits (cliff bases) |
+| 4 | Painted map + kits, generated as one photo |
+| 5 | Flat felt hex mat + 3D minis |
+| 6 | Felt mat, pieces composited on |
+| 7 | Flat flocked hex mat + 3D houses |
+| 8 | Flocked mat, pieces composited on |
+| 9 | Paper map + minis |
+| 10 | Felt mat, larger minis |

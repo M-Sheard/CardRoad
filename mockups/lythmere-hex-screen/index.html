@@ -33,7 +33,7 @@
   }
   .townScene{
     position:absolute;inset:0;z-index:0;
-    background:#2a241e url("./09-wargame.jpg") center / cover no-repeat;
+    background:#2a241e url("./opt/01.jpg") center / cover no-repeat;
   }
   #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
   .worldTopbar{
@@ -78,12 +78,12 @@
   #paints{
     position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
     top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));
-    display:flex;flex-direction:column;gap:6px;pointer-events:auto;
+    display:grid;grid-template-columns:repeat(2,32px);gap:4px;pointer-events:auto;
   }
   #paints button{
-    min-width:108px;padding:7px 10px;
-    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
-    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    min-width:0;width:32px;height:28px;padding:0;
+    font:700 11px/1 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:4px;
     box-shadow:0 4px 12px #0007;
   }
   #paints button[aria-pressed="true"]{background:#e8c27a}
@@ -131,22 +131,25 @@
       </div>
     </nav>
   </div>
-  <div id="paints">
-        <button type="button" data-file="./09-wargame.jpg" aria-pressed="true">Terrain</button>
-        <button type="button" data-file="./09-wargame-b.jpg">Alt hex</button>
-        <button type="button" data-file="./09-empty-mat.jpg">Empty mat</button>
-        <button type="button" data-file="./05-empty-aligned.jpg">Last hex</button>
-  </div>
+  <div id="paints"></div>
 </section>
 <script>
 const scene = document.getElementById("townScene");
-const buttons = [...document.querySelectorAll("#paints button")];
+const paints = document.getElementById("paints");
+const files = Array.from({length:10}, (_,i) => `./opt/${String(i+1).padStart(2,"0")}.jpg`);
+files.forEach((file,i) => {
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.file = file;
+  b.textContent = String(i+1);
+  b.addEventListener("click", () => paint(file));
+  paints.appendChild(b);
+});
 function paint(file){
   scene.style.backgroundImage = 'url("' + file + '")';
-  buttons.forEach(b => b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"));
+  [...paints.querySelectorAll("button")].forEach(b => b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"));
 }
-buttons.forEach(b => b.addEventListener("click", () => paint(b.dataset.file)));
-paint("./09-wargame.jpg");
+paint(files[0]);
 </script>
 </body>
 </html>
