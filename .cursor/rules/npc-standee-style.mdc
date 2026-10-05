@@ -1,25 +1,18 @@
 ---
-description: Locked wood-backed NPC standee style for all character art
+description: Oak standees are the live prototype only — new town work is isometric walkers
 alwaysApply: true
 ---
 
-# NPC standee lock (Tomas bevel v19)
+# NPC standees (live prototype only)
 
-Canonical construction: `assets/npcs/tomas_standee_bevel_v19.png` (option 3 routed wood-sign).
+Marc locked **isometric town** as the display language (`isometric-town.mdc`). New characters in the world are **tiny walking avatars**, not oak boards.
 
-Every **current and future** generated character uses this exact physical design. Change clothes, face, pose, and name only.
+The live game still shows Tomas-bevel standees (`assets/npcs/tomas_standee_bevel_v19.png` and the matching Nessa/Bram/Elira/Beph cutouts). Leave those in `index.html` until the isometric rebuild replaces them. Do not generate **new** standees, Mark-spots locations, or furniture-occlusion layers.
 
-**Must match Tomas:**
-- Painted figure on a **chunky routed oak board** that follows the silhouette
-- Visible **wood-grain edge / bevel** (highlight top-left, darker grain bottom-right)
-- **Rectangular stained-wood foot**, not a circular cobblestone pedestal
-- **One wood plaque** on the foot: four small corner rivets, name once in **black serif ALL-CAPS** (TOMAS, NESSA, BRAM, ELIRA)
-- Isolated sprite; production shots use **lime green `#00FF00` chroma**, then knock out alpha
-- No blue/gold HUD nameplate, compass badge, extra diorama base, or doubled lettering
-- In-game: hide HTML nameplates; the plaque on the art is the name
+If Marc explicitly asks to patch the **current** live town before the rebuild, keep the old construction:
 
-**Do not** invent a new outline, cardboard halo, paper-doll tab, or stone plinth unless Marc unlocks this.
-
-**Next session:** make Nessa, Bram, and Elira **background outlines** match Tomas v19 (same routed oak lip/bevel). Placement and Mark spots are done.
-
-**In-game placement:** each location has four standing anchors with their own size (foreground larger, back smaller). Do not shrink every standee when more people are present. Place every new screen with the **Mark spots** tool (see `location-anchor-tool.mdc`).
+- Painted figure on a chunky routed oak board
+- Wood-grain bevel, rectangular stained-wood foot
+- One ALL-CAPS plaque (TOMAS, NESSA, BRAM, ELIRA, BEPH)
+- Lime `#00FF00` chroma for cutouts
+- Four standing anchors per location; `syncTownStandees()` only; no extra observers

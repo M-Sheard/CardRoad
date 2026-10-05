@@ -24,7 +24,7 @@ Live match layout is `layoutMatchTable()` / `layoutScreenFit()` in root `index.h
 
 - **Felt table / cards** (match, challenge, result, binder): leftover-space sizing **is** the point. Same club-table well; cards stay 5:7 and centred in their slots.
 - **Document / list** (rune draw, terms, profile, tournament, series summary, inspector, journal): fill the viewport; pin the header/actions; **vertical scroll** the body. Do not invent a second board scaler unless cards are the main stage.
-- **Town**: scene is `100dvh` / `100svh` (no 690px+ or 480px phone height). Top bar and location strip stay on-screen (v38 flex row). NPC standees stay **Mark spots** baked `%` of `.townScene` — do not shrink-to-fit live NPCs. Call out that a friend’s tall crop will not match Marc’s monitor pins.
+- **Town**: scene is `100dvh` / `100svh` (no 690px+ or 480px phone height). Top bar stays on-screen. **Locked language is isometric town** (`isometric-town.mdc`): the map fills leftover space; tiny avatars are `%` of the scene, not a match-table scaler. The live prototype still uses street paintings + Mark spots until that rebuild.
 
 ## New screens — tell Marc first
 
@@ -33,14 +33,14 @@ When we add a screen and figure out what sits on it, **say whether leftover-spac
 - **Yes (do it):** a board, card grid, binder, felt well, or anything that must keep a 5:7 card / oak lip lined up.
 - **Partial:** a plaque + scrolling list (challenge known copies) — pin chrome, scroll the list, still no sideways pan.
 - **Probably not:** a short dialog or a few buttons that already fit at 320px with normal document flow. Still forbid horizontal overflow.
-- **Different tool:** a new location painting — use Mark spots, not a match-table scaler.
+- **Different tool:** a new isometric location is a painted map + walk points, not Mark spots and not a match-table scaler.
 
 If Marc says a screen does not need it, skip the scaler and say so.
 
 ## Do
 
 - Let titles flex (`min-width:0`, `%` / `min()`). Pin Journal-like buttons with `flex: 0 0 auto`.
-- Size standees and location tabs with `vw` / `%` of `.townScene`.
+- Size isometric avatars and location tabs with `vw` / `%` of the town scene (live standees: same, of `.townScene`, until rebuilt).
 - Match cards are playing-card rectangles (`aspect-ratio: 5/7`), not squares.
 - Keep the location painting as bright as desktop on phones. Do **not** stack a heavy bottom vignette over the webp.
 

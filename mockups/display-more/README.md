@@ -1,6 +1,6 @@
 # Fifteen more ways to display Card Road
 
-Board-and-pawns stays on standby (`mockups/board-pawns/`). These are different shells so we can check that lock before building it.
+**Locked:** isometric town (`mockups/isometric-town/`, option 7). Board-and-pawns and View-Master are standby. This folder is the look-test that led there.
 
 Same game: living card world, 3×3 matches, calendar, collection, several towns. Not people standing inside a painted street. Not the first ten from `mockups/display-ten/`.
 

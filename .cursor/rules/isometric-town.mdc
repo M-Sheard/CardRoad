@@ -1,0 +1,39 @@
+---
+description: Locked display language — isometric painted town, walking avatars
+alwaysApply: true
+---
+
+# Display language lock (isometric town)
+
+Marc locked this (Oct 2026). Card Road’s **world** is a 3/4 isometric painted English town you walk. Canonical mock: `mockups/isometric-town/` (hero still `mockups/display-more/07-isometric-town.jpg`).
+
+Live `index.html` still uses street paintings + oak standees. That shell is **retired for new work**. Do not add locations, NPCs, or furniture layers in the old 2.5D standee language. Do not generate more display-style pages.
+
+## What people and places are
+
+- **You** = a tiny cream-coat walking avatar.
+- **NPCs** = other tiny walkers (clothes, pose, silhouette vary). Not oak standees, not wood plaques on feet, not Mark-spots pads.
+- **Places** = buildings and paths on the map. Tap / walk to Market, Inn, Mill, Quay, Club.
+- **Challenge** = walk up to someone; cream terms plaque (Challenge / Back). Same match rules as now.
+- **Match / binder / journal / claim** = keep the live leftover-space gilt screens. Do not invent a new isometric parlour unless Marc asks.
+
+## Art
+
+Same oil-painted cottage textures as the isometric mock: cobbles, river, slate roofs, gilt HUD plaques. No gold coins, gems, HP bars, gacha HUD, or virtual-joystick as a product requirement (tap-to-walk is enough).
+
+Card faces stay **17d earthy Mary Blair gouache**. Match cards stay 5:7 gilt with N/E/S/W.
+
+## Standby, not competing
+
+- Board-and-pawns: `mockups/board-pawns/` (and copies in `mockups/iso-vs-board/`)
+- View-Master: `mockups/standby/view-master/`
+
+Do not build those unless Marc reopens them.
+
+## Do not
+
+- Put people inside a close-up street painting with occlusion furniture / railings / pads
+- Generate a new oak-standee character
+- Use the Mark spots overlay for a **new** isometric location (that tool is for the old shell)
+- Split `index.html` just to start the isometric rebuild — say so first
+- Change Baseline V1, Claim One, or calendar to “make isometric work”

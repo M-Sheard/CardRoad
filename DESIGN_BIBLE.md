@@ -745,18 +745,18 @@ Potential functional locations: player/home area; tavern or card-playing gatheri
 
 Existing prototype NPCs can become actual residents rather than names in a menu.
 
-### Prototype starting town (implementation, not fully locked lore)
+### Starting town: Lythmere
 
-The v21 PWA presents **Lythmere**:
+Locked **display**: isometric painted town (`mockups/isometric-town/`). The live PWA still shows street paintings for:
 
-| Location | Current presentation |
+| Location | Role |
 | --- | --- |
-| Market | Lythmere Market — stalls, gossip, ordinary games beside the river |
-| Riverside | Lythmere Riverside — quieter quay; travellers and locals |
+| Market | Stalls, gossip, ordinary games beside the river |
+| Riverside / Quay | Quieter water; travellers and locals |
 | Inn | Gathering place |
-| Card Club | Organised card scene and weekend tournament venue |
+| Card Club | Organised play and Saturday |
 
-Starting-town identity is listed as an open design question. Lythmere is the strongest current candidate because it already has art, NPC placement, noticeboard, and Saturday opens.
+New location art is isometric, not another street painting.
 
 ---
 
@@ -794,15 +794,15 @@ It should not simply award an overpowered card.
 
 # 52. ART-DIRECTION DEVELOPMENT
 
-Visual development has begun but is **not yet completely locked**.
+## The Illustrated Card World (locked environments: isometric town)
 
-The strongest current direction:
+Warm; hand-painted; whimsical; inviting; richly illustrated fantasy; readable game UI; cards belonging to the same world.
 
-## The Illustrated Card World
+**World display (locked Oct 2026):** 3/4 **isometric painted town**. You and NPCs are tiny walking avatars on cobbles and paths. Canonical mock: `mockups/isometric-town/` (hero: `mockups/display-more/07-isometric-town.jpg`). Live `index.html` still uses street paintings + oak standees; that shell is retired for new work.
 
-Warm; hand-painted; whimsical; inviting; richly illustrated fantasy environments; readable game UI; cards visually belonging to the same world.
+**Card faces (locked):** 17d earthy Mary Blair gouache inside the gilt window. Canonical example: `mockups/card-art-dir-17d-blair-earthy-red-fox.png`.
 
-Card-face creature paintings (the picture inside the gilt window, not the frame itself) are locked as **17d earthy Mary Blair gouache**. Canonical example: `mockups/card-art-dir-17d-blair-earthy-red-fox.png`. NPC standees remain a separate lock (Tomas bevel v19).
+Match, binder, journal, and claim stay the live leftover-space gilt screens unless Marc asks to restyle them.
 
 ---
 
@@ -819,11 +819,13 @@ Card-face creature paintings (the picture inside the gilt window, not the frame 
 
 ---
 
-# 54. POSSIBLE HYBRID VISUAL IDENTITY
+# 54. VISUAL IDENTITY (locked mix)
 
-**The Illustrated World:** storybook/illustrated environments + graphic-novel-quality character portraits + travel-journal / printed-card interface.
+**World:** isometric painted town (walkers, buildings, paths).  
+**Cards:** 17d gouache creatures in gilt frames.  
+**Menus / match:** leftover-space gilt HTML (club table, binder, journal).
 
-This would keep the world warm, colourful, welcoming, and fantastical, while giving the interface a distinctive Card Road identity.
+Board-and-pawns and View-Master were strong look-tests; they are **standby**, not the product shell.
 
 ---
 
@@ -841,11 +843,11 @@ Under consideration; not locked production canon.
 
 # 56. UI PHILOSOPHY
 
-The current prototype interface is a development interface. It proves systems but contributes heavily to the game’s current barebones feeling.
+The player occupies a real card-playing **town** (isometric map), then sits at a real **table** (gilt 3×3) to play.
 
-Production UI should move away from a collection of functional HTML panels.
+Do not generate more whole-game display languages. Town work goes into the isometric shell. Do not put people inside a close-up 2.5D street with occlusion pads.
 
-The interface should help create the illusion that the player occupies a real card-playing world.
+The live prototype’s street-and-standee town still runs until that rebuild. Match rules, Baseline V1, Claim One, and the calendar do not change to make the map work.
 
 ---
 
@@ -1197,7 +1199,7 @@ That is the foundation Card Road should now build upon.
 **Already in the playable build**
 
 - Locations: Market, Riverside, Inn, Card Club with production environment art.
-- NPC standees: Tomas, Nessa, Bram, Elira (plus Tomas location placement).
+- NPC standees: Tomas, Nessa, Bram, Elira (plus Tomas location placement). **Production town display is isometric walkers**; these standees stay until that rebuild.
 - Journal tabs: Calendar, People, Cards, Card News, History.
 - Collection, incoming challenges, local season, Saturday Card Club events.
 - Physical-copy collection and ownership history inspection.

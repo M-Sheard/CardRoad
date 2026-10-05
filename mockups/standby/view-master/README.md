@@ -1,6 +1,6 @@
 # Standby: View-Master
 
-Marc liked this from the fifteen-style pass. Do not build it now. Do not throw it away.
+Marc liked this from the fifteen-style pass. World display is now **isometric town**. Do not build View-Master as the product shell. Do not throw this idea away.
 
 The world is a cardboard reel. You click towns. People live inside the stereo picture.
 
