@@ -4,16 +4,20 @@ Marc locked this as Card Road’s world display (Oct 2026).
 
 You are a tiny cream-coat avatar. People are other walkers. Places are buildings you walk to. Match / binder / journal stay the live gilt screens.
 
-1. **Hub** — valley map: Lythmere, Mill, Quay, Club.
-2. **Town** — market. Tomas, Nessa, Bram, Elira at stalls.
-3. **Challenge** — walk up; cream terms plaque.
-4. **Match** — 3×3 gilt creature cards (same rules as now).
-5. **Binder** — collection.
-6. **Saturday** — Club fills with walkers.
-7. **Travel** — coach on the road.
+**HUD is a separate overlay.** It is not painted into the map. `town-hud.html` sits on top of whatever scene we put underneath and resizes with the viewport (date flexes, Journal stays planted, location strip is `min(620px, 100% - 24px)`). Hardware is `hud/paper_corner.png` + `hud/paper_seal.png`. Not `date_frame_*` scrolls.
 
-Hero: `mockups/display-more/07-isometric-town.jpg`.  
-**Lythmere Market as it will show on the phone:** `lythmere-market-ingame.jpg` (Monday morning — you, Tomas, Nessa). HUD is the **saved town-corners cutouts** from commit `58325a8` (the ones made to reuse on every map screen): `hud/town-corners-date.png`, `hud/town-corners-journal.png`, `hud/town-corners-place.png`. Building blocks live on main as `assets/ui/paper_corner.png` + `assets/ui/paper_seal.png`. Not rolled-scroll `date_frame_*`. Source: `market-phone.html`.  
+## Stills
+
+- **HUD only:** `hud-only.jpg`
+- **Game screen only:** `scene-only.jpg` (painting: `lythmere-market-scene.jpg`)
+- **Together:** `lythmere-market-ingame.jpg`
+- **Side by side:** `hud-and-scene.jpg`
+- **Resize:** `hud-resize.jpg` (320 / 390 / 430 / 780)
+
+Open `town-hud.html`, `town-hud.html?layer=hud`, `town-hud.html?layer=scene`.
+
+The 01–07 stills are old concept art with HUD baked into the painting. Do not use those as the live HUD.
+
 Live `index.html` still uses standees until the rebuild.
 
 Standby (do not build): board-and-pawns, View-Master.
