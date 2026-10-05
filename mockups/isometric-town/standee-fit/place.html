@@ -111,6 +111,9 @@
   .standee[data-slot="2"]{--x:41%;--b:66%;--h:10%;--z:15}
   /* Elira: under the pink awning, behind the fruit */
   .standee[data-slot="3"]{--x:84%;--b:63%;--h:9%;--z:15}
+  /* Beph: merchant / traveller. Off until toggled. Path, not a stall bay. */
+  .standee[data-slot="4"]{--x:55%;--b:34%;--h:12%;--z:18;display:none}
+  body.bephOn .standee[data-slot="4"]{display:block}
 
   #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
   .worldTopbar{
@@ -159,6 +162,7 @@
 <body>
 <section id="visualShell">
   <div class="townScene">
+    <img class="standee" data-slot="4" src="../../../assets/npcs/beph_standee_bevel_v3.png" alt="BEPH" hidden>
     <img class="standee" data-slot="3" src="../../../assets/npcs/elira_standee_bevel_v22.png" alt="ELIRA">
     <img class="standee" data-slot="2" src="../../../assets/npcs/tomas_standee_bevel_v19.png" alt="TOMAS">
     <img class="standee" data-slot="1" src="../../../assets/npcs/nessa_standee_bevel_v22.png" alt="NESSA">
@@ -230,7 +234,8 @@
     "0": {x:22, b:36, h:13},
     "1": {x:22, b:64, h:10.5},
     "2": {x:41, b:66, h:10},
-    "3": {x:84, b:63, h:9}
+    "3": {x:84, b:63, h:9},
+    "4": {x:55, b:34, h:12}
   };
   const LOCS = ["Market", "Riverside", "Inn", "Club"];
   const BUILTIN = {
@@ -245,7 +250,7 @@
     {id:"asis", label:"As-is", file:"./bg-0-as-is.jpg", loc:"Market"}
   ];
 
-  let store = {loc:"Market", slots:{}, bgs:{}, paint:"jewel"};
+  let store = {loc:"Market", slots:{}, bgs:{}, paint:"jewel", beph:{}};
   let blobUrl = "";
   let missingBg = false;
 
@@ -265,6 +270,7 @@
         store.slots = raw.slots && typeof raw.slots === "object" ? raw.slots : {};
         store.bgs = raw.bgs && typeof raw.bgs === "object" ? raw.bgs : {};
         store.paint = raw.paint || "jewel";
+        store.beph = raw.beph && typeof raw.beph === "object" ? raw.beph : {};
       }
     }catch(e){}
     if(!store.slots.Market){
@@ -278,6 +284,27 @@
   function saveStore(){
     store.slots[store.loc] = currentSlots();
     try{localStorage.setItem(KEY, JSON.stringify(store))}catch(e){}
+  }
+  function bephOn(){
+    return !!store.beph[store.loc];
+  }
+  function syncBeph(){
+    const on = bephOn();
+    const el = people.find(p=>p.dataset.slot==="4");
+    document.body.classList.toggle("bephOn", on);
+    if(el){
+      el.hidden = !on;
+      el.style.display = on ? "block" : "none";
+    }
+  }
+  function setBeph(on){
+    store.beph[store.loc] = !!on;
+    syncBeph();
+    const el = people.find(p=>p.dataset.slot==="4");
+    if(on && el) select(el);
+    else if(!on && selected && selected.dataset.slot==="4") select(people.find(p=>p.dataset.slot==="0") || people[0]);
+    saveStore();
+    paint();
   }
   function currentSlots(){
     const out = {};
@@ -331,6 +358,7 @@
     locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===loc));
     if(!store.slots[loc]) store.slots[loc] = cloneSlots(store.slots.Market || DEFAULT_SLOTS);
     applySlots(store.slots[loc]);
+    syncBeph();
     const url = await bgFor(loc);
     missingBg = !url;
     if(url) setBg(url);
@@ -351,19 +379,26 @@
     paint();
   }
   function cssText(){
-    const slots = people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot).map(el=>{
+    const visible = people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot)
+      .filter(el=>el.dataset.slot!=="4" || bephOn());
+    const slots = visible.map(el=>{
       const z = 10 + Math.round(+el.dataset.b);
       return `.standee[data-slot="${el.dataset.slot}"]{--x:${(+el.dataset.x).toFixed(1)}%;--b:${(+el.dataset.b).toFixed(1)}%;--h:${(+el.dataset.h).toFixed(1)}%;--z:${z}}`;
     }).join("\n");
-    return `/* Card Road town stage — ${PHONE} */\n/* location: ${store.loc} */\n${slots}`;
+    const bephLine = bephOn()
+      ? "/* beph merchant/traveler: on */"
+      : "/* beph merchant/traveler: off */";
+    return `/* Card Road town stage — ${PHONE} */\n/* location: ${store.loc} */\n${bephLine}\n${slots}`;
   }
   function paint(){
     const paints = PAINTS.map(p=>{
       const on = store.loc==="Market" && store.paint===p.id ? " on" : "";
       return `<button type="button" data-paint="${p.id}" class="${on.trim()}">${p.label}</button>`;
     }).join("");
-    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Drag a person. Wheel or +/− to size. Copy saves this phone crop and the slots. Drop a painting to swap the map.</p>" +
-      people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot).map(el=>{
+    const shown = people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot)
+      .filter(el=>el.dataset.slot!=="4" || bephOn());
+    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Drag a person. Wheel or +/− to size. Copy saves this phone crop and the slots. Drop a painting to swap the map. Beph is an extra merchant/traveller slot.</p>" +
+      shown.map(el=>{
         const on = el===selected ? " style=\"color:#7a1c18\"" : "";
         return `<div class="spotEnd" data-pick="${el.dataset.slot}"${on}><span>${el.alt}</span><code>${(+el.dataset.x).toFixed(0)} ${(+el.dataset.b).toFixed(0)} ${(+el.dataset.h).toFixed(1)}</code></div>`;
       }).join("") +
@@ -373,8 +408,8 @@
         <button type="button" id="spotCopy">Copy</button>
         <button type="button" id="spotReset">Reset</button>
       </div>
-      <div class="sceneRow">${paints}<button type="button" id="spotLoad">Load painting</button></div>
-      <p class="fileHint">${missingBg ? "No " + store.loc + " painting yet — Load or drop a 720×1280 jpg." : store.loc + " · " + PHONE + ". Tabs switch maps; slots save per map."}</p>`;
+      <div class="sceneRow">${paints}<button type="button" id="spotLoad">Load painting</button><button type="button" id="spotBeph" class="${bephOn()?"on":""}">Beph</button></div>
+      <p class="fileHint">${missingBg ? "No " + store.loc + " painting yet — Load or drop a 720×1280 jpg." : store.loc + " · " + PHONE + ". Tabs switch maps; slots save per map. Beph is per map."}</p>`;
   }
   function pct(clientX, clientY){
     const r = scene.getBoundingClientRect();
@@ -410,6 +445,7 @@
 
   people.forEach(el=>{
     el.addEventListener("pointerdown", e=>{
+      if(el.dataset.slot==="4" && !bephOn()) return;
       e.preventDefault();
       select(el);
       const pos = pct(e.clientX, e.clientY);
@@ -454,6 +490,10 @@
       store.paint = p.id;
       delete store.bgs.Market;
       showLoc("Market");
+      return;
+    }
+    if(e.target.id==="spotBeph"){
+      setBeph(!bephOn());
       return;
     }
     if(e.target.id==="spotLoad"){
@@ -519,10 +559,13 @@
   }
   const qLoc = new URLSearchParams(location.search).get("loc");
   const qScene = new URLSearchParams(location.search).get("scene");
+  const qBeph = new URLSearchParams(location.search).get("beph");
   loadStore();
   seed();
   if(qLoc && LOCS.includes(qLoc)) store.loc = qLoc;
+  if(qBeph === "1" || qBeph === "on") store.beph[store.loc] = true;
   applySlots(store.slots[store.loc] || DEFAULT_SLOTS);
+  syncBeph();
   locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===store.loc));
   (async ()=>{
     if(qScene){

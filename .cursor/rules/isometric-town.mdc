@@ -27,7 +27,7 @@ Every town screen uses the **phone crop**, not a laptop-wide `cover`:
 
 - Stage: **390px × 9:16** on a laptop (`place.html` `#visualShell`); on a real phone it fills `100dvh`
 - Paintings: **720×1280** jpg/webp, `center / cover` inside that crop
-- People: four `%` slots on `.townScene` (front larger). Place in `mockups/isometric-town/standee-fit/place.html`. Slots save **per location**
+- People: four stall `%` slots on `.townScene` (front larger), plus a **toggleable 5th slot** — Beph (`beph_standee_bevel_v3.png`) for merchant / traveller maps. Place in `mockups/isometric-town/standee-fit/place.html`. Slots save **per location**; Beph on/off saves per location too.
 - Plug-in map: drop a painting on the phone, or put `mockups/isometric-town/scenes/<location>.jpg` (`riverside.jpg`, `inn.jpg`, `club.jpg`). Market’s locked paint is `standee-fit/bg-b-jewel.jpg`
 
 Do not invent a new pin/grid widget. Do not restretch the map to the monitor.
