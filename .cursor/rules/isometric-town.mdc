@@ -21,6 +21,17 @@ Live `index.html` still uses street paintings + oak standees. That shell is **re
 
 The date / Journal / location strip is a **separate overlay**, not painted into the map. Reuse `mockups/isometric-town/town-hud.html` (hardware `hud/paper_corner.png` + `hud/paper_seal.png`). It sits on whatever scene is underneath and resizes with the viewport. Do not bake HUD into location jpgs. Do not bring back `date_frame_*` scrolls.
 
+## Town stage (locked size + plug-in maps)
+
+Every town screen uses the **phone crop**, not a laptop-wide `cover`:
+
+- Stage: **390px × 9:16** on a laptop (`place.html` `#visualShell`); on a real phone it fills `100dvh`
+- Paintings: **720×1280** jpg/webp, `center / cover` inside that crop
+- People: four `%` slots on `.townScene` (front larger). Place in `mockups/isometric-town/standee-fit/place.html`. Slots save **per location**
+- Plug-in map: drop a painting on the phone, or put `mockups/isometric-town/scenes/<location>.jpg` (`riverside.jpg`, `inn.jpg`, `club.jpg`). Market’s locked paint is `standee-fit/bg-b-jewel.jpg`
+
+Do not invent a new pin/grid widget. Do not restretch the map to the monitor.
+
 ## Art
 
 Same oil-painted cottage textures as the isometric mock: cobbles, river, slate roofs. No gold coins, gems, HP bars, gacha HUD, or virtual-joystick as a product requirement (tap-to-walk is enough).

@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Jewel Market — standee slots</title>
+<title>Lythmere — place people</title>
 <style>
   html,body{
     margin:0;height:100%;background:#1c1612;overflow:hidden;
@@ -90,7 +90,18 @@
     padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;
     border:1px solid #9f8e72;border-radius:4px;cursor:pointer;
   }
-  .locationStrip.paperPlaque{pointer-events:none}
+  #spotReadout .sceneRow{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  #spotReadout .sceneRow button.on{background:#241a13;color:#f2e1be}
+  #spotReadout .fileHint{margin:4px 0 0;color:#614a34;font-size:9px}
+  .townScene.is-drop:after{
+    content:"Drop 720×1280 painting";
+    position:absolute;inset:0;z-index:90;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(28,22,18,.45);color:#f2e1be;
+    font:700 13px/1.2 Georgia,serif;text-align:center;padding:16px;
+    pointer-events:none;
+  }
+  #bgFile{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
   /* Feet at the back of each stall, under the awning — not out on the street. */
   /* Bram: in the cottage stall pocket, behind the fruit crates */
   .standee[data-slot="0"]{--x:22%;--b:36%;--h:13%;--z:16}
@@ -185,16 +196,17 @@
       </span>
       <img class="paperSeal paperSeal-left" src="../hud/paper_seal.png" alt="">
       <div class="scrollWell locationWell">
-        <button type="button" class="active">Market</button>
-        <button type="button">Riverside</button>
-        <button type="button">Inn</button>
-        <button type="button">Club</button>
+        <button type="button" class="active" data-loc="Market">Market</button>
+        <button type="button" data-loc="Riverside">Riverside</button>
+        <button type="button" data-loc="Inn">Inn</button>
+        <button type="button" data-loc="Club">Club</button>
       </div>
     </nav>
   </div>
   <button type="button" id="spotToggle">Hide HUD</button>
   <button type="button" id="spotListToggle">Hide list</button>
   <div id="spotReadout"></div>
+  <input id="bgFile" type="file" accept="image/jpeg,image/png,image/webp">
 </section>
 <script>
 (function(){
@@ -203,36 +215,83 @@
   const readout = document.getElementById("spotReadout");
   const listBtn = document.getElementById("spotListToggle");
   const hudBtn = document.getElementById("spotToggle");
+  const bgFile = document.getElementById("bgFile");
+  const locBtns = [...document.querySelectorAll(".locationWell [data-loc]")];
   let selected = people[0];
   let drag = null;
   let listOn = true;
   document.body.classList.add("spotListOn");
 
-  const KEY = "cardRoadJewelSlots";
-  function load(){
-    try{
-      const saved = JSON.parse(localStorage.getItem(KEY) || "null");
-      if(!saved) return;
-      people.forEach(el=>{
-        const s = saved[el.dataset.slot];
-        if(!s) return;
-        el.dataset.x = s.x; el.dataset.b = s.b; el.dataset.h = s.h;
-      });
-    }catch(e){}
+  /* Locked chassis: phone 390 × 9:16. Paintings 720×1280. Slots are % of that crop. */
+  const PHONE = "390px × 9:16 (paintings 720×1280)";
+  const KEY = "cardRoadIsoTown";
+  const OLD_KEY = "cardRoadJewelSlots";
+  const DEFAULT_SLOTS = {
+    "0": {x:22, b:36, h:13},
+    "1": {x:22, b:64, h:10.5},
+    "2": {x:41, b:66, h:10},
+    "3": {x:84, b:63, h:9}
+  };
+  const LOCS = ["Market", "Riverside", "Inn", "Club"];
+  const BUILTIN = {
+    Market: "./bg-b-jewel.jpg",
+    Riverside: "../scenes/riverside.jpg",
+    Inn: "../scenes/inn.jpg",
+    Club: "../scenes/club.jpg"
+  };
+  const PAINTS = [
+    {id:"jewel", label:"Jewel", file:"./bg-b-jewel.jpg", loc:"Market"},
+    {id:"dusk", label:"Dusk", file:"./bg-e-dusk.jpg", loc:"Market"},
+    {id:"asis", label:"As-is", file:"./bg-0-as-is.jpg", loc:"Market"}
+  ];
+
+  let store = {loc:"Market", slots:{}, bgs:{}, paint:"jewel"};
+  let blobUrl = "";
+  let missingBg = false;
+
+  function cloneSlots(src){
+    const out = {};
+    Object.keys(DEFAULT_SLOTS).forEach(k=>{
+      const s = (src && src[k]) || DEFAULT_SLOTS[k];
+      out[k] = {x:+s.x, b:+s.b, h:+s.h};
+    });
+    return out;
   }
-  function save(){
+  function loadStore(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(KEY) || "null");
+      if(raw && typeof raw === "object"){
+        store.loc = LOCS.includes(raw.loc) ? raw.loc : "Market";
+        store.slots = raw.slots && typeof raw.slots === "object" ? raw.slots : {};
+        store.bgs = raw.bgs && typeof raw.bgs === "object" ? raw.bgs : {};
+        store.paint = raw.paint || "jewel";
+      }
+    }catch(e){}
+    if(!store.slots.Market){
+      try{
+        const old = JSON.parse(localStorage.getItem(OLD_KEY) || "null");
+        if(old) store.slots.Market = cloneSlots(old);
+      }catch(e){}
+    }
+    if(!store.slots.Market) store.slots.Market = cloneSlots(DEFAULT_SLOTS);
+  }
+  function saveStore(){
+    store.slots[store.loc] = currentSlots();
+    try{localStorage.setItem(KEY, JSON.stringify(store))}catch(e){}
+  }
+  function currentSlots(){
     const out = {};
     people.forEach(el=>{
-      out[el.dataset.slot] = {x:el.dataset.x, b:el.dataset.b, h:el.dataset.h};
+      out[el.dataset.slot] = {x:+el.dataset.x, b:+el.dataset.b, h:+el.dataset.h};
     });
-    try{localStorage.setItem(KEY, JSON.stringify(out))}catch(e){}
+    return out;
   }
-  function seed(){
+  function applySlots(slots){
+    const s = cloneSlots(slots);
     people.forEach(el=>{
-      const cs = getComputedStyle(el);
-      if(!el.dataset.x) el.dataset.x = parseFloat(cs.getPropertyValue("--x")) || 50;
-      if(!el.dataset.b) el.dataset.b = parseFloat(cs.getPropertyValue("--b")) || 20;
-      if(!el.dataset.h) el.dataset.h = parseFloat(cs.getPropertyValue("--h")) || 12;
+      const p = s[el.dataset.slot];
+      el.dataset.x = p.x; el.dataset.b = p.b; el.dataset.h = p.h;
+      apply(el);
     });
   }
   function apply(el){
@@ -242,20 +301,68 @@
     el.style.setProperty("--h", h.toFixed(1) + "%");
     el.style.setProperty("--z", String(10 + Math.round(b)));
   }
-  function applyAll(){ people.forEach(apply); }
+  function probe(url){
+    return new Promise(resolve=>{
+      if(!url){ resolve(false); return; }
+      if(url.startsWith("data:") || url.startsWith("blob:")){ resolve(true); return; }
+      const im = new Image();
+      im.onload = () => resolve(true);
+      im.onerror = () => resolve(false);
+      im.src = url;
+    });
+  }
+  function setBg(url){
+    scene.style.backgroundImage = 'url("' + String(url).replace(/"/g, "") + '")';
+  }
+  function marketFile(){
+    const p = PAINTS.find(x=>x.id===store.paint);
+    return (p && p.file) || BUILTIN.Market;
+  }
+  async function bgFor(loc){
+    if(store.bgs[loc]) return store.bgs[loc];
+    if(loc === "Market") return marketFile();
+    const file = BUILTIN[loc];
+    if(await probe(file)) return file;
+    return "";
+  }
+  async function showLoc(loc){
+    if(store.loc !== loc) store.slots[store.loc] = currentSlots();
+    store.loc = loc;
+    locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===loc));
+    if(!store.slots[loc]) store.slots[loc] = cloneSlots(store.slots.Market || DEFAULT_SLOTS);
+    applySlots(store.slots[loc]);
+    const url = await bgFor(loc);
+    missingBg = !url;
+    if(url) setBg(url);
+    saveStore();
+    paint();
+  }
+  function seed(){
+    people.forEach(el=>{
+      const cs = getComputedStyle(el);
+      if(!el.dataset.x) el.dataset.x = parseFloat(cs.getPropertyValue("--x")) || 50;
+      if(!el.dataset.b) el.dataset.b = parseFloat(cs.getPropertyValue("--b")) || 20;
+      if(!el.dataset.h) el.dataset.h = parseFloat(cs.getPropertyValue("--h")) || 12;
+    });
+  }
   function select(el){
     selected = el;
     people.forEach(p=>p.classList.toggle("is-sel", p===el));
     paint();
   }
   function cssText(){
-    return people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot).map(el=>{
+    const slots = people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot).map(el=>{
       const z = 10 + Math.round(+el.dataset.b);
       return `.standee[data-slot="${el.dataset.slot}"]{--x:${(+el.dataset.x).toFixed(1)}%;--b:${(+el.dataset.b).toFixed(1)}%;--h:${(+el.dataset.h).toFixed(1)}%;--z:${z}}`;
     }).join("\n");
+    return `/* Card Road town stage — ${PHONE} */\n/* location: ${store.loc} */\n${slots}`;
   }
   function paint(){
-    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Drag a person. Wheel or +/− to size. Copy when it looks right.</p>" +
+    const paints = PAINTS.map(p=>{
+      const on = store.loc==="Market" && store.paint===p.id ? " on" : "";
+      return `<button type="button" data-paint="${p.id}" class="${on.trim()}">${p.label}</button>`;
+    }).join("");
+    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Drag a person. Wheel or +/− to size. Copy saves this phone crop and the slots. Drop a painting to swap the map.</p>" +
       people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot).map(el=>{
         const on = el===selected ? " style=\"color:#7a1c18\"" : "";
         return `<div class="spotEnd" data-pick="${el.dataset.slot}"${on}><span>${el.alt}</span><code>${(+el.dataset.x).toFixed(0)} ${(+el.dataset.b).toFixed(0)} ${(+el.dataset.h).toFixed(1)}</code></div>`;
@@ -264,7 +371,10 @@
         <button type="button" data-dir="-1">−</button>
         <button type="button" data-dir="1">+</button>
         <button type="button" id="spotCopy">Copy</button>
-      </div>`;
+        <button type="button" id="spotReset">Reset</button>
+      </div>
+      <div class="sceneRow">${paints}<button type="button" id="spotLoad">Load painting</button></div>
+      <p class="fileHint">${missingBg ? "No " + store.loc + " painting yet — Load or drop a 720×1280 jpg." : store.loc + " · " + PHONE + ". Tabs switch maps; slots save per map."}</p>`;
   }
   function pct(clientX, clientY){
     const r = scene.getBoundingClientRect();
@@ -276,7 +386,26 @@
   function bump(dir){
     if(!selected) return;
     selected.dataset.h = Math.max(6, Math.min(28, +selected.dataset.h + dir * 0.5));
-    apply(selected); save(); paint();
+    apply(selected); saveStore(); paint();
+  }
+  function readPainting(file){
+    if(!file || !file.type.startsWith("image/")) return;
+    const loc = store.loc;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      if(dataUrl.length < 1800000) store.bgs[loc] = dataUrl;
+      else {
+        if(blobUrl) URL.revokeObjectURL(blobUrl);
+        blobUrl = URL.createObjectURL(file);
+        store.bgs[loc] = blobUrl;
+      }
+      missingBg = false;
+      setBg(store.bgs[loc]);
+      saveStore();
+      paint();
+    };
+    reader.readAsDataURL(file);
   }
 
   people.forEach(el=>{
@@ -300,7 +429,7 @@
     if(!drag || e.pointerId!==drag.id) return;
     drag.el.classList.remove("is-drag");
     drag = null;
-    save(); paint();
+    saveStore(); paint();
   });
   scene.addEventListener("wheel", e=>{
     const el = e.target.closest(".standee");
@@ -318,6 +447,26 @@
     }
     const dir = e.target.closest("[data-dir]");
     if(dir) bump(+dir.dataset.dir);
+    const paintBtn = e.target.closest("[data-paint]");
+    if(paintBtn){
+      const p = PAINTS.find(x=>x.id===paintBtn.dataset.paint);
+      if(!p) return;
+      store.paint = p.id;
+      delete store.bgs.Market;
+      showLoc("Market");
+      return;
+    }
+    if(e.target.id==="spotLoad"){
+      bgFile.dataset.expectLoc = store.loc;
+      bgFile.click();
+      return;
+    }
+    if(e.target.id==="spotReset"){
+      store.slots[store.loc] = cloneSlots(DEFAULT_SLOTS);
+      applySlots(store.slots[store.loc]);
+      saveStore(); paint();
+      return;
+    }
     if(e.target.id==="spotCopy"){
       const text = cssText();
       navigator.clipboard.writeText(text).then(()=>{
@@ -327,6 +476,32 @@
         window.prompt("Copy CSS", text);
       });
     }
+  });
+  locBtns.forEach(btn=>{
+    btn.addEventListener("click", ()=> showLoc(btn.dataset.loc));
+  });
+  bgFile.addEventListener("change", ()=>{
+    const file = bgFile.files && bgFile.files[0];
+    bgFile.value = "";
+    readPainting(file);
+  });
+  const shell = document.getElementById("visualShell");
+  ["dragenter","dragover"].forEach(ev=>{
+    shell.addEventListener(ev, e=>{
+      if(!e.dataTransfer || ![...e.dataTransfer.types].includes("Files")) return;
+      e.preventDefault();
+      scene.classList.add("is-drop");
+    });
+  });
+  ["dragleave","drop"].forEach(ev=>{
+    shell.addEventListener(ev, e=>{
+      if(ev==="drop"){
+        if(!e.dataTransfer || !e.dataTransfer.files.length) { scene.classList.remove("is-drop"); return; }
+        e.preventDefault();
+        readPainting(e.dataTransfer.files[0]);
+      }
+      scene.classList.remove("is-drop");
+    });
   });
   listBtn.addEventListener("click", ()=>{
     listOn = !listOn;
@@ -342,7 +517,25 @@
     document.body.dataset.hud = "off";
     hudBtn.textContent = "Show HUD";
   }
-  seed(); load(); applyAll(); select(people[0]);
+  const qLoc = new URLSearchParams(location.search).get("loc");
+  const qScene = new URLSearchParams(location.search).get("scene");
+  loadStore();
+  seed();
+  if(qLoc && LOCS.includes(qLoc)) store.loc = qLoc;
+  applySlots(store.slots[store.loc] || DEFAULT_SLOTS);
+  locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===store.loc));
+  (async ()=>{
+    if(qScene){
+      const safe = qScene.replace(/[^a-zA-Z0-9._/-]/g, "");
+      if(await probe(safe)) setBg(safe);
+      else setBg((await bgFor(store.loc)) || BUILTIN.Market);
+    } else {
+      const url = (await bgFor(store.loc)) || BUILTIN.Market;
+      setBg(url);
+    }
+    paint();
+    select(people[0]);
+  })();
 })();
 </script>
 </body>
