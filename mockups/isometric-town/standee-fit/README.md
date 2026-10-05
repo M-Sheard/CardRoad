@@ -26,10 +26,13 @@ Scale is the other clash: live street-standee size dwarfs these cottages. These 
 
 Four-NPC stills sit on jewel, dusk, oak, and umber.
 
-HUD overlay on the two that help (same `town-hud.html` as every map screen):
+Jewel gold is the locked colour. Cutouts are HTML overlays on that painting — four depth slots, front large / back small, path down the middle left open.
 
-- `jewel-with-hud.jpg`
-- `dusk-with-hud.jpg`
+- Place file: `place.html` (HUD on; `?hud=off` for the street only)
+- With HUD: `jewel-placed.jpg`
+- Street only: `jewel-placed-nohud.jpg`
+
+Slots: 0 Bram (front left, cottage), 1 Nessa (right cobbles), 2 Tomas (three awnings), 3 Elira (pink awning).
 
 
 ## Compare
