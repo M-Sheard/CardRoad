@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lythmere — tabletop map</title>
+<style>
+  html,body{
+    margin:0;height:100%;background:#1c1612;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+  }
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;
+    border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+  }
+  .townScene{
+    position:absolute;inset:0;z-index:0;
+    background:#2a241e url("./map.jpg") center / cover no-repeat;
+  }
+  .standee{
+    position:absolute;left:var(--x);bottom:var(--b);height:var(--h);width:auto;
+    transform:translateX(-50%);transform-origin:50% 100%;z-index:var(--z,12);
+    filter:drop-shadow(3px 8px 7px rgba(18,12,8,.45));
+    object-fit:contain;pointer-events:none;
+  }
+  body[data-view="map"] .standee{display:none}
+
+  /* Invisible-ish encounter boxes on the campaign map. Labels are already inked on the painting. */
+  .mapHit{
+    position:absolute;z-index:12;padding:0;margin:0;
+    background:rgba(247,234,210,.12);
+    border:1.5px dashed rgba(139,105,58,.7);
+    border-radius:6px;
+    pointer-events:auto;
+  }
+  .mapHit:hover, .mapHit:focus-visible{
+    background:rgba(247,234,210,.2);
+    border-color:#c4a06a;
+    box-shadow:inset 0 0 0 1px rgba(247,234,210,.35);
+  }
+  body[data-view="loc"] .mapHit{display:none}
+
+  .mapHit[data-loc="Inn"]{left:4%;top:12%;width:46%;height:26%}
+  .mapHit[data-loc="Club"]{left:54%;top:30%;width:44%;height:24%}
+  .mapHit[data-loc="Market"]{left:2%;top:44%;width:42%;height:20%}
+  .mapHit[data-loc="Riverside"]{left:2%;top:64%;width:50%;height:18%}
+
+  #tapHint{
+    position:absolute;z-index:18;left:62%;top:16%;transform:translate(-50%,0);
+    padding:8px 12px;pointer-events:none;
+    font:700 12px/1.2 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;
+    color:#1a120c;background:rgba(247,234,210,.92);
+    border:1px solid #c4a06a;border-radius:3px;box-shadow:0 4px 12px #0006;
+  }
+  body[data-view="loc"] #tapHint, body[data-hint="off"] #tapHint{display:none}
+
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;flex-direction:row;flex-wrap:nowrap;
+    align-items:flex-start;justify-content:space-between;gap:10px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldTopbar #advanceTime,.worldTopbar .worldActions{pointer-events:none}
+  .worldActions{flex:0 0 auto;display:flex}
+  .scrollPlaque{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:0;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:0 10px;border:0;background:none}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 16px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;width:auto;min-width:0;max-width:min(264px, calc(100% - 118px))}
+  #advanceTime #visualDate{font:700 clamp(11px, 3.2cqw, 13px)/1.1 Georgia,serif;color:#1a120c;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(9px, 2.7cqw, 11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #worldRecord.paperPlaque{height:var(--hud-journal-h);min-height:var(--hud-journal-h);min-width:min(118px,34cqw);padding:0;gap:0;font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c}
+  #worldRecord.paperPlaque .scrollWell{gap:6px;padding:4px 12px 4px 14px}
+  #worldRecord .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  .locationStrip.paperPlaque{position:absolute;z-index:32;left:50%;bottom:var(--hud-pad-b);width:min(620px,calc(100% - 24px));transform:translateX(-50%);padding:0;pointer-events:auto}
+  .locationStrip.paperPlaque .scrollWell{padding:4px 12px 4px 28px}
+  .locationStrip .paperSeal-left{position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:var(--hud-seal);height:var(--hud-seal);object-fit:contain;z-index:6;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));pointer-events:none}
+  .locationWell{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;height:100%;padding:0;gap:0}
+  .locationWell button{position:relative;min-width:0;min-height:0;height:100%;margin:0;padding:8px 4px;color:#3d2b1a;border-right:1px solid rgba(90,62,38,.22);font:700 clamp(8px,2.4cqw,11px)/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,244,214,.7);pointer-events:auto}
+  .locationWell button:last-child{border-right:0}
+  .locationWell button.active{color:#1a120c;font-weight:800}
+  #mapBtn{
+    position:absolute;z-index:46;
+    right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));
+    min-width:108px;padding:7px 10px;
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;pointer-events:auto;
+  }
+  body[data-view="map"] #mapBtn{display:none}
+  body[data-hud="off"] #hudLayer{display:none}
+</style>
+</head>
+<body data-view="map">
+<section id="visualShell">
+  <div class="townScene" id="townScene">
+    <button type="button" class="mapHit" data-loc="Inn" aria-label="Open Inn"></button>
+    <button type="button" class="mapHit" data-loc="Market" aria-label="Open Market"></button>
+    <button type="button" class="mapHit" data-loc="Riverside" aria-label="Open Riverside"></button>
+    <button type="button" class="mapHit" data-loc="Club" aria-label="Open Club"></button>
+    <div id="tapHint">Tap a place</div>
+    <img class="standee" data-who="elira" src="../../assets/npcs/elira_standee_bevel_v22.png" alt="ELIRA">
+    <img class="standee" data-who="tomas" src="../../assets/npcs/tomas_standee_bevel_v19.png" alt="TOMAS">
+    <img class="standee" data-who="nessa" src="../../assets/npcs/nessa_standee_bevel_v22.png" alt="NESSA">
+    <img class="standee" data-who="beph" src="../../assets/npcs/beph_standee_bevel_v3.png" alt="BEPH">
+    <img class="standee" data-who="bram" src="../../assets/npcs/bram_standee_bevel_v22.png" alt="BRAM">
+  </div>
+  <div id="hudLayer" class="townHud">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING · YEAR 1</span></span></span>
+      </button>
+      <div class="worldActions">
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button" aria-label="Open journal">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span id="worldRecordLabel">Journal</span><img class="paperSeal" src="../isometric-town/hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+    <nav class="locationStrip scrollPlaque paperPlaque" aria-label="Lythmere locations">
+      <span class="paperCorners" aria-hidden="true">
+        <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+      </span>
+      <img class="paperSeal paperSeal-left" src="../isometric-town/hud/paper_seal.png" alt="">
+      <div class="scrollWell locationWell">
+        <button type="button" data-loc="Market">Market</button>
+        <button type="button" data-loc="Riverside">Riverside</button>
+        <button type="button" data-loc="Inn">Inn</button>
+        <button type="button" data-loc="Club">Club</button>
+      </div>
+    </nav>
+  </div>
+  <button type="button" id="mapBtn">Map</button>
+</section>
+<script>
+(function(){
+  const scene = document.getElementById("townScene");
+  const mapBtn = document.getElementById("mapBtn");
+  const people = [...document.querySelectorAll(".standee")];
+  const tabs = [...document.querySelectorAll(".locationWell [data-loc]")];
+  const PLACES = {
+    Market: {
+      file: "./loc-market.jpg",
+      slots: {
+        bram:{x:22,b:16,h:36}, nessa:{x:44,b:18,h:34}, tomas:{x:66,b:16,h:32},
+        elira:{x:82,b:14,h:28}, beph:{x:86,b:14,h:34}
+      },
+      show: ["bram","nessa","tomas","beph"]
+    },
+    Riverside: {
+      file: "./loc-riverside.jpg",
+      slots: {
+        tomas:{x:24,b:16,h:38}, elira:{x:76,b:16,h:36}, beph:{x:50,b:14,h:32},
+        bram:{x:22,b:14,h:36}, nessa:{x:74,b:14,h:32}
+      },
+      show: ["tomas","elira","beph"]
+    },
+    Inn: {
+      file: "./loc-inn.jpg",
+      slots: {
+        nessa:{x:32,b:14,h:36}, bram:{x:52,b:12,h:40}, tomas:{x:74,b:14,h:32},
+        elira:{x:24,b:12,h:32}, beph:{x:48,b:10,h:34}
+      },
+      show: ["nessa","bram","tomas"]
+    },
+    Club: {
+      file: "./loc-club.jpg",
+      slots: {
+        elira:{x:50,b:14,h:36}, bram:{x:26,b:14,h:38}, tomas:{x:76,b:14,h:34},
+        nessa:{x:82,b:12,h:30}, beph:{x:50,b:10,h:34}
+      },
+      show: ["elira","bram","tomas"]
+    }
+  };
+
+  function applyPerson(el, slot){
+    el.style.setProperty("--x", slot.x.toFixed(1) + "%");
+    el.style.setProperty("--b", slot.b.toFixed(1) + "%");
+    el.style.setProperty("--h", slot.h.toFixed(1) + "%");
+    el.style.setProperty("--z", String(10 + Math.round(slot.b)));
+  }
+
+  function showMap(){
+    document.body.dataset.view = "map";
+    scene.style.backgroundImage = 'url("./map.jpg")';
+    tabs.forEach(t => t.classList.remove("active"));
+    people.forEach(p => { p.style.display = "none"; });
+    if(location.hash && location.hash !== "#map"){
+      history.replaceState(null, "", location.pathname + location.search + "#map");
+    }
+  }
+
+  function openLoc(id){
+    const place = PLACES[id];
+    if(!place) return;
+    document.body.dataset.view = "loc";
+    document.body.dataset.hint = "off";
+    scene.style.backgroundImage = 'url("' + place.file + '")';
+    tabs.forEach(t => t.classList.toggle("active", t.dataset.loc === id));
+    people.forEach(el => {
+      const who = el.dataset.who;
+      const on = place.show.indexOf(who) >= 0;
+      el.style.display = on ? "block" : "none";
+      if(on && place.slots[who]) applyPerson(el, place.slots[who]);
+    });
+    const hash = "#" + id.toLowerCase();
+    if(location.hash !== hash) history.replaceState(null, "", location.pathname + location.search + hash);
+  }
+
+  document.querySelectorAll(".mapHit").forEach(btn => {
+    btn.addEventListener("click", () => openLoc(btn.dataset.loc));
+  });
+  tabs.forEach(btn => {
+    btn.addEventListener("click", () => openLoc(btn.dataset.loc));
+  });
+  mapBtn.addEventListener("click", showMap);
+
+  function applyHash(){
+    const id = (location.hash || "").replace("#","").toLowerCase();
+    if(!id || id === "map"){ showMap(); return; }
+    const locId = Object.keys(PLACES).find(k => k.toLowerCase() === id);
+    if(locId) openLoc(locId);
+    else showMap();
+  }
+  window.addEventListener("hashchange", applyHash);
+  applyHash();
+})();
+</script>
+</body>
+</html>

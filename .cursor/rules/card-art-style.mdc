@@ -7,7 +7,7 @@ alwaysApply: true
 
 Canonical painting: `mockups/card-art-dir-17d-blair-earthy-red-fox.png`
 
-This is the **picture inside the gilt window**, not a new card frame. Physical chrome stays `assets/ui/card_gilt_frame.png`. NPC wood standees stay Tomas bevel v19 (`npc-standee-style.mdc`) — never mix the two.
+This is the **picture inside the gilt window**, not a new card frame. Physical chrome stays `assets/ui/card_gilt_frame.png`. World people are isometric walkers (`isometric-town.mdc`), not card art and not oak standees — never mix the three.
 
 **Style:** Mary Blair mid-century storybook **gouache**, **earthy/muted** (not candy-bright 17), slightly more naturalistic silhouette than flat Blair, still **cartoon**. Visible paper/gouache texture. Pastoral English countryside OK. The animal is an animal (no cloak, staff, or clothes).
 

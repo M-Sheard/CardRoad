@@ -1,23 +1,16 @@
 ---
-description: Canonical Mark spots tool for location anchors and perspective scale
+description: Mark spots is for the old street-and-standee shell only
 alwaysApply: true
 ---
 
-# Location anchor tool (locked)
+# Location anchor tool (old shell only)
 
-Whenever we add or restage a **location / town screen**, use the existing **Mark spots** overlay in root `index.html` (v37 block, `#spotToggle`). Do not invent a new pin, grid, or scale widget.
+**Mark spots** (`#spotToggle`, `?pins=1` in root `index.html`) places oak standees on the current street paintings.
 
-**How Marc places a screen**
-1. Open the game with `?pins=1` (players never see the tool). Hard-refresh, **Mark spots**.
-2. Tap the floor for pins **0–3** (Tomas ghost standees at real slot size).
-3. Pin **0** = front (large), pin **3** = back (small). Set those with Front/Back or the wheel. Pins **1–2** interpolate from how high they sit.
-4. **Copy**, then bake the CSS into the v35 slot rules for that `data-location`.
-5. **Hide grid** when done. Overlay stays **off by default**.
+Marc locked **isometric town** (`isometric-town.mdc`). Do **not** use Mark spots for new locations. Do not invent a new pin/grid widget for isometric either until we build that map on purpose.
 
-**Keep**
-- Four anchors per location, size per slot (not a crowd-wide shrink)
-- Ghosts = `assets/npcs/tomas_standee_bevel_v19.png`; hide live NPCs while placing
-- List panel top-right (never on the floor); **Hide list** if it blocks clicks
-- No per-mousemove CSS rewrites (laptop stays usable)
+If Marc asks to restage the **live** street screens before the rebuild:
 
-**Do not** eyeball new screens from scratch, drag live NPCs as the placer, or split this tool out of `index.html` unless Marc asks.
+1. Open with `?pins=1`. **Mark spots**.
+2. Pins **0–3** (front large → back small). **Copy**, bake CSS, **Hide grid**.
+3. Ghosts = Tomas bevel v19. List panel top-right. No per-mousemove CSS rewrites.

@@ -1,0 +1,623 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lythmere — place people</title>
+<style>
+  html,body{
+    margin:0;height:100%;background:#1c1612;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+  }
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+  /* Phone crop: painting is 720×1280 (9:16). Do not let cover eat the stalls on a laptop. */
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;
+    border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block}
+    #visualShell{
+      width:100%;height:100dvh;height:100svh;
+      border-radius:0;box-shadow:none;
+    }
+  }
+  .townScene{
+    position:absolute;inset:0;z-index:0;
+    background:#2a241e url("./bg-b-jewel.jpg") center / cover no-repeat;
+  }
+  /* Four depth slots. Size is per slot (front large, back small). Path down the middle stays open. */
+  .standee{
+    position:absolute;
+    left:var(--x);
+    bottom:var(--b);
+    height:var(--h);
+    width:auto;
+    transform:translateX(-50%);
+    transform-origin:50% 100%;
+    z-index:var(--z);
+    filter:drop-shadow(3px 8px 7px rgba(18,12,8,.45));
+    pointer-events:auto;
+    object-fit:contain;
+    cursor:grab;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-drag:none;
+  }
+  .standee.is-drag{cursor:grabbing;z-index:80!important}
+  .standee.is-sel{outline:2px solid #f2e1be;outline-offset:2px;border-radius:4px}
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  #spotToggle,#spotListToggle,#spotReadout{
+    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;cursor:pointer;pointer-events:auto;
+  }
+  #spotToggle{
+    top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));
+    min-width:108px;padding:7px 10px;
+  }
+  #spotListToggle{
+    top:max(100px, calc(env(safe-area-inset-top, 0px) + 92px));
+    min-width:108px;padding:5px 8px;font-size:11px;
+  }
+  #spotReadout{
+    display:none;top:max(136px, calc(env(safe-area-inset-top, 0px) + 128px));
+    left:auto;width:min(228px, calc(100% - 24px));bottom:auto;
+    padding:6px 7px 7px;border-radius:6px;cursor:default;
+    font:650 10px/1.3 system-ui,sans-serif;
+  }
+  body.spotListOn #spotReadout{display:block}
+  #spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+  #spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+  #spotReadout code{font:700 10px/1.35 ui-monospace,Consolas,monospace}
+  #spotReadout .spotEnd{display:flex;justify-content:space-between;align-items:center;gap:4px;margin:3px 0}
+  #spotReadout .spotActs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  #spotReadout button{
+    padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;
+    border:1px solid #9f8e72;border-radius:4px;cursor:pointer;
+  }
+  #spotReadout .sceneRow{display:flex;flex-wrap:wrap;gap:4px;margin-top:6px}
+  #spotReadout .sceneRow button.on{background:#241a13;color:#f2e1be}
+  #spotReadout .fileHint{margin:4px 0 0;color:#614a34;font-size:9px}
+  .townScene.is-drop:after{
+    content:"Drop 720×1280 painting";
+    position:absolute;inset:0;z-index:90;
+    display:flex;align-items:center;justify-content:center;
+    background:rgba(28,22,18,.45);color:#f2e1be;
+    font:700 13px/1.2 Georgia,serif;text-align:center;padding:16px;
+    pointer-events:none;
+  }
+  #bgFile{position:absolute;width:0;height:0;opacity:0;pointer-events:none}
+  /* Feet at the back of each stall, under the awning — not out on the street. */
+  /* Bram: in the cottage stall pocket, behind the fruit crates */
+  .standee[data-slot="0"]{--x:22%;--b:36%;--h:13%;--z:16}
+  /* Nessa: under the blue awning, behind those tables */
+  .standee[data-slot="1"]{--x:22%;--b:64%;--h:10.5%;--z:15}
+  /* Tomas: under the green awning, behind those tables */
+  .standee[data-slot="2"]{--x:41%;--b:66%;--h:10%;--z:15}
+  /* Elira: under the pink awning, behind the fruit */
+  .standee[data-slot="3"]{--x:84%;--b:63%;--h:9%;--z:15}
+  /* Beph: merchant / traveller. Off until toggled. Path, not a stall bay. */
+  .standee[data-slot="4"]{--x:55%;--b:34%;--h:12%;--z:18;display:none}
+  body.bephOn .standee[data-slot="4"]{display:block}
+
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;flex-direction:row;flex-wrap:nowrap;
+    align-items:flex-start;justify-content:space-between;gap:10px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldTopbar #advanceTime,.worldTopbar .worldActions{pointer-events:none}
+  .worldActions{flex:0 0 auto;display:flex}
+  .scrollPlaque{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:0;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:0 10px;border:0;background:none}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 16px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;width:auto;min-width:0;max-width:min(264px, calc(100% - 118px))}
+  #advanceTime #visualDate{font:700 clamp(11px, 3.2cqw, 13px)/1.1 Georgia,serif;color:#1a120c;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(9px, 2.7cqw, 11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #worldRecord.paperPlaque{height:var(--hud-journal-h);min-height:var(--hud-journal-h);min-width:min(118px,34cqw);padding:0;gap:0;font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c}
+  #worldRecord.paperPlaque .scrollWell{gap:6px;padding:4px 12px 4px 14px}
+  #worldRecord .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  .locationStrip.paperPlaque{position:absolute;z-index:32;left:50%;bottom:var(--hud-pad-b);width:min(620px,calc(100% - 24px));transform:translateX(-50%);padding:0;pointer-events:auto}
+  .locationStrip.paperPlaque .scrollWell{padding:4px 12px 4px 28px}
+  .locationStrip .paperSeal-left{position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:var(--hud-seal);height:var(--hud-seal);object-fit:contain;z-index:6;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));pointer-events:none}
+  .locationWell{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;height:100%;padding:0;gap:0}
+  .locationWell button{position:relative;min-width:0;min-height:0;height:100%;margin:0;padding:8px 4px;color:#3d2b1a;border-right:1px solid rgba(90,62,38,.22);font:700 clamp(8px,2.4cqw,11px)/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,244,214,.7)}
+  .locationWell button:last-child{border-right:0}
+  .locationWell button.active{color:#1a120c;font-weight:800}
+  body[data-hud="off"] #hudLayer{display:none}
+</style>
+</head>
+<body>
+<section id="visualShell">
+  <div class="townScene">
+    <img class="standee" data-slot="4" src="../../../assets/npcs/beph_standee_bevel_v3.png" alt="BEPH" hidden>
+    <img class="standee" data-slot="3" src="../../../assets/npcs/elira_standee_bevel_v22.png" alt="ELIRA">
+    <img class="standee" data-slot="2" src="../../../assets/npcs/tomas_standee_bevel_v19.png" alt="TOMAS">
+    <img class="standee" data-slot="1" src="../../../assets/npcs/nessa_standee_bevel_v22.png" alt="NESSA">
+    <img class="standee" data-slot="0" src="../../../assets/npcs/bram_standee_bevel_v22.png" alt="BRAM">
+  </div>
+  <div id="hudLayer" class="townHud">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING · YEAR 1</span></span></span>
+      </button>
+      <div class="worldActions">
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button" aria-label="Open journal">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span id="worldRecordLabel">Journal</span><img class="paperSeal" src="../hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+    <nav class="locationStrip scrollPlaque paperPlaque" aria-label="Lythmere locations">
+      <span class="paperCorners" aria-hidden="true">
+        <img class="paperCorner paperCorner-tl" src="../hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-tr" src="../hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-bl" src="../hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-br" src="../hud/paper_corner.png" alt="">
+      </span>
+      <img class="paperSeal paperSeal-left" src="../hud/paper_seal.png" alt="">
+      <div class="scrollWell locationWell">
+        <button type="button" class="active" data-loc="Market">Market</button>
+        <button type="button" data-loc="Riverside">Riverside</button>
+        <button type="button" data-loc="Inn">Inn</button>
+        <button type="button" data-loc="Club">Club</button>
+      </div>
+    </nav>
+  </div>
+  <button type="button" id="spotToggle">Hide HUD</button>
+  <button type="button" id="spotListToggle">Hide list</button>
+  <div id="spotReadout"></div>
+  <input id="bgFile" type="file" accept="image/jpeg,image/png,image/webp">
+</section>
+<script>
+(function(){
+  const scene = document.querySelector(".townScene");
+  const people = [...document.querySelectorAll(".standee")];
+  const readout = document.getElementById("spotReadout");
+  const listBtn = document.getElementById("spotListToggle");
+  const hudBtn = document.getElementById("spotToggle");
+  const bgFile = document.getElementById("bgFile");
+  const locBtns = [...document.querySelectorAll(".locationWell [data-loc]")];
+  let selected = people[0];
+  let drag = null;
+  let listOn = true;
+  document.body.classList.add("spotListOn");
+
+  /* Locked chassis: phone 390 × 9:16. Paintings 720×1280. Slots are % of that crop. */
+  const PHONE = "390px × 9:16 (paintings 720×1280)";
+  const KEY = "cardRoadIsoTown";
+  const OLD_KEY = "cardRoadJewelSlots";
+  const DEFAULT_SLOTS = {
+    "0": {x:22, b:36, h:13},
+    "1": {x:22, b:64, h:10.5},
+    "2": {x:41, b:66, h:10},
+    "3": {x:84, b:63, h:9},
+    "4": {x:55, b:34, h:12}
+  };
+  /* Same jewel painting, tighter crop — stalls big enough for larger oak cutouts. */
+  const DEFAULT_CLOSE_SLOTS = {
+    "0": {x:24, b:20, h:22},
+    "1": {x:22, b:56, h:18},
+    "2": {x:46, b:58, h:17},
+    "3": {x:90, b:48, h:16},
+    "4": {x:58, b:30, h:20}
+  };
+  const LOCS = ["Market", "Riverside", "Inn", "Club"];
+  const BUILTIN = {
+    Market: "./bg-b-jewel.jpg",
+    Riverside: "../scenes/riverside.jpg",
+    Inn: "../scenes/inn.jpg",
+    Club: "../scenes/club.jpg"
+  };
+  const PAINTS = [
+    {id:"jewel", label:"Wide", file:"./bg-b-jewel.jpg", loc:"Market"},
+    {id:"close", label:"Close", file:"./bg-b-jewel-close.jpg", loc:"Market"},
+    {id:"near", label:"Near", file:"./bg-b-jewel-near.jpg", loc:"Market"},
+    {id:"dusk", label:"Dusk", file:"./bg-e-dusk.jpg", loc:"Market"},
+    {id:"asis", label:"As-is", file:"./bg-0-as-is.jpg", loc:"Market"}
+  ];
+
+  let store = {loc:"Market", slots:{}, bgs:{}, paint:"jewel", beph:{}};
+  let blobUrl = "";
+  let missingBg = false;
+
+  function slotKey(loc, paint){
+    loc = loc || store.loc;
+    paint = paint == null ? store.paint : paint;
+    if(loc === "Market" && (paint === "close" || paint === "near")) return loc + ":" + paint;
+    return loc;
+  }
+  function defaultsFor(){
+    const key = slotKey();
+    if(key.indexOf(":close") >= 0 || key.indexOf(":near") >= 0) return DEFAULT_CLOSE_SLOTS;
+    return DEFAULT_SLOTS;
+  }
+  function cloneSlots(src, defs){
+    defs = defs || defaultsFor();
+    const out = {};
+    Object.keys(defs).forEach(k=>{
+      const s = (src && src[k]) || defs[k];
+      out[k] = {x:+s.x, b:+s.b, h:+s.h};
+    });
+    return out;
+  }
+  function rememberSlots(){
+    store.slots[slotKey()] = currentSlots();
+  }
+  function loadSlotsForCurrent(){
+    const key = slotKey();
+    if(!store.slots[key]) store.slots[key] = cloneSlots(null, defaultsFor());
+    applySlots(store.slots[key]);
+    syncBeph();
+  }
+  function loadStore(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(KEY) || "null");
+      if(raw && typeof raw === "object"){
+        store.loc = LOCS.includes(raw.loc) ? raw.loc : "Market";
+        store.slots = raw.slots && typeof raw.slots === "object" ? raw.slots : {};
+        store.bgs = raw.bgs && typeof raw.bgs === "object" ? raw.bgs : {};
+        store.paint = raw.paint || "jewel";
+        store.beph = raw.beph && typeof raw.beph === "object" ? raw.beph : {};
+      }
+    }catch(e){}
+    if(!store.slots.Market){
+      try{
+        const old = JSON.parse(localStorage.getItem(OLD_KEY) || "null");
+        if(old) store.slots.Market = cloneSlots(old);
+      }catch(e){}
+    }
+    if(!store.slots.Market) store.slots.Market = cloneSlots(null, DEFAULT_SLOTS);
+  }
+  function saveStore(){
+    store.slots[slotKey()] = currentSlots();
+    try{localStorage.setItem(KEY, JSON.stringify(store))}catch(e){}
+  }
+  function bephOn(){
+    return !!store.beph[store.loc];
+  }
+  function syncBeph(){
+    const on = bephOn();
+    const el = people.find(p=>p.dataset.slot==="4");
+    document.body.classList.toggle("bephOn", on);
+    if(el){
+      el.hidden = !on;
+      el.style.display = on ? "block" : "none";
+    }
+  }
+  function setBeph(on){
+    store.beph[store.loc] = !!on;
+    syncBeph();
+    const el = people.find(p=>p.dataset.slot==="4");
+    if(on && el) select(el);
+    else if(!on && selected && selected.dataset.slot==="4") select(people.find(p=>p.dataset.slot==="0") || people[0]);
+    saveStore();
+    paint();
+  }
+  function currentSlots(){
+    const out = {};
+    people.forEach(el=>{
+      out[el.dataset.slot] = {x:+el.dataset.x, b:+el.dataset.b, h:+el.dataset.h};
+    });
+    return out;
+  }
+  function applySlots(slots){
+    const s = cloneSlots(slots);
+    people.forEach(el=>{
+      const p = s[el.dataset.slot];
+      el.dataset.x = p.x; el.dataset.b = p.b; el.dataset.h = p.h;
+      apply(el);
+    });
+  }
+  function apply(el){
+    const x = +el.dataset.x, b = +el.dataset.b, h = +el.dataset.h;
+    el.style.setProperty("--x", x.toFixed(1) + "%");
+    el.style.setProperty("--b", b.toFixed(1) + "%");
+    el.style.setProperty("--h", h.toFixed(1) + "%");
+    el.style.setProperty("--z", String(10 + Math.round(b)));
+  }
+  function probe(url){
+    return new Promise(resolve=>{
+      if(!url){ resolve(false); return; }
+      if(url.startsWith("data:") || url.startsWith("blob:")){ resolve(true); return; }
+      const im = new Image();
+      im.onload = () => resolve(true);
+      im.onerror = () => resolve(false);
+      im.src = url;
+    });
+  }
+  function setBg(url){
+    scene.style.backgroundImage = 'url("' + String(url).replace(/"/g, "") + '")';
+  }
+  function marketFile(){
+    const p = PAINTS.find(x=>x.id===store.paint);
+    return (p && p.file) || BUILTIN.Market;
+  }
+  async function bgFor(loc){
+    if(store.bgs[loc]) return store.bgs[loc];
+    if(loc === "Market") return marketFile();
+    const file = BUILTIN[loc];
+    if(await probe(file)) return file;
+    return "";
+  }
+  async function showLoc(loc){
+    rememberSlots();
+    store.loc = loc;
+    locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===loc));
+    loadSlotsForCurrent();
+    const url = await bgFor(loc);
+    missingBg = !url;
+    if(url) setBg(url);
+    saveStore();
+    paint();
+  }
+  function seed(){
+    people.forEach(el=>{
+      const cs = getComputedStyle(el);
+      if(!el.dataset.x) el.dataset.x = parseFloat(cs.getPropertyValue("--x")) || 50;
+      if(!el.dataset.b) el.dataset.b = parseFloat(cs.getPropertyValue("--b")) || 20;
+      if(!el.dataset.h) el.dataset.h = parseFloat(cs.getPropertyValue("--h")) || 12;
+    });
+  }
+  function select(el){
+    selected = el;
+    people.forEach(p=>p.classList.toggle("is-sel", p===el));
+    paint();
+  }
+  function cssText(){
+    const visible = people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot)
+      .filter(el=>el.dataset.slot!=="4" || bephOn());
+    const slots = visible.map(el=>{
+      const z = 10 + Math.round(+el.dataset.b);
+      return `.standee[data-slot="${el.dataset.slot}"]{--x:${(+el.dataset.x).toFixed(1)}%;--b:${(+el.dataset.b).toFixed(1)}%;--h:${(+el.dataset.h).toFixed(1)}%;--z:${z}}`;
+    }).join("\n");
+    const bephLine = bephOn()
+      ? "/* beph merchant/traveler: on */"
+      : "/* beph merchant/traveler: off */";
+    return `/* Card Road town stage — ${PHONE} */\n/* location: ${store.loc} */\n${bephLine}\n${slots}`;
+  }
+  function paint(){
+    const paints = PAINTS.map(p=>{
+      const on = store.loc==="Market" && store.paint===p.id ? " on" : "";
+      return `<button type="button" data-paint="${p.id}" class="${on.trim()}">${p.label}</button>`;
+    }).join("");
+    const shown = people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot)
+      .filter(el=>el.dataset.slot!=="4" || bephOn());
+    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Wide is the full map (people stay small). Close / Near zoom the stalls so bigger oak cutouts fit. Drag, +/−, Copy.</p>" +
+      shown.map(el=>{
+        const on = el===selected ? " style=\"color:#7a1c18\"" : "";
+        return `<div class="spotEnd" data-pick="${el.dataset.slot}"${on}><span>${el.alt}</span><code>${(+el.dataset.x).toFixed(0)} ${(+el.dataset.b).toFixed(0)} ${(+el.dataset.h).toFixed(1)}</code></div>`;
+      }).join("") +
+      `<div class="spotActs">
+        <button type="button" data-dir="-1">−</button>
+        <button type="button" data-dir="1">+</button>
+        <button type="button" id="spotCopy">Copy</button>
+        <button type="button" id="spotReset">Reset</button>
+      </div>
+      <div class="sceneRow">${paints}<button type="button" id="spotLoad">Load painting</button><button type="button" id="spotBeph" class="${bephOn()?"on":""}">Beph</button></div>
+      <p class="fileHint">${missingBg ? "No " + store.loc + " painting yet — Load or drop a 720×1280 jpg." : store.loc + " · " + PHONE + ". Tabs switch maps; slots save per map. Beph is per map."}</p>`;
+  }
+  function pct(clientX, clientY){
+    const r = scene.getBoundingClientRect();
+    return {
+      x: ((clientX - r.left) / r.width) * 100,
+      b: ((r.bottom - clientY) / r.height) * 100
+    };
+  }
+  function bump(dir){
+    if(!selected) return;
+    selected.dataset.h = Math.max(6, Math.min(36, +selected.dataset.h + dir * 0.5));
+    apply(selected); saveStore(); paint();
+  }
+  function readPainting(file){
+    if(!file || !file.type.startsWith("image/")) return;
+    const loc = store.loc;
+    const reader = new FileReader();
+    reader.onload = () => {
+      const dataUrl = String(reader.result || "");
+      if(dataUrl.length < 1800000) store.bgs[loc] = dataUrl;
+      else {
+        if(blobUrl) URL.revokeObjectURL(blobUrl);
+        blobUrl = URL.createObjectURL(file);
+        store.bgs[loc] = blobUrl;
+      }
+      missingBg = false;
+      setBg(store.bgs[loc]);
+      saveStore();
+      paint();
+    };
+    reader.readAsDataURL(file);
+  }
+
+  people.forEach(el=>{
+    el.addEventListener("pointerdown", e=>{
+      if(el.dataset.slot==="4" && !bephOn()) return;
+      e.preventDefault();
+      select(el);
+      const pos = pct(e.clientX, e.clientY);
+      drag = {el, id:e.pointerId, grabX:+el.dataset.x - pos.x, grabB:+el.dataset.b - pos.b};
+      el.classList.add("is-drag");
+      try{el.setPointerCapture(e.pointerId)}catch(err){}
+    });
+  });
+  window.addEventListener("pointermove", e=>{
+    if(!drag || e.pointerId!==drag.id) return;
+    const pos = pct(e.clientX, e.clientY);
+    drag.el.dataset.x = Math.max(4, Math.min(96, pos.x + drag.grabX));
+    drag.el.dataset.b = Math.max(6, Math.min(92, pos.b + drag.grabB));
+    apply(drag.el);
+  });
+  window.addEventListener("pointerup", e=>{
+    if(!drag || e.pointerId!==drag.id) return;
+    drag.el.classList.remove("is-drag");
+    drag = null;
+    saveStore(); paint();
+  });
+  scene.addEventListener("wheel", e=>{
+    const el = e.target.closest(".standee");
+    if(!el) return;
+    e.preventDefault();
+    select(el);
+    bump(e.deltaY<0 ? 1 : -1);
+  }, {passive:false});
+
+  readout.addEventListener("click", e=>{
+    const pick = e.target.closest("[data-pick]");
+    if(pick){
+      select(people.find(p=>p.dataset.slot===pick.dataset.pick));
+      return;
+    }
+    const dir = e.target.closest("[data-dir]");
+    if(dir) bump(+dir.dataset.dir);
+    const paintBtn = e.target.closest("[data-paint]");
+    if(paintBtn){
+      const p = PAINTS.find(x=>x.id===paintBtn.dataset.paint);
+      if(!p) return;
+      rememberSlots();
+      store.paint = p.id;
+      if(p.id === "close" || p.id === "near" || p.id === "jewel" || p.id === "dusk" || p.id === "asis"){
+        if(p.id !== "close" && p.id !== "near") delete store.bgs.Market;
+      }
+      store.loc = "Market";
+      locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc==="Market"));
+      loadSlotsForCurrent();
+      setBg(p.file);
+      missingBg = false;
+      saveStore();
+      paint();
+      return;
+    }
+    if(e.target.id==="spotBeph"){
+      setBeph(!bephOn());
+      return;
+    }
+    if(e.target.id==="spotLoad"){
+      bgFile.dataset.expectLoc = store.loc;
+      bgFile.click();
+      return;
+    }
+    if(e.target.id==="spotReset"){
+      store.slots[slotKey()] = cloneSlots(null, defaultsFor());
+      applySlots(store.slots[slotKey()]);
+      saveStore(); paint();
+      return;
+    }
+    if(e.target.id==="spotCopy"){
+      const text = cssText();
+      navigator.clipboard.writeText(text).then(()=>{
+        e.target.textContent = "Copied";
+        setTimeout(()=>e.target.textContent="Copy", 1200);
+      }).catch(()=>{
+        window.prompt("Copy CSS", text);
+      });
+    }
+  });
+  locBtns.forEach(btn=>{
+    btn.addEventListener("click", ()=> showLoc(btn.dataset.loc));
+  });
+  bgFile.addEventListener("change", ()=>{
+    const file = bgFile.files && bgFile.files[0];
+    bgFile.value = "";
+    readPainting(file);
+  });
+  const shell = document.getElementById("visualShell");
+  ["dragenter","dragover"].forEach(ev=>{
+    shell.addEventListener(ev, e=>{
+      if(!e.dataTransfer || ![...e.dataTransfer.types].includes("Files")) return;
+      e.preventDefault();
+      scene.classList.add("is-drop");
+    });
+  });
+  ["dragleave","drop"].forEach(ev=>{
+    shell.addEventListener(ev, e=>{
+      if(ev==="drop"){
+        if(!e.dataTransfer || !e.dataTransfer.files.length) { scene.classList.remove("is-drop"); return; }
+        e.preventDefault();
+        readPainting(e.dataTransfer.files[0]);
+      }
+      scene.classList.remove("is-drop");
+    });
+  });
+  listBtn.addEventListener("click", ()=>{
+    listOn = !listOn;
+    document.body.classList.toggle("spotListOn", listOn);
+    listBtn.textContent = listOn ? "Hide list" : "Show list";
+  });
+  hudBtn.addEventListener("click", ()=>{
+    const off = document.body.dataset.hud === "off";
+    document.body.dataset.hud = off ? "" : "off";
+    hudBtn.textContent = off ? "Hide HUD" : "Show HUD";
+  });
+  if (new URLSearchParams(location.search).get("hud") === "off") {
+    document.body.dataset.hud = "off";
+    hudBtn.textContent = "Show HUD";
+  }
+  const qLoc = new URLSearchParams(location.search).get("loc");
+  const qScene = new URLSearchParams(location.search).get("scene");
+  const qBeph = new URLSearchParams(location.search).get("beph");
+  loadStore();
+  seed();
+  if(qLoc && LOCS.includes(qLoc)) store.loc = qLoc;
+  if(qBeph === "1" || qBeph === "on") store.beph[store.loc] = true;
+  applySlots(store.slots[slotKey()] || defaultsFor());
+  syncBeph();
+  locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===store.loc));
+  (async ()=>{
+    if(qScene){
+      const safe = qScene.replace(/[^a-zA-Z0-9._/-]/g, "");
+      if(await probe(safe)) setBg(safe);
+      else setBg((await bgFor(store.loc)) || BUILTIN.Market);
+    } else {
+      const url = (await bgFor(store.loc)) || BUILTIN.Market;
+      setBg(url);
+    }
+    paint();
+    select(people[0]);
+  })();
+})();
+</script>
+</body>
+</html>
