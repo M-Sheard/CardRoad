@@ -16,4 +16,6 @@ Hero: `mockups/display-more/07-isometric-town.jpg`.
 **Lythmere Market as it will show on the phone:** `lythmere-market-ingame.jpg` (Monday morning — you, Tomas, Nessa). HUD is the **live-game cream oak plaques** (compact paper fill, thin gilt/oak edge, small brass corners, wax seals on Journal and the current place). Not rolled-scroll `date_frame_*` caps, not oversized photo-corner parchment. Source: `market-phone.html`, cloning v38 top bar + v96 `paperPlaque` from live town chrome.  
 Live `index.html` still uses standees until the rebuild.
 
+Look-test (does not change the lock): keep the **oak NPC standees** on this map by retinting the town — `standee-fit/`.
+
 Standby (do not build): board-and-pawns, View-Master.
