@@ -33,8 +33,13 @@
   }
   .townScene{
     position:absolute;inset:0;z-index:0;
-    background:#2a241e url("./08-tabletop.jpg") center / cover no-repeat;
+    background:#3a4a28;
   }
+  .townScene canvas{display:block;width:100%;height:100%;touch-action:none}
+  .townScene.is-painted{
+    background:#2a241e url("./05-empty-aligned.jpg") center / cover no-repeat;
+  }
+  .townScene.is-painted canvas{display:none}
   #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
   .worldTopbar{
     position:absolute;left:0;right:0;top:0;z-index:40;
@@ -132,20 +137,34 @@
     </nav>
   </div>
   <div id="paints">
-        <button type="button" data-file="./08-tabletop.jpg" aria-pressed="true">Tabletop</button>
-        <button type="button" data-file="./08-empty-board.jpg">Empty board</button>
-        <button type="button" data-file="./05-empty-aligned.jpg">Old painted</button>
+        <button type="button" data-view="map" aria-pressed="true">3D models</button>
+        <button type="button" data-view="tilt">Tilt</button>
+        <button type="button" data-view="painted">Old painted</button>
   </div>
 </section>
-<script>
-const scene = document.getElementById("townScene");
-const buttons = [...document.querySelectorAll("#paints button")];
-function paint(file){
-  scene.style.backgroundImage = 'url("' + file + '")';
-  buttons.forEach(b => b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"));
+<script type="importmap">
+{
+  "imports": {
+    "three": "./vendor/three.module.js"
+  }
 }
-buttons.forEach(b => b.addEventListener("click", () => paint(b.dataset.file)));
-paint("./08-tabletop.jpg");
+</script>
+<script type="module">
+import { mountBoard } from "./board3d.js";
+const host = document.getElementById("townScene");
+const buttons = [...document.querySelectorAll("#paints button")];
+const board = mountBoard(host);
+function show(view){
+  buttons.forEach(b => b.setAttribute("aria-pressed", b.dataset.view === view ? "true" : "false"));
+  if (view === "painted"){
+    host.classList.add("is-painted");
+    return;
+  }
+  host.classList.remove("is-painted");
+  board.setView(view === "tilt" ? "tilt" : "map");
+}
+buttons.forEach(b => b.addEventListener("click", () => show(b.dataset.view)));
+show(new URLSearchParams(location.search).get("view") || "map");
 </script>
 </body>
 </html>

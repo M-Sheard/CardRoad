@@ -1,5 +1,7 @@
 # Full-screen hex Lythmere (look-test)
 
-Flat flocked hex wargame board. Inn, Market, Club, and Riverside are physical miniature models sitting on the turf — not painted into the landscape.
+Real WebGL 3D: a **flat felt hex slab** with **mesh buildings** sitting on it (Inn, Market, Club, Riverside). Drag to orbit; Tilt to see them stand off the board.
 
-Open `index.html`. Paints: Tabletop / Empty board / Old painted.
+This is not a painting of a diorama.
+
+Open `index.html`. Paints: 3D models / Tilt / Old painted.
