@@ -33,7 +33,7 @@
   }
   .townScene{
     position:absolute;inset:0;z-index:0;
-    background:#2a241e url("./07-diorama-aligned.jpg") center / cover no-repeat;
+    background:#2a241e url("./08-tabletop.jpg") center / cover no-repeat;
   }
   #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
   .worldTopbar{
@@ -132,8 +132,8 @@
     </nav>
   </div>
   <div id="paints">
-        <button type="button" data-file="./07-diorama-aligned.jpg" aria-pressed="true">3D board</button>
-        <button type="button" data-file="./07-diorama-town.jpg">No hex</button>
+        <button type="button" data-file="./08-tabletop.jpg" aria-pressed="true">Tabletop</button>
+        <button type="button" data-file="./08-empty-board.jpg">Empty board</button>
         <button type="button" data-file="./05-empty-aligned.jpg">Old painted</button>
   </div>
 </section>
@@ -145,7 +145,7 @@ function paint(file){
   buttons.forEach(b => b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"));
 }
 buttons.forEach(b => b.addEventListener("click", () => paint(b.dataset.file)));
-paint("./07-diorama-aligned.jpg");
+paint("./08-tabletop.jpg");
 </script>
 </body>
 </html>

@@ -1,5 +1,5 @@
 # Full-screen hex Lythmere (look-test)
 
-Overworld rebuilt as one 3D tabletop diorama of Lythmere (flocked grass, miniature trees, chunky timber locations). Same layout as the painted board: Inn, Market, Riverside, Club. NPCs live at locations, not on this map.
+Flat flocked hex wargame board. Inn, Market, Club, and Riverside are physical miniature models sitting on the turf — not painted into the landscape.
 
-Open `index.html`. Paints: 3D board / No hex / Old painted.
+Open `index.html`. Paints: Tabletop / Empty board / Old painted.
