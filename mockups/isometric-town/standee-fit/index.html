@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Standee fit — Lythmere Market</title>
+<style>
+  html,body{
+    margin:0; min-height:100%;
+    background:#1c1612; color:#e8d6b4;
+    font:16px/1.45 Georgia,serif;
+  }
+  body{
+    display:flex; flex-direction:column;
+    min-height:100dvh; min-height:100vh;
+    overflow-x:hidden;
+  }
+  header{
+    flex:0 0 auto;
+    padding:max(16px, env(safe-area-inset-top) + 10px) max(16px, env(safe-area-inset-right) + 10px) 12px max(16px, env(safe-area-inset-left) + 10px);
+    max-width:980px; width:100%; margin:0 auto; box-sizing:border-box;
+  }
+  h1{margin:0 0 8px; font:700 22px/1.2 Georgia,serif; color:#f3e2c4}
+  header p{margin:0 0 8px; color:#cbb892; max-width:46rem}
+  header p.note{font-size:14px; color:#a89070}
+  main{
+    flex:1 1 auto; min-height:0; min-width:0;
+    display:flex; flex-direction:column; align-items:center;
+    padding:0 max(16px, env(safe-area-inset-right) + 10px) 24px max(16px, env(safe-area-inset-left) + 10px);
+    overflow-x:hidden; overflow-y:auto; touch-action:pan-y;
+  }
+  .phoneWrap{
+    flex:0 1 auto;
+    width:min(390px, 100%);
+    aspect-ratio:9/16;
+    max-height:min(78dvh, 720px);
+    position:relative;
+    border-radius:12px; overflow:hidden;
+    box-shadow:0 12px 40px rgba(0,0,0,.55);
+    background:#2a241e;
+  }
+  .townScene{
+    position:absolute; inset:0;
+    background:#2a241e center / cover no-repeat;
+  }
+  .controls{
+    flex:0 0 auto; width:min(720px, 100%);
+    margin-top:16px;
+  }
+  .row{display:flex; flex-wrap:wrap; gap:8px; margin:0 0 10px}
+  .row button{
+    flex:0 0 auto;
+    margin:0; padding:8px 12px;
+    border:1px solid #8a6a3e; border-radius:2px;
+    background:#3a2c20; color:#f3e2c4;
+    font:700 12px/1 Georgia,serif; letter-spacing:.04em; text-transform:uppercase;
+    cursor:pointer;
+  }
+  .row button.active{background:#edd6aa; color:#1a120c; border-color:#c4a06a}
+  .row button:disabled{opacity:.35; cursor:default}
+  .blurb{
+    margin:0 0 18px; color:#cbb892; font-size:14px; min-height:2.8em;
+  }
+  .sheets{width:min(960px, 100%); margin-top:8px}
+  .sheets h2{margin:18px 0 8px; font:700 16px/1.2 Georgia,serif; color:#f3e2c4}
+  .sheets img{display:block; width:100%; height:auto; border-radius:6px; margin-bottom:12px}
+</style>
+</head>
+<body>
+<header>
+  <h1>Standee fit</h1>
+  <p>Same Market layout. Real oak NPC cutouts. Only the town’s colour and finish change.</p>
+  <p class="note">Look-test — product lock is still tiny walkers. Live game unchanged. No HUD here; this is the street paint.</p>
+</header>
+<main>
+  <div class="phoneWrap" aria-label="Lythmere Market colour test">
+    <div class="townScene" id="scene"></div>
+  </div>
+
+  <div class="controls">
+    <div class="row" id="variantRow"></div>
+    <div class="row" id="castRow">
+      <button type="button" data-cast="pair" class="active">Tomas + Nessa</button>
+      <button type="button" data-cast="four" id="fourBtn">Four NPCs</button>
+    </div>
+    <p class="blurb" id="blurb"></p>
+  </div>
+
+  <div class="sheets">
+    <h2>All six colour shifts</h2>
+    <img src="./compare-standee-fit.jpg" alt="Six Market backgrounds with Tomas and Nessa oak standees">
+    <h2>Four oak standees</h2>
+    <img src="./compare-four.jpg" alt="Jewel, dusk, oak, and umber with Tomas, Nessa, Bram, and Elira">
+  </div>
+</main>
+<script>
+const VARIANTS = [
+  {id:'0-as-is', label:'As-is', four:false,
+   blurb:'Control. Muted slate and teal against glossy jewel-tone oak. This is the clash.'},
+  {id:'a-oak', label:'Oak playset', four:true,
+   blurb:'Town painted on a wooden board. Honey grain in the sky and river. Pieces look like toys on a playset.'},
+  {id:'b-jewel', label:'Jewel gold', four:true,
+   blurb:'Cobalt, emerald, and magenta awnings, terracotta roofs, warmer river. Closest colour match to the figures.'},
+  {id:'c-oil', label:'Oil finish', four:false,
+   blurb:'Glossier varnish on the same layout. Subtle. Easy to miss next to as-is.'},
+  {id:'e-dusk', label:'Warm dusk', four:true,
+   blurb:'Lantern hour. Gold sky and windows, river reflecting amber. Figures pick up the same warmth.'},
+  {id:'f-umber', label:'Umber', four:true,
+   blurb:'Olive water, taupe cobbles, linen plaster. Quiet town so the oak boards are the colour.'},
+  {id:'d-pale', label:'Pale', four:false,
+   blurb:'Too far. Stalls wash out and the figures look stuck on a picture book.'}
+];
+let cur = VARIANTS[2];
+let cast = 'pair';
+
+const scene = document.getElementById('scene');
+const blurb = document.getElementById('blurb');
+const fourBtn = document.getElementById('fourBtn');
+const row = document.getElementById('variantRow');
+
+VARIANTS.forEach(v => {
+  const b = document.createElement('button');
+  b.type = 'button';
+  b.textContent = v.label;
+  b.dataset.id = v.id;
+  b.addEventListener('click', () => { cur = v; if (cast==='four' && !v.four) cast = 'pair'; paint(); });
+  row.appendChild(b);
+});
+document.getElementById('castRow').addEventListener('click', (e) => {
+  const b = e.target.closest('button[data-cast]');
+  if (!b || b.disabled) return;
+  cast = b.dataset.cast;
+  paint();
+});
+
+function paint(){
+  const src = (cast==='four' && cur.four) ? `${cur.id}-four.jpg` : `${cur.id}.jpg`;
+  scene.style.backgroundImage = `url("./${src}")`;
+  blurb.textContent = cur.blurb;
+  fourBtn.disabled = !cur.four;
+  row.querySelectorAll('button').forEach(b => b.classList.toggle('active', b.dataset.id === cur.id));
+  document.querySelectorAll('#castRow button').forEach(b => b.classList.toggle('active', b.dataset.cast === cast));
+}
+paint();
+</script>
+</body>
+</html>

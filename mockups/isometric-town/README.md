@@ -16,4 +16,6 @@ Hero: `mockups/display-more/07-isometric-town.jpg`.
 **Lythmere Market as it will show on the phone:** `lythmere-market-ingame.jpg` (Monday morning — you, Tomas, Nessa; live parchment strips with brass corners and wax seal).  
 Live `index.html` still uses standees until the rebuild.
 
+Look-test (does not change the lock): keep the **oak NPC standees** on this map by retinting the town — `standee-fit/`.
+
 Standby (do not build): board-and-pawns, View-Master.
