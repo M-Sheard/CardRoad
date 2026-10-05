@@ -32,7 +32,7 @@ Jewel gold is the locked colour. Cutouts are HTML overlays on that painting — 
 - With HUD: `jewel-placed.jpg`
 - Street only: `jewel-placed-nohud.jpg`
 
-Slots: 0 Bram (front left, cottage), 1 Nessa (right cobbles), 2 Tomas (three awnings), 3 Elira (pink awning).
+Slots: Bram at the cottage fruit stall, Nessa at the stripe stall, Tomas at the green awning, Elira at the pink stall. Street down the middle stays open.
 
 
 ## Compare
