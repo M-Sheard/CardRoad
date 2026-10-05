@@ -32,7 +32,11 @@ Jewel gold is the locked colour. Cutouts are HTML overlays on that painting — 
 - With HUD: `jewel-placed.jpg`
 - Street only: `jewel-placed-nohud.jpg`
 
-People stand **in the stall bays**, not in the street. New still: `jewel-at-stalls.jpg`. Before/after: `place-before-after.jpg`.
+People stand **in the stall bays**, not in the street.
+
+**Place them yourself:** open `place.html`. Drag a person, wheel or +/− to size, Copy when it looks right. Hide HUD if it gets in the way. Positions save in the browser.
+
+New still: `jewel-at-stalls.jpg`. Before/after: `place-before-after.jpg`.
 
 
 ## Compare

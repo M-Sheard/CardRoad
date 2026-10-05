@@ -33,9 +33,47 @@
     transform-origin:50% 100%;
     z-index:var(--z);
     filter:drop-shadow(3px 8px 7px rgba(18,12,8,.45));
-    pointer-events:none;
+    pointer-events:auto;
     object-fit:contain;
+    cursor:grab;
+    touch-action:none;
+    user-select:none;
+    -webkit-user-drag:none;
   }
+  .standee.is-drag{cursor:grabbing;z-index:80!important}
+  .standee.is-sel{outline:2px solid #f2e1be;outline-offset:2px;border-radius:4px}
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  #spotToggle,#spotListToggle,#spotReadout{
+    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;cursor:pointer;pointer-events:auto;
+  }
+  #spotToggle{
+    top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));
+    min-width:108px;padding:7px 10px;
+  }
+  #spotListToggle{
+    top:max(100px, calc(env(safe-area-inset-top, 0px) + 92px));
+    min-width:108px;padding:5px 8px;font-size:11px;
+  }
+  #spotReadout{
+    display:none;top:max(136px, calc(env(safe-area-inset-top, 0px) + 128px));
+    left:auto;width:min(228px, calc(100% - 24px));bottom:auto;
+    padding:6px 7px 7px;border-radius:6px;cursor:default;
+    font:650 10px/1.3 system-ui,sans-serif;
+  }
+  body.spotListOn #spotReadout{display:block}
+  #spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+  #spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+  #spotReadout code{font:700 10px/1.35 ui-monospace,Consolas,monospace}
+  #spotReadout .spotEnd{display:flex;justify-content:space-between;align-items:center;gap:4px;margin:3px 0}
+  #spotReadout .spotActs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  #spotReadout button{
+    padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;
+    border:1px solid #9f8e72;border-radius:4px;cursor:pointer;
+  }
+  .locationStrip.paperPlaque{pointer-events:none}
   /* Feet at the back of each stall, under the awning — not out on the street. */
   /* Bram: in the cottage stall pocket, behind the fruit crates */
   .standee[data-slot="0"]{--x:22%;--b:36%;--h:13%;--z:16}
@@ -54,7 +92,7 @@
     padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
     box-sizing:border-box;pointer-events:none;
   }
-  .worldTopbar #advanceTime,.worldTopbar .worldActions{pointer-events:auto}
+  .worldTopbar #advanceTime,.worldTopbar .worldActions{pointer-events:none}
   .worldActions{flex:0 0 auto;display:flex}
   .scrollPlaque{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:0;padding:0;margin:0;box-sizing:border-box;overflow:visible}
   .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:0 10px;border:0;background:none}
@@ -138,8 +176,157 @@
     </nav>
   </div>
 </section>
+<button type="button" id="spotToggle">Hide HUD</button>
+<button type="button" id="spotListToggle">Hide list</button>
+<div id="spotReadout"></div>
 <script>
-  if (new URLSearchParams(location.search).get('hud') === 'off') document.body.dataset.hud = 'off';
+(function(){
+  const scene = document.querySelector(".townScene");
+  const people = [...document.querySelectorAll(".standee")];
+  const readout = document.getElementById("spotReadout");
+  const listBtn = document.getElementById("spotListToggle");
+  const hudBtn = document.getElementById("spotToggle");
+  let selected = people[0];
+  let drag = null;
+  let listOn = true;
+  document.body.classList.add("spotListOn");
+
+  const KEY = "cardRoadJewelSlots";
+  function load(){
+    try{
+      const saved = JSON.parse(localStorage.getItem(KEY) || "null");
+      if(!saved) return;
+      people.forEach(el=>{
+        const s = saved[el.dataset.slot];
+        if(!s) return;
+        el.dataset.x = s.x; el.dataset.b = s.b; el.dataset.h = s.h;
+      });
+    }catch(e){}
+  }
+  function save(){
+    const out = {};
+    people.forEach(el=>{
+      out[el.dataset.slot] = {x:el.dataset.x, b:el.dataset.b, h:el.dataset.h};
+    });
+    try{localStorage.setItem(KEY, JSON.stringify(out))}catch(e){}
+  }
+  function seed(){
+    people.forEach(el=>{
+      const cs = getComputedStyle(el);
+      if(!el.dataset.x) el.dataset.x = parseFloat(cs.getPropertyValue("--x")) || 50;
+      if(!el.dataset.b) el.dataset.b = parseFloat(cs.getPropertyValue("--b")) || 20;
+      if(!el.dataset.h) el.dataset.h = parseFloat(cs.getPropertyValue("--h")) || 12;
+    });
+  }
+  function apply(el){
+    const x = +el.dataset.x, b = +el.dataset.b, h = +el.dataset.h;
+    el.style.setProperty("--x", x.toFixed(1) + "%");
+    el.style.setProperty("--b", b.toFixed(1) + "%");
+    el.style.setProperty("--h", h.toFixed(1) + "%");
+    el.style.setProperty("--z", String(10 + Math.round(b)));
+  }
+  function applyAll(){ people.forEach(apply); }
+  function select(el){
+    selected = el;
+    people.forEach(p=>p.classList.toggle("is-sel", p===el));
+    paint();
+  }
+  function cssText(){
+    return people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot).map(el=>{
+      const z = 10 + Math.round(+el.dataset.b);
+      return `.standee[data-slot="${el.dataset.slot}"]{--x:${(+el.dataset.x).toFixed(1)}%;--b:${(+el.dataset.b).toFixed(1)}%;--h:${(+el.dataset.h).toFixed(1)}%;--z:${z}}`;
+    }).join("\n");
+  }
+  function paint(){
+    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Drag a person. Wheel or +/− to size. Copy when it looks right.</p>" +
+      people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot).map(el=>{
+        const on = el===selected ? " style=\"color:#7a1c18\"" : "";
+        return `<div class="spotEnd" data-pick="${el.dataset.slot}"${on}><span>${el.alt}</span><code>${(+el.dataset.x).toFixed(0)} ${(+el.dataset.b).toFixed(0)} ${(+el.dataset.h).toFixed(1)}</code></div>`;
+      }).join("") +
+      `<div class="spotActs">
+        <button type="button" data-dir="-1">−</button>
+        <button type="button" data-dir="1">+</button>
+        <button type="button" id="spotCopy">Copy</button>
+      </div>`;
+  }
+  function pct(clientX, clientY){
+    const r = scene.getBoundingClientRect();
+    return {
+      x: ((clientX - r.left) / r.width) * 100,
+      b: ((r.bottom - clientY) / r.height) * 100
+    };
+  }
+  function bump(dir){
+    if(!selected) return;
+    selected.dataset.h = Math.max(6, Math.min(28, +selected.dataset.h + dir * 0.5));
+    apply(selected); save(); paint();
+  }
+
+  people.forEach(el=>{
+    el.addEventListener("pointerdown", e=>{
+      e.preventDefault();
+      select(el);
+      const pos = pct(e.clientX, e.clientY);
+      drag = {el, id:e.pointerId, grabX:+el.dataset.x - pos.x, grabB:+el.dataset.b - pos.b};
+      el.classList.add("is-drag");
+      try{el.setPointerCapture(e.pointerId)}catch(err){}
+    });
+  });
+  window.addEventListener("pointermove", e=>{
+    if(!drag || e.pointerId!==drag.id) return;
+    const pos = pct(e.clientX, e.clientY);
+    drag.el.dataset.x = Math.max(4, Math.min(96, pos.x + drag.grabX));
+    drag.el.dataset.b = Math.max(6, Math.min(92, pos.b + drag.grabB));
+    apply(drag.el);
+  });
+  window.addEventListener("pointerup", e=>{
+    if(!drag || e.pointerId!==drag.id) return;
+    drag.el.classList.remove("is-drag");
+    drag = null;
+    save(); paint();
+  });
+  scene.addEventListener("wheel", e=>{
+    const el = e.target.closest(".standee");
+    if(!el) return;
+    e.preventDefault();
+    select(el);
+    bump(e.deltaY<0 ? 1 : -1);
+  }, {passive:false});
+
+  readout.addEventListener("click", e=>{
+    const pick = e.target.closest("[data-pick]");
+    if(pick){
+      select(people.find(p=>p.dataset.slot===pick.dataset.pick));
+      return;
+    }
+    const dir = e.target.closest("[data-dir]");
+    if(dir) bump(+dir.dataset.dir);
+    if(e.target.id==="spotCopy"){
+      const text = cssText();
+      navigator.clipboard.writeText(text).then(()=>{
+        e.target.textContent = "Copied";
+        setTimeout(()=>e.target.textContent="Copy", 1200);
+      }).catch(()=>{
+        window.prompt("Copy CSS", text);
+      });
+    }
+  });
+  listBtn.addEventListener("click", ()=>{
+    listOn = !listOn;
+    document.body.classList.toggle("spotListOn", listOn);
+    listBtn.textContent = listOn ? "Hide list" : "Show list";
+  });
+  hudBtn.addEventListener("click", ()=>{
+    const off = document.body.dataset.hud === "off";
+    document.body.dataset.hud = off ? "" : "off";
+    hudBtn.textContent = off ? "Hide HUD" : "Show HUD";
+  });
+  if (new URLSearchParams(location.search).get("hud") === "off") {
+    document.body.dataset.hud = "off";
+    hudBtn.textContent = "Show HUD";
+  }
+  seed(); load(); applyAll(); select(people[0]);
+})();
 </script>
 </body>
 </html>
