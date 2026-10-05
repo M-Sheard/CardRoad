@@ -1,5 +1,5 @@
 ---
-description: Locked display language — isometric painted town, walking avatars
+description: Isometric painted town; HUD overlay on every map; oak standees look-test
 alwaysApply: true
 ---
 
@@ -11,15 +11,21 @@ Live `index.html` still uses street paintings + oak standees. That shell is **re
 
 ## What people and places are
 
-- **You** = a tiny cream-coat walking avatar.
-- **NPCs** = other tiny walkers (clothes, pose, silhouette vary). Not oak standees, not wood plaques on feet, not Mark-spots pads.
+- **You** = a tiny cream-coat walking avatar on the map (or later a standee if Marc picks that).
+- **NPCs** = look-test: existing oak-bevel standees (Tomas, Nessa, Bram, Elira, Beph) on the isometric street. Retint the **town**, not the figures. Tiny walkers are parked until Marc picks.
 - **Places** = buildings and paths on the map. Tap / walk to Market, Inn, Mill, Quay, Club.
 - **Challenge** = walk up to someone; cream terms plaque (Challenge / Back). Same match rules as now.
 - **Match / binder / journal / claim** = keep the live leftover-space gilt screens. Do not invent a new isometric parlour unless Marc asks.
 
+## Town HUD (locked for every map screen)
+
+The date / Journal / location strip is a **separate overlay**, not painted into the map. Reuse `mockups/isometric-town/town-hud.html` (hardware `hud/paper_corner.png` + `hud/paper_seal.png`). It sits on whatever scene is underneath and resizes with the viewport. Do not bake HUD into location jpgs. Do not bring back `date_frame_*` scrolls.
+
 ## Art
 
-Same oil-painted cottage textures as the isometric mock: cobbles, river, slate roofs, gilt HUD plaques. No gold coins, gems, HP bars, gacha HUD, or virtual-joystick as a product requirement (tap-to-walk is enough).
+Same oil-painted cottage textures as the isometric mock: cobbles, river, slate roofs. No gold coins, gems, HP bars, gacha HUD, or virtual-joystick as a product requirement (tap-to-walk is enough).
+
+Marc is look-testing **oak-bevel NPC standees** on this map by retinting the **town**, not the figures (`mockups/isometric-town/standee-fit/`). Do not invent a new standee construction.
 
 Card faces stay **17d earthy Mary Blair gouache**. Match cards stay 5:7 gilt with N/E/S/W.
 

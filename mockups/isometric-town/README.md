@@ -18,6 +18,8 @@ Open `town-hud.html`, `town-hud.html?layer=hud`, `town-hud.html?layer=scene`.
 
 The 01–07 stills are old concept art with HUD baked into the painting. Do not use those as the live HUD.
 
-Live `index.html` still uses standees until the rebuild.
+**Oak standees on this map:** look-test by retinting the town, not the figures. `standee-fit/` — jewel gold and warm dusk are the two that help.
+
+Live `index.html` is untouched.
 
 Standby (do not build): board-and-pawns, View-Master.

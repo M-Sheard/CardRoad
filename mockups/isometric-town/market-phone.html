@@ -190,11 +190,13 @@
   </div>
 </section>
 <script>
-  const layer = new URLSearchParams(location.search).get("layer") || "both";
+  const params = new URLSearchParams(location.search);
+  const layer = params.get("layer") || "both";
+  const sceneFile = params.get("scene") || "lythmere-market-scene.jpg";
   document.body.dataset.layer = layer;
   const scene = document.getElementById("townScene");
   if (layer !== "hud") {
-    scene.style.backgroundImage = 'url("./lythmere-market-scene.jpg")';
+    scene.style.backgroundImage = 'url("./' + sceneFile.replace(/[^a-zA-Z0-9._/-]/g, "") + '")';
   }
 </script>
 </body>
