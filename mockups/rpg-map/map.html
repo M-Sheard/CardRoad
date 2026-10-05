@@ -46,8 +46,8 @@
   /* Invisible-ish encounter boxes on the campaign map. Labels are already inked on the painting. */
   .mapHit{
     position:absolute;z-index:12;padding:0;margin:0;
-    background:transparent;
-    border:1.5px dashed rgba(139,105,58,.55);
+    background:rgba(247,234,210,.12);
+    border:1.5px dashed rgba(139,105,58,.7);
     border-radius:6px;
     pointer-events:auto;
   }
@@ -64,7 +64,7 @@
   .mapHit[data-loc="Riverside"]{left:2%;top:64%;width:50%;height:18%}
 
   #tapHint{
-    position:absolute;z-index:18;left:50%;top:42%;transform:translate(-50%,-50%);
+    position:absolute;z-index:18;left:62%;top:16%;transform:translate(-50%,0);
     padding:8px 12px;pointer-events:none;
     font:700 12px/1.2 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;
     color:#1a120c;background:rgba(247,234,210,.92);
@@ -191,32 +191,32 @@
     Market: {
       file: "./loc-market.jpg",
       slots: {
-        bram:{x:30,b:12,h:38}, nessa:{x:50,b:16,h:34}, tomas:{x:70,b:14,h:32},
-        elira:{x:82,b:12,h:28}, beph:{x:48,b:8,h:36}
+        bram:{x:22,b:16,h:36}, nessa:{x:44,b:18,h:34}, tomas:{x:66,b:16,h:32},
+        elira:{x:82,b:14,h:28}, beph:{x:86,b:14,h:34}
       },
       show: ["bram","nessa","tomas","beph"]
     },
     Riverside: {
       file: "./loc-riverside.jpg",
       slots: {
-        tomas:{x:34,b:8,h:40}, elira:{x:58,b:10,h:36}, beph:{x:46,b:4,h:34},
-        bram:{x:22,b:8,h:36}, nessa:{x:74,b:8,h:32}
+        tomas:{x:24,b:16,h:38}, elira:{x:76,b:16,h:36}, beph:{x:50,b:14,h:32},
+        bram:{x:22,b:14,h:36}, nessa:{x:74,b:14,h:32}
       },
       show: ["tomas","elira","beph"]
     },
     Inn: {
       file: "./loc-inn.jpg",
       slots: {
-        nessa:{x:36,b:10,h:36}, bram:{x:54,b:8,h:40}, tomas:{x:72,b:12,h:32},
-        elira:{x:24,b:10,h:32}, beph:{x:48,b:4,h:34}
+        nessa:{x:32,b:14,h:36}, bram:{x:52,b:12,h:40}, tomas:{x:74,b:14,h:32},
+        elira:{x:24,b:12,h:32}, beph:{x:48,b:10,h:34}
       },
       show: ["nessa","bram","tomas"]
     },
     Club: {
       file: "./loc-club.jpg",
       slots: {
-        elira:{x:52,b:8,h:38}, bram:{x:32,b:6,h:40}, tomas:{x:70,b:10,h:34},
-        nessa:{x:82,b:8,h:30}, beph:{x:50,b:4,h:34}
+        elira:{x:50,b:14,h:36}, bram:{x:26,b:14,h:38}, tomas:{x:76,b:14,h:34},
+        nessa:{x:82,b:12,h:30}, beph:{x:50,b:10,h:34}
       },
       show: ["elira","bram","tomas"]
     }
@@ -264,10 +264,15 @@
   });
   mapBtn.addEventListener("click", showMap);
 
-  const start = (location.hash || "").replace("#","").toLowerCase();
-  const startId = Object.keys(PLACES).find(k => k.toLowerCase() === start);
-  if(startId) openLoc(startId);
-  else showMap();
+  function applyHash(){
+    const id = (location.hash || "").replace("#","").toLowerCase();
+    if(!id || id === "map"){ showMap(); return; }
+    const locId = Object.keys(PLACES).find(k => k.toLowerCase() === id);
+    if(locId) openLoc(locId);
+    else showMap();
+  }
+  window.addEventListener("hashchange", applyHash);
+  applyHash();
 })();
 </script>
 </body>

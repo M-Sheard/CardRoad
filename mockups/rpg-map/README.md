@@ -11,7 +11,9 @@ Not a lock. Isometric town stays the current display lock until Marc picks. Live
 3. Oak-bevel cutouts stand on the plate’s yard / quay / drive.
 4. **Map** returns. HUD is the cream overlay, not baked into the jpg.
 
-Open `map.html`. Public tunnel (while this session’s server is up):
+Open `map.html` (phone 9:16). Overlay stills: `rpg-map-town.jpg`, `rpg-map-market.jpg`, `rpg-map-inn.jpg`, `rpg-map-riverside.jpg`, `rpg-map-club.jpg`.
+
+Public tunnel (while this session’s server is up):
 
 `https://walnut-activated-flashing-coupon.trycloudflare.com/mockups/rpg-map/map.html`
 
