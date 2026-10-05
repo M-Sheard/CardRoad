@@ -1,0 +1,106 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lythmere — on the table</title>
+<style>
+  html,body{
+    margin:0;height:100%;background:#1c1612;overflow:hidden;
+    display:flex;align-items:center;justify-content:center;
+    font:15px/1.35 Georgia,serif;color:#f4ead3;
+  }
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;
+    border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    background:#2a241e;
+  }
+  @media (max-width:430px){
+    html,body{display:block}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+  }
+  .shot{position:absolute;inset:0;background:#2a241e center / cover no-repeat}
+  #bar{
+    position:absolute;left:0;right:0;bottom:0;z-index:20;
+    padding:10px 10px max(14px, env(safe-area-inset-bottom, 0px) + 10px);
+    background:linear-gradient(transparent, #1c1612 36%);
+    pointer-events:none;
+  }
+  #bar > *{pointer-events:auto}
+  .opts{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:6px;margin-bottom:8px}
+  .opts button{
+    min-height:44px;padding:6px 4px;border:2px solid #594333;border-radius:5px;
+    background:rgba(242,225,190,.96);color:#241a13;
+    font:700 11px/1.15 system-ui,sans-serif;
+  }
+  .opts button[aria-pressed="true"]{background:#e8c27a;box-shadow:inset 0 0 0 2px #7a542c}
+  #title{margin:0 0 4px;font:700 16px/1.2 Georgia,serif;color:#f7efdc}
+  #blurb{margin:0;font:13px/1.35 system-ui,sans-serif;color:#d8c4a4;min-height:2.6em}
+</style>
+</head>
+<body>
+<section id="visualShell">
+  <div class="shot" id="shot"></div>
+  <div id="bar">
+    <p id="title"></p>
+    <p id="blurb"></p>
+    <div class="opts" role="tablist">
+      <button type="button" data-i="0">1 Minis</button>
+      <button type="button" data-i="1">2 Table</button>
+      <button type="button" data-i="2">3 Session</button>
+      <button type="button" data-i="3">4 Both</button>
+      <button type="button" data-i="4">5 Tokens</button>
+    </div>
+  </div>
+</section>
+<script>
+const OPTIONS = [
+  {
+    file: "./01-minis-on-map.jpg",
+    title: "1 · Minis on the map",
+    blurb: "Printed Lythmere, painted die-cast figures on the roads. Warm lamp, shallow focus."
+  },
+  {
+    file: "./02-tavern-diorama.jpg",
+    title: "2 · Recessed map table",
+    blurb: "Cartoon tavern table. Whole town carved into the wood, landmarks standing up."
+  },
+  {
+    file: "./03-session-overhead.jpg",
+    title: "3 · Session overhead",
+    blurb: "Parchment map, minis, dice and notes. A game in progress."
+  },
+  {
+    file: "./04-diorama-minis.jpg",
+    title: "4 · Diorama + minis",
+    blurb: "3D map well with landmark buildings, and painted minis standing on it."
+  },
+  {
+    file: "./05-map-landmarks-minis.jpg",
+    title: "5 · Map, tokens, minis",
+    blurb: "Printed map with 3D landmark pieces and villager minis together."
+  }
+];
+const shot = document.getElementById("shot");
+const title = document.getElementById("title");
+const blurb = document.getElementById("blurb");
+const buttons = [...document.querySelectorAll(".opts button")];
+function show(i){
+  const o = OPTIONS[i];
+  shot.style.backgroundImage = 'url("' + o.file + '")';
+  title.textContent = o.title;
+  blurb.textContent = o.blurb;
+  buttons.forEach((b, n) => b.setAttribute("aria-pressed", n === i ? "true" : "false"));
+  location.hash = String(i + 1);
+}
+buttons.forEach(b => b.addEventListener("click", () => show(+b.dataset.i)));
+const start = Math.max(1, Math.min(5, parseInt((location.hash || "#1").slice(1), 10) || 1)) - 1;
+show(start);
+</script>
+</body>
+</html>
