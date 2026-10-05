@@ -6,7 +6,6 @@
 <title>Lythmere Market</title>
 <style>
   html,body{margin:0;height:100%;background:#1c1612;overflow:hidden}
-  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer}
   #visualShell{
     position:relative;width:100%;height:100dvh;height:100vh;overflow:hidden;background:#2a241e;
   }
@@ -14,194 +13,35 @@
     position:absolute;inset:0;
     background:#2a241e url("./lythmere-market-scene.jpg") center / cover no-repeat;
   }
-
-  /* v38 — top chrome is a padded flex row. Date shrinks; Journal stays fully on-screen. */
-  #visualShell .worldTopbar{
-    position:absolute;z-index:40;left:0;right:0;top:0;
-    display:flex;flex-direction:row;flex-wrap:nowrap;
-    align-items:flex-start;justify-content:space-between;gap:10px;
-    padding:max(16px, calc(env(safe-area-inset-top, 0px) + 10px)) max(16px, calc(env(safe-area-inset-right, 0px) + 10px)) 0 max(16px, calc(env(safe-area-inset-left, 0px) + 10px));
-    box-sizing:border-box;pointer-events:none;background:transparent;border:0;
+  /* Reusable map HUD — the town-corners cutouts from commit 58325a8, not date_frame scrolls. */
+  .hudDate,.hudJournal,.hudPlace{
+    position:absolute;z-index:40;pointer-events:none;
+    filter:drop-shadow(0 4px 8px rgba(0,0,0,.4));
   }
-  #visualShell .worldTopbar #advanceTime,
-  #visualShell .worldTopbar .worldActions{pointer-events:auto}
-  #visualShell .worldActions{flex:0 0 auto;display:flex;position:relative}
-
-  /* Live scroll well (used as the inner row; parchment mid image is NOT used). */
-  #visualShell .scrollPlaque{
-    display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;
-    gap:0;padding:0;margin:0;border:0;background:none;
-    overflow:visible;box-sizing:border-box;
+  .hudDate{
+    top:max(16px, env(safe-area-inset-top, 0px) + 10px);
+    left:max(16px, env(safe-area-inset-left, 0px) + 10px);
+    height:48px;width:auto;
   }
-  #visualShell .scrollWell{
-    flex:1 1 auto;min-width:0;position:relative;z-index:1;
-    display:flex;align-items:center;justify-content:center;gap:8px;
-    margin:0;padding:0 10px;border:0;background:none;
+  .hudJournal{
+    top:max(16px, env(safe-area-inset-top, 0px) + 10px);
+    right:max(16px, env(safe-area-inset-right, 0px) + 10px);
+    height:42px;width:auto;
   }
-  #visualShell .scrollCopy{
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;min-width:0;overflow:hidden;
-  }
-  #visualShell #advanceTime.scrollPlaque{
-    position:relative;flex:1 1 auto;width:auto;min-width:0;
-    max-width:min(264px, calc(100% - 118px));
-  }
-  #visualShell #advanceTime .scrollCopy #visualDate,
-  #visualShell #advanceTime #visualDate{
-    font:700 13px/1.1 Georgia, "Times New Roman", serif;
-    color:#1a120c;max-width:100%;
-    overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  #visualShell #advanceTime #visualPhase{
-    font:500 11px/1.1 Georgia, "Times New Roman", serif;
-    color:#614a34;margin-top:1px;letter-spacing:.1em;
-    max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
-  }
-  #visualShell #worldRecord.scrollPlaque{
-    width:auto;max-width:none;min-width:0;
-    font:800 11px/1 Georgia, "Times New Roman", serif;
-    letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
-  }
-  #visualShell .locationWell{
-    display:grid;grid-template-columns:repeat(4,minmax(0,1fr));
-    align-items:stretch;height:100%;padding:0;gap:0;
-  }
-  #visualShell .locationWell button,
-  #visualShell .locationStrip button{
-    position:relative;min-height:0;height:100%;margin:0;padding:10px 4px 6px;
-    background:transparent;color:#3d2b1a;border:0;
-    border-right:1px solid rgba(90,62,38,.22);border-radius:0;
-    box-shadow:none;outline:none;filter:none;
-    font:700 11px/1.05 Georgia, "Times New Roman", serif;
-    letter-spacing:.04em;text-transform:uppercase;
-    text-shadow:0 1px 0 rgba(255,244,214,.7);
-  }
-  #visualShell .locationWell button:last-child{border-right:0}
-  #visualShell .locationWell button.active{
-    color:#1a120c;background:transparent;font-weight:800;
-  }
-
-  /* v96 live HUD — cream paper, thin gilt/oak edge, small brass corners, wax seals.
-     Scroll caps and date_frame_left/mid/right are not used. */
-  #visualShell .paperPlaque{
-    position:relative;
-    height:52px;min-height:52px;
-    border:1px solid #c4a06a;border-radius:2px;
-    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
-    box-shadow:0 4px 10px rgba(0,0,0,.35);
-    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));
-    overflow:visible;
-  }
-  #visualShell .paperPlaque .scrollWell{
-    background:none;padding:4px 16px;
-  }
-  #visualShell .paperCorners{
-    position:absolute;inset:0;z-index:5;pointer-events:none;
-  }
-  #visualShell .paperCorner{
-    position:absolute;width:24px;height:28px;object-fit:contain;pointer-events:none;
-    filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
-  }
-  #visualShell .paperCorner-tl{top:-4px;left:-4px}
-  #visualShell .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
-  #visualShell .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
-  #visualShell .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
-  #visualShell .paperSeal{
-    width:28px;height:28px;flex:0 0 auto;object-fit:contain;
-    pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6;
-  }
-  #visualShell #advanceTime.paperPlaque{
-    height:52px;min-height:52px;min-width:0;
-  }
-  #visualShell #worldRecord.paperPlaque{
-    height:44px;min-height:44px;min-width:118px;padding:0;gap:0;
-  }
-  #visualShell #worldRecord.paperPlaque .scrollWell{
-    gap:6px;padding:4px 12px 4px 14px;
-  }
-  #visualShell #worldRecord .paperCorner{width:16px;height:19px}
-  #visualShell .locationStrip.paperPlaque{
-    position:absolute;z-index:32;left:50%;right:auto;
-    bottom:max(12px, env(safe-area-inset-bottom, 0px));
-    width:min(620px, calc(100% - 24px));
-    height:52px;min-height:52px;
+  .hudPlace{
+    left:50%;bottom:max(16px, env(safe-area-inset-bottom, 0px) + 8px);
     transform:translateX(-50%);
-    padding:0;
-  }
-  #visualShell .locationStrip.paperPlaque .scrollWell{
-    padding:4px 12px 4px 28px;
-  }
-  #visualShell .locationStrip .paperSeal-left{
-    position:absolute;left:-8px;top:50%;transform:translateY(-50%);
-    width:32px;height:32px;object-fit:contain;z-index:6;
-    filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));pointer-events:none;
-  }
-  #visualShell .paperPlaque .locationWell button{padding:8px 4px}
-
-  @media(max-width:620px){
-    #visualShell #advanceTime.scrollPlaque,
-    #visualShell #advanceTime.paperPlaque{
-      max-width:min(224px, calc(100% - 110px));
-      height:48px;min-height:48px;
-    }
-    #visualShell #advanceTime #visualDate{font-size:12px}
-    #visualShell #advanceTime #visualPhase{font-size:10px}
-    #visualShell #worldRecord.paperPlaque{height:42px;min-height:42px;min-width:108px}
-    #visualShell .locationStrip.paperPlaque{height:48px;min-height:48px}
-    #visualShell .paperCorner{width:16px;height:19px}
-    #visualShell .locationStrip .paperSeal-left{width:26px;height:26px;left:-6px}
-    #visualShell .locationWell button{font-size:9px;padding:12px 2px 4px}
+    height:48px;width:min(366px, calc(100% - 24px));
+    object-fit:fill;
   }
 </style>
 </head>
 <body>
 <section id="visualShell">
   <div class="townScene" data-location="Market"></div>
-  <div class="worldTopbar">
-    <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
-      <span class="paperCorners" aria-hidden="true">
-        <img class="paperCorner paperCorner-tl" src="./paper_corner.png" alt="">
-        <img class="paperCorner paperCorner-tr" src="./paper_corner.png" alt="">
-        <img class="paperCorner paperCorner-bl" src="./paper_corner.png" alt="">
-        <img class="paperCorner paperCorner-br" src="./paper_corner.png" alt="">
-      </span>
-      <span class="scrollWell">
-        <span class="scrollCopy">
-          <b id="visualDate">Mon 2 Mar</b>
-          <span id="visualPhase">MORNING · YEAR 1</span>
-        </span>
-      </span>
-    </button>
-    <div class="worldActions">
-      <button id="worldRecord" class="scrollPlaque scrollPlaque-sm paperPlaque" type="button" aria-label="Open journal">
-        <span class="paperCorners" aria-hidden="true">
-          <img class="paperCorner paperCorner-tl" src="./paper_corner.png" alt="">
-          <img class="paperCorner paperCorner-tr" src="./paper_corner.png" alt="">
-          <img class="paperCorner paperCorner-bl" src="./paper_corner.png" alt="">
-          <img class="paperCorner paperCorner-br" src="./paper_corner.png" alt="">
-        </span>
-        <span class="scrollWell">
-          <span id="worldRecordLabel">Journal</span>
-          <img class="paperSeal" src="./paper_seal.png" alt="">
-        </span>
-      </button>
-    </div>
-  </div>
-  <nav class="locationStrip scrollPlaque scrollPlaque-wide paperPlaque" id="locationStrip" aria-label="Lythmere locations">
-    <span class="paperCorners" aria-hidden="true">
-      <img class="paperCorner paperCorner-tl" src="./paper_corner.png" alt="">
-      <img class="paperCorner paperCorner-tr" src="./paper_corner.png" alt="">
-      <img class="paperCorner paperCorner-bl" src="./paper_corner.png" alt="">
-      <img class="paperCorner paperCorner-br" src="./paper_corner.png" alt="">
-    </span>
-    <img class="paperSeal paperSeal-left" src="./paper_seal.png" alt="">
-    <div class="scrollWell locationWell">
-      <button type="button" class="active" data-loc="Market">Market</button>
-      <button type="button" data-loc="Riverside">Riverside</button>
-      <button type="button" data-loc="Inn">Inn</button>
-      <button type="button" data-loc="Card Club" title="Card Club">Club</button>
-    </div>
-  </nav>
+  <img class="hudDate" src="./hud/town-corners-date.png" alt="Mon 2 Mar, morning year 1">
+  <img class="hudJournal" src="./hud/town-corners-journal.png" alt="Journal">
+  <img class="hudPlace" src="./hud/town-corners-place.png" alt="Market, Riverside, Inn, Club">
 </section>
 </body>
 </html>
