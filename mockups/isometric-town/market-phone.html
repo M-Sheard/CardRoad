@@ -25,7 +25,7 @@
   .paperPlaque{
     position:relative;
     display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;
-    height:48px;min-height:48px;padding:0;margin:0;border:1px solid #c4a06a;border-radius:2px;
+    height:56px;min-height:56px;padding:0;margin:0;border:1px solid #c4a06a;border-radius:2px;
     background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
     box-shadow:0 4px 10px rgba(0,0,0,.35);
     filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));
@@ -33,46 +33,50 @@
   }
   .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
   .paperCorner{
-    position:absolute;width:16px;height:19px;object-fit:contain;pointer-events:none;
+    position:absolute;width:36px;height:42px;object-fit:contain;pointer-events:none;
     filter:drop-shadow(0 1px 1px rgba(0,0,0,.35));
   }
-  .paperCorner-tl{top:-4px;left:-4px}
-  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
-  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
-  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperCorner-tl{top:-8px;left:-8px}
+  .paperCorner-tr{top:-8px;right:-8px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-8px;left:-8px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-8px;right:-8px;transform:scale(-1)}
   .scrollWell{
     flex:1 1 auto;min-width:0;position:relative;z-index:1;
-    display:flex;align-items:center;justify-content:center;gap:6px;
-    margin:0;padding:4px 16px;border:0;background:none;
+    display:flex;align-items:center;justify-content:center;gap:8px;
+    margin:0;padding:6px 22px;border:0;background:none;
   }
   #advanceTime.paperPlaque{
-    flex:1 1 auto;width:auto;min-width:0;max-width:min(224px, calc(100% - 110px));
-    height:48px;min-height:48px;
+    flex:1 1 auto;width:auto;min-width:0;max-width:min(230px, calc(100% - 128px));
+    height:56px;min-height:56px;
   }
   .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
   #visualDate{
-    font:700 12px/1.1 Georgia,serif;color:#1a120c;max-width:100%;
+    font:700 13px/1.1 Georgia,serif;color:#1a120c;max-width:100%;
     overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   #visualPhase{
-    font:500 10px/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.08em;
+    font:500 11px/1.1 Georgia,serif;color:#614a34;margin-top:2px;letter-spacing:.06em;
     max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;
   }
   #worldRecord.paperPlaque{
-    height:42px;min-height:42px;min-width:108px;padding:0;gap:0;
-    font:800 11px/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
+    height:52px;min-height:52px;min-width:132px;padding:0;gap:0;
+    font:800 12px/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
   }
-  #worldRecord .scrollWell{padding:4px 12px 4px 14px}
+  #worldRecord .scrollWell{padding:4px 10px 4px 16px;gap:8px}
+  #worldRecord .paperSeal{
+    width:34px;height:34px;flex:0 0 auto;object-fit:contain;
+    filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));
+  }
   .locationStrip.paperPlaque{
     position:absolute;z-index:32;left:50%;right:auto;
-    bottom:max(10px, env(safe-area-inset-bottom, 0px));
-    width:min(620px, calc(100% - 24px));height:48px;min-height:48px;
+    bottom:max(12px, env(safe-area-inset-bottom, 0px));
+    width:min(620px, calc(100% - 28px));height:52px;min-height:52px;
     transform:translateX(-50%);
   }
-  .locationStrip .scrollWell{padding:4px 12px 4px 28px}
+  .locationStrip .scrollWell{padding:4px 16px 4px 34px}
   .paperSeal-left{
-    position:absolute;left:-6px;top:50%;transform:translateY(-50%);
-    width:26px;height:26px;object-fit:contain;z-index:6;
+    position:absolute;left:-12px;top:50%;transform:translateY(-50%);
+    width:38px;height:38px;object-fit:contain;z-index:6;
     filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));pointer-events:none;
   }
   .locationWell{
@@ -101,8 +105,8 @@
       </span>
       <span class="scrollWell">
         <span class="scrollCopy">
-          <b id="visualDate">Monday, 2 March · Year 1</b>
-          <span id="visualPhase">Morning</span>
+          <b id="visualDate">Mon 2 Mar</b>
+          <span id="visualPhase">Morning · Year 1</span>
         </span>
       </span>
     </button>
@@ -114,7 +118,7 @@
           <img class="paperCorner paperCorner-bl" src="./paper_corner.png" alt="">
           <img class="paperCorner paperCorner-br" src="./paper_corner.png" alt="">
         </span>
-        <span class="scrollWell"><span>Journal</span></span>
+        <span class="scrollWell"><span>Journal</span><img class="paperSeal" src="./paper_seal.png" alt=""></span>
       </button>
     </div>
   </div>
