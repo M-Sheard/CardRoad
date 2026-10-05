@@ -13,7 +13,7 @@ You are a tiny cream-coat avatar. People are other walkers. Places are buildings
 7. **Travel** — coach on the road.
 
 Hero: `mockups/display-more/07-isometric-town.jpg`.  
-**Lythmere Market as it will show on the phone:** `lythmere-market-ingame.jpg` (Monday morning — you, Tomas, Nessa; live parchment strips with brass corners and wax seal).  
+**Lythmere Market as it will show on the phone:** `lythmere-market-ingame.jpg` (Monday morning — you, Tomas, Nessa). HUD is the **live-game cream oak plaques** (compact paper fill, thin gilt/oak edge, small brass corners, wax seals on Journal and the current place). Not rolled-scroll `date_frame_*` caps, not oversized photo-corner parchment. Source: `market-phone.html`, cloning v38 top bar + v96 `paperPlaque` from live town chrome.  
 Live `index.html` still uses standees until the rebuild.
 
 Standby (do not build): board-and-pawns, View-Master.
