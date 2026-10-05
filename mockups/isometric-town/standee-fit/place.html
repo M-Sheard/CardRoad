@@ -237,6 +237,14 @@
     "3": {x:84, b:63, h:9},
     "4": {x:55, b:34, h:12}
   };
+  /* Same jewel painting, tighter crop — stalls big enough for larger oak cutouts. */
+  const DEFAULT_CLOSE_SLOTS = {
+    "0": {x:24, b:20, h:22},
+    "1": {x:22, b:56, h:18},
+    "2": {x:46, b:58, h:17},
+    "3": {x:90, b:48, h:16},
+    "4": {x:58, b:30, h:20}
+  };
   const LOCS = ["Market", "Riverside", "Inn", "Club"];
   const BUILTIN = {
     Market: "./bg-b-jewel.jpg",
@@ -245,7 +253,9 @@
     Club: "../scenes/club.jpg"
   };
   const PAINTS = [
-    {id:"jewel", label:"Jewel", file:"./bg-b-jewel.jpg", loc:"Market"},
+    {id:"jewel", label:"Wide", file:"./bg-b-jewel.jpg", loc:"Market"},
+    {id:"close", label:"Close", file:"./bg-b-jewel-close.jpg", loc:"Market"},
+    {id:"near", label:"Near", file:"./bg-b-jewel-near.jpg", loc:"Market"},
     {id:"dusk", label:"Dusk", file:"./bg-e-dusk.jpg", loc:"Market"},
     {id:"asis", label:"As-is", file:"./bg-0-as-is.jpg", loc:"Market"}
   ];
@@ -254,13 +264,34 @@
   let blobUrl = "";
   let missingBg = false;
 
-  function cloneSlots(src){
+  function slotKey(loc, paint){
+    loc = loc || store.loc;
+    paint = paint == null ? store.paint : paint;
+    if(loc === "Market" && (paint === "close" || paint === "near")) return loc + ":" + paint;
+    return loc;
+  }
+  function defaultsFor(){
+    const key = slotKey();
+    if(key.indexOf(":close") >= 0 || key.indexOf(":near") >= 0) return DEFAULT_CLOSE_SLOTS;
+    return DEFAULT_SLOTS;
+  }
+  function cloneSlots(src, defs){
+    defs = defs || defaultsFor();
     const out = {};
-    Object.keys(DEFAULT_SLOTS).forEach(k=>{
-      const s = (src && src[k]) || DEFAULT_SLOTS[k];
+    Object.keys(defs).forEach(k=>{
+      const s = (src && src[k]) || defs[k];
       out[k] = {x:+s.x, b:+s.b, h:+s.h};
     });
     return out;
+  }
+  function rememberSlots(){
+    store.slots[slotKey()] = currentSlots();
+  }
+  function loadSlotsForCurrent(){
+    const key = slotKey();
+    if(!store.slots[key]) store.slots[key] = cloneSlots(null, defaultsFor());
+    applySlots(store.slots[key]);
+    syncBeph();
   }
   function loadStore(){
     try{
@@ -279,10 +310,10 @@
         if(old) store.slots.Market = cloneSlots(old);
       }catch(e){}
     }
-    if(!store.slots.Market) store.slots.Market = cloneSlots(DEFAULT_SLOTS);
+    if(!store.slots.Market) store.slots.Market = cloneSlots(null, DEFAULT_SLOTS);
   }
   function saveStore(){
-    store.slots[store.loc] = currentSlots();
+    store.slots[slotKey()] = currentSlots();
     try{localStorage.setItem(KEY, JSON.stringify(store))}catch(e){}
   }
   function bephOn(){
@@ -353,12 +384,10 @@
     return "";
   }
   async function showLoc(loc){
-    if(store.loc !== loc) store.slots[store.loc] = currentSlots();
+    rememberSlots();
     store.loc = loc;
     locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===loc));
-    if(!store.slots[loc]) store.slots[loc] = cloneSlots(store.slots.Market || DEFAULT_SLOTS);
-    applySlots(store.slots[loc]);
-    syncBeph();
+    loadSlotsForCurrent();
     const url = await bgFor(loc);
     missingBg = !url;
     if(url) setBg(url);
@@ -397,7 +426,7 @@
     }).join("");
     const shown = people.slice().sort((a,b)=>+a.dataset.slot-+b.dataset.slot)
       .filter(el=>el.dataset.slot!=="4" || bephOn());
-    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Drag a person. Wheel or +/− to size. Copy saves this phone crop and the slots. Drop a painting to swap the map. Beph is an extra merchant/traveller slot.</p>" +
+    readout.innerHTML = "<b>Place people</b><p class=\"spotHint\">Wide is the full map (people stay small). Close / Near zoom the stalls so bigger oak cutouts fit. Drag, +/−, Copy.</p>" +
       shown.map(el=>{
         const on = el===selected ? " style=\"color:#7a1c18\"" : "";
         return `<div class="spotEnd" data-pick="${el.dataset.slot}"${on}><span>${el.alt}</span><code>${(+el.dataset.x).toFixed(0)} ${(+el.dataset.b).toFixed(0)} ${(+el.dataset.h).toFixed(1)}</code></div>`;
@@ -420,7 +449,7 @@
   }
   function bump(dir){
     if(!selected) return;
-    selected.dataset.h = Math.max(6, Math.min(28, +selected.dataset.h + dir * 0.5));
+    selected.dataset.h = Math.max(6, Math.min(36, +selected.dataset.h + dir * 0.5));
     apply(selected); saveStore(); paint();
   }
   function readPainting(file){
@@ -487,9 +516,18 @@
     if(paintBtn){
       const p = PAINTS.find(x=>x.id===paintBtn.dataset.paint);
       if(!p) return;
+      rememberSlots();
       store.paint = p.id;
-      delete store.bgs.Market;
-      showLoc("Market");
+      if(p.id === "close" || p.id === "near" || p.id === "jewel" || p.id === "dusk" || p.id === "asis"){
+        if(p.id !== "close" && p.id !== "near") delete store.bgs.Market;
+      }
+      store.loc = "Market";
+      locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc==="Market"));
+      loadSlotsForCurrent();
+      setBg(p.file);
+      missingBg = false;
+      saveStore();
+      paint();
       return;
     }
     if(e.target.id==="spotBeph"){
@@ -502,8 +540,8 @@
       return;
     }
     if(e.target.id==="spotReset"){
-      store.slots[store.loc] = cloneSlots(DEFAULT_SLOTS);
-      applySlots(store.slots[store.loc]);
+      store.slots[slotKey()] = cloneSlots(null, defaultsFor());
+      applySlots(store.slots[slotKey()]);
       saveStore(); paint();
       return;
     }
@@ -564,7 +602,7 @@
   seed();
   if(qLoc && LOCS.includes(qLoc)) store.loc = qLoc;
   if(qBeph === "1" || qBeph === "on") store.beph[store.loc] = true;
-  applySlots(store.slots[store.loc] || DEFAULT_SLOTS);
+  applySlots(store.slots[slotKey()] || defaultsFor());
   syncBeph();
   locBtns.forEach(btn=>btn.classList.toggle("active", btn.dataset.loc===store.loc));
   (async ()=>{
