@@ -1,5 +1,7 @@
 # Full-screen hex Lythmere (look-test)
 
-Last version Marc signed off: zoomed-out Lythmere, thin aligned hexes, no NPCs.
+Physical wargame table: flocked hex mat filling the phone, 3D terrain pieces sitting on it.
 
-Open `index.html`. That map is the default again.
+Default `09-wargame.jpg` uses Marc’s hobby-table photos as the style lock. Inn / Market / Club / Riverside are models on the board, not a painted map.
+
+Open `index.html`. Paints: Terrain / Alt hex / Empty mat / Last hex.

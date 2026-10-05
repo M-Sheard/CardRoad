@@ -33,7 +33,7 @@
   }
   .townScene{
     position:absolute;inset:0;z-index:0;
-    background:#2a241e url("./05-empty-aligned.jpg") center / cover no-repeat;
+    background:#2a241e url("./09-wargame.jpg") center / cover no-repeat;
   }
   #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
   .worldTopbar{
@@ -132,8 +132,10 @@
     </nav>
   </div>
   <div id="paints">
-        <button type="button" data-file="./05-empty-aligned.jpg" aria-pressed="true">Hex map</button>
-        <button type="button" data-file="./05-empty-town.jpg">No hex</button>
+        <button type="button" data-file="./09-wargame.jpg" aria-pressed="true">Terrain</button>
+        <button type="button" data-file="./09-wargame-b.jpg">Alt hex</button>
+        <button type="button" data-file="./09-empty-mat.jpg">Empty mat</button>
+        <button type="button" data-file="./05-empty-aligned.jpg">Last hex</button>
   </div>
 </section>
 <script>
@@ -144,7 +146,7 @@ function paint(file){
   buttons.forEach(b => b.setAttribute("aria-pressed", b.dataset.file === file ? "true" : "false"));
 }
 buttons.forEach(b => b.addEventListener("click", () => paint(b.dataset.file)));
-paint("./05-empty-aligned.jpg");
+paint("./09-wargame.jpg");
 </script>
 </body>
 </html>
