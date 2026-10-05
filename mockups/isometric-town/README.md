@@ -13,7 +13,7 @@ You are a tiny cream-coat avatar. People are other walkers. Places are buildings
 7. **Travel** — coach on the road.
 
 Hero: `mockups/display-more/07-isometric-town.jpg`.  
-**Lythmere Market as it will show on the phone:** `lythmere-market-ingame.jpg` (Monday morning — you, Tomas, Nessa; live date scroll, Journal, location strip).  
+**Lythmere Market as it will show on the phone:** `lythmere-market-ingame.jpg` (Monday morning — you, Tomas, Nessa; live parchment strips with brass corners and wax seal).  
 Live `index.html` still uses standees until the rebuild.
 
 Standby (do not build): board-and-pawns, View-Master.
