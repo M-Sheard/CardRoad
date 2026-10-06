@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lythmere — approved hex map with raised 3D pieces</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#17120d;color:#e8dcc4;font:14px/1.4 Georgia,serif}
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px 0}
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block;overflow:hidden}
+    body{padding:0;gap:0}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+    .devBar{display:none}
+  }
+
+  /* The signed-off hex map is the flat table surface. Nothing repaints it. */
+  .townScene{position:absolute;inset:0;z-index:0;overflow:hidden;background:#3b3122;touch-action:none}
+  .scenePlane{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:max(100cqw, calc(100cqh * 9 / 16));
+    height:max(100cqh, calc(100cqw * 16 / 9));
+  }
+  .mapArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
+
+  /* Each landmark is a separate keyed model standing on the map. */
+  .piece{
+    position:absolute;padding:0;background:none;border:0;
+    width:var(--pw);
+    transform:translate(-50%, calc(-1 * var(--anchor)));
+    transition:opacity .2s ease, filter .2s ease;
+    pointer-events:auto;
+  }
+  .piece img{display:block;width:100%;height:auto}
+  .pieces.lit .piece img{
+    filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55));
+  }
+  .piece::before{ /* tight pool of shade so the base reads as touching the map */
+    content:"";position:absolute;left:2%;right:-4%;bottom:-3%;height:14%;
+    border-radius:50%;background:radial-gradient(ellipse at center, rgba(14,9,4,.6), rgba(14,9,4,0) 68%);
+    z-index:-1;
+  }
+  .pieces.bare .piece{opacity:0;pointer-events:none}
+
+  /* Matches the serif place names inked into the signed-off map. */
+  .mapLabel{
+    position:absolute;left:46%;bottom:-11%;transform:translateX(-50%);
+    font:400 clamp(11px,3.4cqw,15px)/1 Georgia,"Times New Roman",serif;
+    letter-spacing:.07em;text-transform:uppercase;white-space:nowrap;
+    color:#2c1d08;
+    text-shadow:0 0 3px rgba(240,226,188,.95), 0 0 9px rgba(240,226,188,.85), 0 1px 0 rgba(255,246,214,.7);
+    pointer-events:none;
+  }
+  .piece:hover img,.piece:focus-visible img{filter:drop-shadow(5px 9px 7px rgba(18,12,6,.62)) brightness(1.1)}
+
+  /* HUD — same paper chrome as the rest of the town */
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:10px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldActions{flex:0 0 auto;display:flex}
+  .scrollPlaque{display:flex;align-items:stretch;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 16px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;min-width:0;max-width:min(264px, calc(100% - 118px));pointer-events:auto}
+  #advanceTime #visualDate{font:700 clamp(11px,3.2cqw,13px)/1.1 Georgia,serif;color:#1a120c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(9px,2.7cqw,11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;white-space:nowrap}
+  #worldRecord.paperPlaque{height:var(--hud-journal-h);min-height:var(--hud-journal-h);min-width:min(118px,34cqw);font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;pointer-events:auto}
+  #worldRecord.paperPlaque .scrollWell{gap:6px;padding:4px 12px 4px 14px}
+  #worldRecord .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  .locationStrip.paperPlaque{position:absolute;z-index:32;left:50%;bottom:var(--hud-pad-b);width:min(620px,calc(100% - 24px));transform:translateX(-50%);pointer-events:auto}
+  .locationStrip .paperSeal-left{position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:var(--hud-seal);height:var(--hud-seal);object-fit:contain;z-index:6;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4))}
+  .locationWell{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;height:100%;padding:4px 12px 4px 28px}
+  .locationWell button{position:relative;min-width:0;height:100%;padding:8px 4px;color:#3d2b1a;border-right:1px solid rgba(90,62,38,.22);font:700 clamp(8px,2.4cqw,11px)/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,244,214,.7);pointer-events:auto}
+  .locationWell button:last-child{border-right:0}
+  .locationWell button.active{color:#1a120c;font-weight:800}
+
+  .devBar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px}
+  .devBar button{padding:6px 11px;border:1px solid #5d472f;border-radius:3px;background:#2b2218;color:#d9c9a8;font:600 12px/1 Georgia,serif}
+  .devBar button.active{background:#f2e1bd;color:#2b2016;border-color:#c4a06a}
+</style>
+</head>
+<body>
+
+<section id="visualShell">
+  <div class="townScene">
+    <div class="scenePlane">
+      <img class="mapArt" id="mapArt" src="./map-bare-grid.jpg" alt="The Lythmere hex map">
+      <div class="pieces lit" id="pieces"></div>
+    </div>
+  </div>
+
+  <div id="hudLayer" class="townHud">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING · YEAR 1</span></span></span>
+      </button>
+      <div class="worldActions">
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button" aria-label="Open journal">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Journal</span><img class="paperSeal" src="../isometric-town/hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="locationStrip scrollPlaque paperPlaque" aria-label="Lythmere locations">
+      <span class="paperCorners" aria-hidden="true">
+        <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+      </span>
+      <img class="paperSeal paperSeal-left" src="../isometric-town/hud/paper_seal.png" alt="">
+      <div class="scrollWell locationWell" id="locationWell">
+        <button type="button" data-loc="Market">Market</button>
+        <button type="button" data-loc="Riverside">Riverside</button>
+        <button type="button" data-loc="Inn">Inn</button>
+        <button type="button" data-loc="Club">Club</button>
+      </div>
+    </nav>
+  </div>
+</section>
+
+<div class="devBar" id="mapBar"></div>
+<div class="devBar">
+  <button type="button" id="bareToggle">Pieces: on</button>
+  <button type="button" id="litToggle" class="active">Shadows: on</button>
+  <button type="button" id="smaller">Smaller</button>
+  <button type="button" id="bigger">Bigger</button>
+  <span id="readout" style="align-self:center;color:#a3917a;font-size:12px"></span>
+</div>
+
+<script>
+/* x / y are where the model's base centre lands on the map, as a % of the
+   painting. anchor is how far down its own image that base centre sits, so a
+   tall model rises off the map instead of sinking into it.
+   The bare maps allow free placement. The signed-off map still has its four
+   buildings painted in, so there the pieces have to cover them. */
+const MAPS = {
+  "map-bare-grid": {
+    label: "bare map · strong grid",
+    labels: true,
+    pieces: [
+      { loc:"Inn",       x:28, y:26, w:36, anchor:72 },
+      { loc:"Club",      x:73, y:36, w:34, anchor:67 },
+      { loc:"Market",    x:27, y:56, w:34, anchor:70 },
+      { loc:"Riverside", x:50, y:77, w:36, anchor:62 }
+    ]
+  },
+  "map-bare-soft": {
+    label: "bare map · soft grid",
+    labels: true,
+    pieces: [
+      { loc:"Inn",       x:28, y:26, w:36, anchor:72 },
+      { loc:"Club",      x:73, y:36, w:34, anchor:67 },
+      { loc:"Market",    x:27, y:56, w:34, anchor:70 },
+      { loc:"Riverside", x:50, y:77, w:36, anchor:62 }
+    ]
+  },
+  "../lythmere-hex-screen/05-empty-aligned": {
+    label: "signed-off map",
+    labels: false,
+    pieces: [
+      { loc:"Inn",       x:23, y:21, w:38, anchor:72 },
+      { loc:"Club",      x:83, y:42, w:36, anchor:67 },
+      { loc:"Market",    x:21, y:48, w:38, anchor:70 },
+      { loc:"Riverside", x:26, y:77, w:40, anchor:62 }
+    ]
+  }
+};
+
+const host = document.getElementById("pieces");
+const mapArt = document.getElementById("mapArt");
+const readout = document.getElementById("readout");
+const mapBar = document.getElementById("mapBar");
+let scale = 1;
+let currentMap = "map-bare-grid";
+
+function draw(){
+  const map = MAPS[currentMap];
+  host.textContent = "";
+  host.classList.toggle("tagged", map.labels);
+  for (const p of map.pieces){
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "piece";
+    b.dataset.loc = p.loc;
+    b.style.left = p.x + "%";
+    b.style.top = p.y + "%";
+    b.style.setProperty("--pw", (p.w * scale).toFixed(1) + "%");
+    b.style.setProperty("--anchor", p.anchor + "%");
+    b.setAttribute("aria-label", "Go to the " + p.loc);
+    const img = document.createElement("img");
+    img.src = "./piece-" + p.loc.toLowerCase() + ".png";
+    img.alt = "";
+    b.append(img);
+    if (map.labels){
+      const tag = document.createElement("span");
+      tag.className = "mapLabel";
+      tag.textContent = p.loc;
+      b.append(tag);
+    }
+    host.append(b);
+  }
+  readout.textContent = "scale " + scale.toFixed(2) + "×";
+}
+
+function showMap(key){
+  currentMap = key;
+  mapArt.src = "./" + key + ".jpg";
+  mapBar.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.map === key));
+  draw();
+}
+
+for (const [key, meta] of Object.entries(MAPS)){
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.map = key;
+  b.textContent = meta.label;
+  b.addEventListener("click", () => showMap(key));
+  mapBar.append(b);
+}
+
+host.addEventListener("click", e => {
+  const hit = e.target.closest(".piece");
+  if (!hit) return;
+  document.querySelectorAll("#locationWell button")
+    .forEach(b => b.classList.toggle("active", b.dataset.loc === hit.dataset.loc));
+});
+
+document.getElementById("bareToggle").addEventListener("click", e => {
+  const bare = host.classList.toggle("bare");
+  e.target.textContent = bare ? "Pieces: off" : "Pieces: on";
+});
+document.getElementById("litToggle").addEventListener("click", e => {
+  const lit = host.classList.toggle("lit");
+  e.target.classList.toggle("active", lit);
+  e.target.textContent = lit ? "Shadows: on" : "Shadows: off";
+});
+document.getElementById("smaller").addEventListener("click", () => { scale = Math.max(.6, scale - .06); draw(); });
+document.getElementById("bigger").addEventListener("click", () => { scale = Math.min(1.6, scale + .06); draw(); });
+
+const asked = new URLSearchParams(location.search);
+showMap(MAPS[asked.get("map")] ? asked.get("map") : "map-bare-grid");
+if (asked.get("hud") === "0") document.getElementById("hudLayer").hidden = true;
+if (asked.get("pieces") === "0") host.classList.add("bare");
+</script>
+</body>
+</html>
