@@ -1,0 +1,53 @@
+---
+description: Location screens are a flat board with 3D pieces sitting on it
+alwaysApply: true
+---
+
+# Location screens (tabletop board + 3D pieces)
+
+Marc locked this (Oct 2026). **Every location screen** — the Lythmere map and Inn, Market, Club, Riverside (and any future place) — is a **flat painted board with separate 3D models sitting on it**. Canonical look-test: `mockups/lythmere-hex-pieces/`.
+
+Never generate the board and the pieces as one picture. That always reads as a drawing.
+
+Live `index.html` still uses street paintings + oak standees. Leave that until a rebuild is asked. **New** location work uses this language only. Do not generate isometric overworlds, walkable streets, or display-style pages.
+
+## Two layers
+
+1. **Board** — one 720×1280 (`9:16`) painting. Flat. No buildings, no people, no HUD, no town name, no hex grid. Aged sepia / olive / ochre, candlelit, vignetted. Slight look-down at a board, not a 3D valley model.
+2. **Pieces** — each landmark generated **alone**, 1:1, on lime `#00FF00`. Three-quarter, **~35° above the table**, one warm light from the **upper left**, chunky **hex base** with a visible earth side wall. Same muted palette. No people, no letters. Key with `mockups/lythmere-hex-pieces/key_pieces.py`, trim, ~520px wide, under ~500KB.
+
+Composite in HTML. Contact shadow on each piece. Marc places in **% of the board** (`x` / `y` = base centre, `w` ≈ 34–36%, `anchor` ≈ 62–72%). Lower on the board = in front. Labels are HTML.
+
+Full recipe: `mockups/lythmere-hex-pieces/README.md`.
+
+## HUD (every location screen)
+
+Overlay, never paint.
+
+- Date + Journal paper plaques at the top (`paper_corner.png` / `paper_seal.png`).
+- Place name is HTML in the gap **under** those plaques (not baked into the jpg).
+- **No** bottom place-name strip on these screens. The pieces are the navigation.
+- Safe-area: `max(16px, env(safe-area-inset-*) + 10px)`.
+- Stage: **390px × 9:16** on a laptop; on a phone `100dvh` / `100svh`. Not a leftover-space match-table scaler.
+
+## What sits on a location
+
+- **Overworld (Lythmere map):** Inn, Market, Club, Riverside as hex-base terrain. **No NPCs** on this map — they are at a location.
+- **Inside a location:** same two layers, closer shot of that place’s floor/mat. Furniture and stalls are pieces. People are **separate keyed figures**, not painted into the board.
+- People construction stays Tomas oak bevel until Marc picks otherwise. Do not invent isometric walkers or put people on hex bases.
+
+## Do
+
+- Repeat this recipe for every new location screen.
+- Let Marc drag pieces (same placer pattern as `mockups/lythmere-hex-pieces/index.html`). Do not eyeball new towns.
+- Keep match / binder / journal / claim as leftover-space gilt screens.
+
+## Do not
+
+- Ask a generator for “flat map with 3D things on it” in one shot
+- Paint HUD, titles, hex grid, or people into the board
+- Generate a new isometric town or street you walk
+- Put NPCs on the overworld map
+- Use Mark spots for a new location
+- Split `index.html` just to start this rebuild — say so first
+- Change Baseline V1, Claim One, or calendar to make the map work

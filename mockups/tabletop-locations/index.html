@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>
+(function(){
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+  var b = document.createElement("base");
+  b.href = "https://raw.githubusercontent.com/M-Sheard/CardRoad/cursor/lythmere-25d-screen-12f4/mockups/tabletop-locations/";
+  document.head.appendChild(b);
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lythmere — location screens</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#17120d;color:#e8dcc4;font:14px/1.4 Georgia,serif}
+  body{display:flex;align-items:center;justify-content:center;min-height:100dvh}
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block;overflow:hidden}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+  }
+  .townScene{position:absolute;inset:0;z-index:0;overflow:hidden;background:#3b3122;touch-action:none}
+  .scenePlane{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:max(100cqw, calc(100cqh * 9 / 16));
+    height:max(100cqh, calc(100cqw * 16 / 9));
+  }
+  .mapArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
+  .piece{
+    position:absolute;padding:0;background:none;border:0;
+    width:var(--pw); left:var(--x); top:var(--y);
+    transform:translate(-50%, calc(-1 * var(--anchor)));
+    z-index:var(--z); cursor:grab; touch-action:none;
+    user-select:none; -webkit-user-drag:none;
+  }
+  .piece img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none}
+  .pieces.lit .piece img{filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55))}
+  .piece[data-kind="terrain"]::before{
+    content:"";position:absolute;left:2%;right:-4%;bottom:-3%;height:14%;
+    border-radius:50%;background:radial-gradient(ellipse at center, rgba(14,9,4,.6), rgba(14,9,4,0) 68%);
+    z-index:-1;
+  }
+  .piece.is-drag{cursor:grabbing;z-index:80!important}
+  body.spotListOn .piece.is-sel img{filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55)) brightness(1.08)}
+  .townName{
+    position:absolute;z-index:34;left:0;right:0;
+    top:calc(var(--hud-pad-t) + var(--hud-h) + 6px);
+    text-align:center;pointer-events:none;color:#2c1d10;
+    text-shadow:0 1px 0 rgba(240,226,188,.55), 0 0 12px rgba(232,214,176,.45);
+  }
+  body.hudOff .townName{top:calc(var(--hud-pad-t) + 10px)}
+  .townName b{
+    display:block;
+    font:400 clamp(20px,6.6cqw,32px)/1.05 Palatino,"Palatino Linotype","Times New Roman",serif;
+    letter-spacing:.2em;
+  }
+  .townName .flourish{display:block;width:min(48%,180px);height:18px;margin:2px auto 0}
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldActions{flex:0 0 auto;display:flex;gap:6px}
+  .scrollPlaque{display:flex;align-items:stretch;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 16px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;min-width:0;max-width:min(200px, calc(100% - 168px));pointer-events:auto}
+  #advanceTime #visualDate{font:700 clamp(11px,3.2cqw,13px)/1.1 Georgia,serif;color:#1a120c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(9px,2.7cqw,11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;white-space:nowrap}
+  #worldRecord.paperPlaque,#worldMap.paperPlaque{
+    height:var(--hud-journal-h);min-height:var(--hud-journal-h);
+    min-width:72px;padding:0;
+    font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
+    pointer-events:auto;
+  }
+  #worldRecord.paperPlaque .scrollWell,#worldMap.paperPlaque .scrollWell{gap:6px;padding:4px 10px}
+  #worldRecord .paperCorner,#worldMap .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  body.hudOff #hudLayer{display:none}
+  body.chromeOff #spotToggle,body.chromeOff #spotListToggle,body.chromeOff #spotReadout{display:none!important}
+  #spotToggle,#spotListToggle,#spotReadout{
+    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;cursor:pointer;pointer-events:auto;
+  }
+  #spotToggle{top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));min-width:108px;padding:7px 10px}
+  #spotListToggle{top:max(100px, calc(env(safe-area-inset-top, 0px) + 92px));min-width:108px;padding:5px 8px;font-size:11px}
+  #spotReadout{
+    display:none;top:max(136px, calc(env(safe-area-inset-top, 0px) + 128px));
+    left:auto;width:min(228px, calc(100% - 24px));
+    padding:6px 7px 7px;border-radius:6px;cursor:default;font:650 10px/1.3 system-ui,sans-serif;
+  }
+  body.spotListOn #spotReadout{display:block}
+  #spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+  #spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+  #spotReadout .spotEnd{display:flex;justify-content:space-between;align-items:center;gap:4px;margin:3px 0}
+  #spotReadout .spotActs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  #spotReadout button{padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;border:1px solid #9f8e72;border-radius:4px}
+  #spotReadout button.on{background:#241a13;color:#f2e1be}
+</style>
+</head>
+<body class="spotListOn">
+<section id="visualShell">
+  <div class="townScene">
+    <div class="scenePlane" id="scenePlane">
+      <img class="mapArt" id="mapArt" src="./board-inn.jpg" alt="">
+      <div class="pieces lit" id="pieces"></div>
+    </div>
+  </div>
+  <div class="townName"><b id="placeTitle">THE INN</b>
+    <svg class="flourish" viewBox="0 0 180 18" fill="none" aria-hidden="true">
+      <path d="M8 9h62M110 9h62" stroke="#3a2814" stroke-width="1" opacity=".7"/>
+      <path d="M78 9c6-7 18-7 24 0c-6 7-18 7-24 0z" stroke="#3a2814" stroke-width="1" fill="none" opacity=".8"/>
+      <circle cx="90" cy="9" r="1.4" fill="#3a2814"/>
+    </svg>
+  </div>
+  <div id="hudLayer" class="townHud">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING · YEAR 1</span></span></span>
+      </button>
+      <div class="worldActions">
+        <a id="worldMap" class="scrollPlaque paperPlaque" href="../lythmere-hex-pieces/index.html?list=0&chrome=0" style="text-decoration:none">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Map</span></span>
+        </a>
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Journal</span><img class="paperSeal" src="../isometric-town/hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <button type="button" id="spotToggle">Hide HUD</button>
+  <button type="button" id="spotListToggle">Hide list</button>
+  <div id="spotReadout"></div>
+</section>
+<script>
+(function(){
+  const PERSON = "../../assets/npcs/tomas_standee_bevel_v19.png";
+  const LOCS = {
+    Inn: {
+      title:"THE INN", board:"./board-inn.jpg",
+      pieces:[
+        {id:"Hearth", src:"./piece-inn-hearth.png", x:62, y:64, w:46, anchor:78, kind:"terrain"},
+        {id:"Bar", src:"./piece-inn-bar.png", x:28, y:42, w:40, anchor:78, kind:"terrain"},
+        {id:"Tomas", src:PERSON, x:20, y:74, w:16, anchor:96, kind:"person"}
+      ]
+    },
+    Market: {
+      title:"THE MARKET", board:"./board-market.jpg",
+      pieces:[
+        {id:"Stall", src:"./piece-market.png", x:52, y:54, w:52, anchor:70, kind:"terrain"},
+        {id:"Tomas", src:PERSON, x:22, y:72, w:16, anchor:96, kind:"person"}
+      ]
+    },
+    Club: {
+      title:"THE CLUB", board:"./board-club.jpg",
+      pieces:[
+        {id:"Tables", src:"./piece-club-tables.png", x:52, y:58, w:58, anchor:78, kind:"terrain"},
+        {id:"Tomas", src:PERSON, x:20, y:72, w:16, anchor:96, kind:"person"}
+      ]
+    },
+    Riverside: {
+      title:"RIVERSIDE", board:"./board-riverside.jpg",
+      pieces:[
+        {id:"Dock", src:"./piece-riverside.png", x:48, y:62, w:54, anchor:62, kind:"terrain"},
+        {id:"Tomas", src:PERSON, x:80, y:70, w:14, anchor:96, kind:"person"}
+      ]
+    }
+  };
+  const KEY = "cardRoadLocationPieces";
+  const host = document.getElementById("pieces");
+  const plane = document.getElementById("scenePlane");
+  const mapArt = document.getElementById("mapArt");
+  const readout = document.getElementById("spotReadout");
+  let loc = "Inn";
+  let selected = null;
+  let drag = null;
+  let listOn = true;
+
+  function locData(){ return LOCS[loc]; }
+  function find(id){ return locData().pieces.find(p => p.id === id); }
+  function elFor(id){ return host.querySelector('.piece[data-id="'+id+'"]'); }
+  function dump(){
+    const out = {};
+    Object.keys(LOCS).forEach(name => {
+      out[name] = LOCS[name].pieces.map(p => ({id:p.id, x:+p.x, y:+p.y, w:+p.w, anchor:+p.anchor}));
+    });
+    return out;
+  }
+  function load(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (!raw) return;
+      Object.keys(LOCS).forEach(name => {
+        const saved = raw[name];
+        if (!Array.isArray(saved)) return;
+        LOCS[name].pieces.forEach(p => {
+          const s = saved.find(x => x.id === p.id);
+          if (!s) return;
+          p.x = +s.x; p.y = +s.y; p.w = +s.w; p.anchor = +s.anchor;
+        });
+      });
+    }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify(dump())); }catch(e){}
+  }
+  function apply(el, p){
+    el.style.setProperty("--x", p.x.toFixed(1)+"%");
+    el.style.setProperty("--y", p.y.toFixed(1)+"%");
+    el.style.setProperty("--pw", p.w.toFixed(1)+"%");
+    el.style.setProperty("--anchor", p.anchor+"%");
+    el.style.setProperty("--z", String(10 + Math.round(p.y)));
+  }
+  function draw(){
+    const L = locData();
+    mapArt.src = L.board;
+    document.getElementById("placeTitle").textContent = L.title;
+    host.textContent = "";
+    L.pieces.slice().sort((a,b)=>a.y-b.y).forEach(p => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "piece" + (p.id===selected ? " is-sel" : "");
+      b.dataset.id = p.id;
+      b.dataset.kind = p.kind;
+      apply(b, p);
+      const img = document.createElement("img");
+      img.src = p.src; img.alt = ""; img.draggable = false;
+      b.append(img);
+      b.addEventListener("pointerdown", onDown);
+      host.append(b);
+    });
+    paint();
+  }
+  function paint(){
+    readout.innerHTML = "<b>Place "+loc+"</b><p class=\"spotHint\">Empty board + pieces. Drag, +/−, Copy. People stand on the board.</p>" +
+      Object.keys(LOCS).map(name => `<button type="button" data-loc="${name}" class="${name===loc?"on":""}">${name}</button>`).join(" ") +
+      locData().pieces.map(p => {
+        const on = p.id===selected ? " style=\"color:#7a1c18\"" : "";
+        return `<div class="spotEnd" data-pick="${p.id}"${on}><span>${p.id}</span><code>${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.w.toFixed(1)}</code></div>`;
+      }).join("") +
+      `<div class="spotActs">
+        <button type="button" data-dir="-1">−</button>
+        <button type="button" data-dir="1">+</button>
+        <button type="button" id="spotCopy">Copy</button>
+        <button type="button" id="spotReset">Reset</button>
+      </div>`;
+  }
+  function cssText(){
+    return "/* Location interiors — x y = base centre %, w = width % */\n" +
+      Object.keys(LOCS).map(name => {
+        const bits = LOCS[name].pieces.map(p =>
+          `{id:"${p.id}", x:${p.x.toFixed(1)}, y:${p.y.toFixed(1)}, w:${p.w.toFixed(1)}, anchor:${p.anchor}}`
+        ).join(", ");
+        return name + ": [" + bits + "]";
+      }).join("\n");
+  }
+  function bump(dir){
+    const p = selected ? find(selected) : locData().pieces[0];
+    if (!p) return;
+    selected = p.id;
+    const lo = p.kind === "person" ? 10 : 22;
+    const hi = p.kind === "person" ? 28 : 70;
+    p.w = Math.max(lo, Math.min(hi, p.w + dir * 1.5));
+    apply(elFor(p.id), p);
+    save(); paint();
+  }
+  function pct(cx,cy){
+    const r = plane.getBoundingClientRect();
+    return {x:((cx-r.left)/r.width)*100, y:((cy-r.top)/r.height)*100};
+  }
+  function onDown(e){
+    const el = e.currentTarget;
+    const p = find(el.dataset.id);
+    if (!p) return;
+    e.preventDefault();
+    selected = p.id;
+    const pos = pct(e.clientX, e.clientY);
+    drag = {id:p.id, pid:e.pointerId, grabX:p.x-pos.x, grabY:p.y-pos.y};
+    el.classList.add("is-drag");
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    paint();
+  }
+  window.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId!==drag.pid) return;
+    const p = find(drag.id), el = elFor(drag.id);
+    if (!p||!el) return;
+    const pos = pct(e.clientX, e.clientY);
+    p.x = Math.max(8, Math.min(92, pos.x+drag.grabX));
+    p.y = Math.max(12, Math.min(90, pos.y+drag.grabY));
+    apply(el, p);
+  });
+  window.addEventListener("pointerup", e => {
+    if (!drag || e.pointerId!==drag.pid) return;
+    const el = elFor(drag.id);
+    if (el) el.classList.remove("is-drag");
+    drag = null; save(); paint();
+  });
+  plane.addEventListener("wheel", e => {
+    const el = e.target.closest(".piece");
+    if (!el) return;
+    e.preventDefault();
+    selected = el.dataset.id;
+    bump(e.deltaY < 0 ? 1 : -1);
+  }, {passive:false});
+  readout.addEventListener("click", e => {
+    const go = e.target.closest("[data-loc]");
+    if (go){ loc = go.dataset.loc; selected = null; draw(); return; }
+    const pick = e.target.closest("[data-pick]");
+    if (pick){ selected = pick.dataset.pick; paint(); return; }
+    const dir = e.target.closest("[data-dir]");
+    if (dir){ bump(+dir.dataset.dir); return; }
+    if (e.target.id === "spotReset"){
+      localStorage.removeItem(KEY);
+      location.reload();
+      return;
+    }
+    if (e.target.id === "spotCopy"){
+      const text = cssText();
+      navigator.clipboard.writeText(text).then(() => {
+        e.target.textContent = "Copied";
+        setTimeout(() => e.target.textContent = "Copy", 1200);
+      }).catch(() => window.prompt("Copy slots", text));
+    }
+  });
+  document.getElementById("spotListToggle").addEventListener("click", () => {
+    listOn = !listOn;
+    document.body.classList.toggle("spotListOn", listOn);
+    document.getElementById("spotListToggle").textContent = listOn ? "Hide list" : "Show list";
+  });
+  document.getElementById("spotToggle").addEventListener("click", () => {
+    const off = document.body.classList.toggle("hudOff");
+    document.getElementById("spotToggle").textContent = off ? "Show HUD" : "Hide HUD";
+  });
+  const asked = new URLSearchParams(location.search);
+  if (LOCS[asked.get("loc")]) loc = asked.get("loc");
+  if (asked.get("hud")==="0" || asked.get("hud")==="off"){
+    document.body.classList.add("hudOff");
+    document.getElementById("spotToggle").textContent = "Show HUD";
+  }
+  if (asked.get("list")==="0"){
+    listOn = false;
+    document.body.classList.remove("spotListOn");
+    document.getElementById("spotListToggle").textContent = "Show list";
+  }
+  if (asked.get("chrome")==="0") document.body.classList.add("chromeOff");
+  load();
+  draw();
+})();
+</script>
+</body>
+</html>

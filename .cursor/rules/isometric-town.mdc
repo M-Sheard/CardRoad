@@ -1,56 +1,12 @@
 ---
-description: Isometric painted town; HUD overlay on every map; oak standees look-test
+description: Superseded — location screens are tabletop board + 3D pieces
 alwaysApply: true
 ---
 
-# Display language lock (isometric town)
+# Isometric town (superseded)
 
-Marc locked this (Oct 2026). Card Road’s **world** is a 3/4 isometric painted English town you walk. Canonical mock: `mockups/isometric-town/` (hero still `mockups/display-more/07-isometric-town.jpg`).
+Marc locked **tabletop location screens** instead (Oct 2026). Follow `tabletop-locations.mdc` and `mockups/lythmere-hex-pieces/`.
 
-Live `index.html` still uses street paintings + oak standees. That shell is **retired for new work**. Do not add locations, NPCs, or furniture layers in the old 2.5D standee language. Do not generate more display-style pages.
+Do **not** generate isometric overworlds, walkable streets, or tiny walking avatars. `mockups/isometric-town/` is a standby look-test, not new work.
 
-## What people and places are
-
-- **You** = a tiny cream-coat walking avatar on the map (or later a standee if Marc picks that).
-- **NPCs** = look-test: existing oak-bevel standees (Tomas, Nessa, Bram, Elira, Beph) on the isometric street. Retint the **town**, not the figures. Tiny walkers are parked until Marc picks.
-- **Places** = buildings and paths on the map. Tap / walk to Market, Inn, Mill, Quay, Club.
-- **Challenge** = walk up to someone; cream terms plaque (Challenge / Back). Same match rules as now.
-- **Match / binder / journal / claim** = keep the live leftover-space gilt screens. Do not invent a new isometric parlour unless Marc asks.
-
-## Town HUD (locked for every map screen)
-
-The date / Journal / location strip is a **separate overlay**, not painted into the map. Reuse `mockups/isometric-town/town-hud.html` (hardware `hud/paper_corner.png` + `hud/paper_seal.png`). It sits on whatever scene is underneath and resizes with the viewport. Do not bake HUD into location jpgs. Do not bring back `date_frame_*` scrolls.
-
-## Town stage (locked size + plug-in maps)
-
-Every town screen uses the **phone crop**, not a laptop-wide `cover`:
-
-- Stage: **390px × 9:16** on a laptop (`place.html` `#visualShell`); on a real phone it fills `100dvh`
-- Paintings: **720×1280** jpg/webp, `center / cover` inside that crop
-- People: four stall `%` slots on `.townScene` (front larger), plus a **toggleable 5th slot** — Beph (`beph_standee_bevel_v3.png`) for merchant / traveller maps. Place in `mockups/isometric-town/standee-fit/place.html`. Slots save **per location**; Beph on/off saves per location too.
-- Plug-in map: drop a painting on the phone, or put `mockups/isometric-town/scenes/<location>.jpg` (`riverside.jpg`, `inn.jpg`, `club.jpg`). Market’s locked paint is `standee-fit/bg-b-jewel.jpg`. **Close** (`bg-b-jewel-close.jpg`) is the same painting cropped tighter so larger oak cutouts can match the stalls — look-test, not a new street camera.
-
-Do not invent a new pin/grid widget. Do not restretch the map to the monitor.
-
-## Art
-
-Same oil-painted cottage textures as the isometric mock: cobbles, river, slate roofs. No gold coins, gems, HP bars, gacha HUD, or virtual-joystick as a product requirement (tap-to-walk is enough).
-
-Marc is look-testing **oak-bevel NPC standees** on this map by retinting the **town**, not the figures (`mockups/isometric-town/standee-fit/`). Do not invent a new standee construction.
-
-Card faces stay **17d earthy Mary Blair gouache**. Match cards stay 5:7 gilt with N/E/S/W.
-
-## Standby, not competing
-
-- Board-and-pawns: `mockups/board-pawns/` (and copies in `mockups/iso-vs-board/`)
-- View-Master: `mockups/standby/view-master/`
-
-Do not build those unless Marc reopens them.
-
-## Do not
-
-- Put people inside a close-up street painting with occlusion furniture / railings / pads
-- Generate a new oak-standee character
-- Use the Mark spots overlay for a **new** isometric location (that tool is for the old shell)
-- Split `index.html` just to start the isometric rebuild — say so first
-- Change Baseline V1, Claim One, or calendar to “make isometric work”
+Live `index.html` street paintings stay until a rebuild is asked.

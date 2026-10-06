@@ -1,15 +1,17 @@
 ---
-description: Oak standees are the live prototype only — new town work is isometric walkers
+description: Oak standees stay on live streets; new location screens use keyed figures on a flat board
 alwaysApply: true
 ---
 
-# NPC standees (live prototype only)
+# NPC figures on location screens
 
-Marc locked **isometric town** as the display language (`isometric-town.mdc`). New characters in the world are **tiny walking avatars**, not oak boards.
+New location screens are a flat board with 3D pieces (`tabletop-locations.mdc`). People are **separate keyed figures sitting on that board**, not painted into it, and **not** on the overworld map.
 
-The live game still shows Tomas-bevel standees (`assets/npcs/tomas_standee_bevel_v19.png` and the matching Nessa/Bram/Elira/Beph cutouts). Leave those in `index.html` until the isometric rebuild replaces them. Do not generate **new** standees, Mark-spots locations, or furniture-occlusion layers.
+Do not generate isometric walkers. Do not put people on hex terrain bases (those bases are for buildings).
 
-If Marc explicitly asks to patch the **current** live town before the rebuild, keep the old construction:
+The live game still shows Tomas-bevel standees (`assets/npcs/tomas_standee_bevel_v19.png` and the matching Nessa/Bram/Elira/Beph cutouts). Leave those in `index.html` until the location rebuild. If a new location mock needs a person before Marc picks a new construction, reuse those oak cutouts on the board.
+
+If Marc explicitly asks to patch the **current** live streets before the rebuild, keep the old oak construction:
 
 - Painted figure on a chunky routed oak board
 - Wood-grain bevel, rectangular stained-wood foot

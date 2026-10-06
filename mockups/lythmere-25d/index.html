@@ -1,0 +1,289 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Lythmere — 2.5D town screen</title>
+<style>
+  html,body{
+    margin:0;min-height:100%;background:#1c1612;color:#e8dcc4;
+    font:14px/1.4 Georgia,serif;
+  }
+  body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px 0}
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;
+    border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block;overflow:hidden}
+    body{padding:0;gap:0}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+    .devBar{display:none}
+  }
+
+  /* ---- 2.5D scene ----
+     The plane keeps the art's own 9:16 geometry and covers whatever shape the
+     phone is, so landmark anchors stay glued to the buildings on every handset. */
+  .townScene{position:absolute;inset:0;z-index:0;overflow:hidden;background:#6f8a4a;touch-action:none}
+  .scenePlane{
+    position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
+    width:max(100cqw, calc(100cqh * 9 / 16));
+    height:max(100cqh, calc(100cqw * 16 / 9));
+  }
+  .scenePlane img{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
+
+  /* Keeps the HUD legible over bright grass without dimming the painting. */
+  .sceneVeil{
+    position:absolute;inset:0;z-index:5;pointer-events:none;
+    background:
+      linear-gradient(180deg, rgba(28,20,12,.34) 0%, rgba(28,20,12,.10) 9%, rgba(28,20,12,0) 17%),
+      linear-gradient(0deg,   rgba(28,20,12,.34) 0%, rgba(28,20,12,.10) 9%, rgba(28,20,12,0) 17%);
+  }
+
+  /* ---- landmark anchors ---- */
+  .landmarks{position:absolute;inset:0;z-index:20}
+  .landmark{
+    position:absolute;transform:translate(-50%,-50%);
+    width:var(--lm-w,26%);aspect-ratio:1/.62;
+    display:grid;place-items:end center;
+    background:none;padding:0;pointer-events:auto;
+  }
+  .landmark::before{ /* warm pool of light on the ground under the model */
+    content:"";position:absolute;inset:0;border-radius:50%;
+    background:radial-gradient(ellipse at center, rgba(255,226,160,.46), rgba(255,210,130,.16) 52%, rgba(255,200,120,0) 72%);
+    opacity:0;transition:opacity .18s ease;
+  }
+  .landmark::after{ /* thin gilt ring so the tap target reads as a place */
+    content:"";position:absolute;inset:14% 6%;border-radius:50%;
+    border:1.5px solid rgba(255,235,190,.62);
+    box-shadow:0 0 10px rgba(255,220,150,.35), inset 0 0 12px rgba(255,225,165,.22);
+    opacity:0;transform:scale(.94);transition:opacity .18s ease, transform .18s ease;
+  }
+  .landmark:hover::before,.landmark:focus-visible::before,.landmark.on::before{opacity:1}
+  .landmark:hover::after,.landmark:focus-visible::after,.landmark.on::after{opacity:1;transform:scale(1)}
+
+  .lmTag{
+    position:relative;z-index:2;transform:translateY(38%);
+    padding:3px 9px;border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 3px 7px rgba(0,0,0,.45);
+    font:800 clamp(8px,2.5cqw,10px)/1 Georgia,serif;
+    letter-spacing:.09em;text-transform:uppercase;color:#1a120c;
+    white-space:nowrap;text-shadow:0 1px 0 rgba(255,246,220,.8);
+  }
+  .lmTag::after{ /* little pin stem down to the ground */
+    content:"";position:absolute;left:50%;top:100%;
+    width:1px;height:7px;margin-left:-.5px;
+    background:linear-gradient(180deg,#8a6a40,rgba(138,106,64,0));
+  }
+  .landmarks.quiet .lmTag{opacity:0;transition:opacity .18s ease}
+  .landmarks.quiet .landmark:hover .lmTag,
+  .landmarks.quiet .landmark:focus-visible .lmTag,
+  .landmarks.quiet .landmark.on .lmTag{opacity:1}
+
+  /* ---- HUD (shared paper-plaque chrome) ---- */
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;flex-direction:row;flex-wrap:nowrap;
+    align-items:flex-start;justify-content:space-between;gap:10px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldActions{flex:0 0 auto;display:flex}
+  .scrollPlaque{display:flex;flex-direction:row;flex-wrap:nowrap;align-items:stretch;gap:0;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;margin:0;padding:0 10px;border:0;background:none}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 16px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;pointer-events:none;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;pointer-events:none;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;width:auto;min-width:0;max-width:min(264px, calc(100% - 118px));pointer-events:auto}
+  #advanceTime #visualDate{font:700 clamp(11px, 3.2cqw, 13px)/1.1 Georgia,serif;color:#1a120c;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(9px, 2.7cqw, 11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #worldRecord.paperPlaque{height:var(--hud-journal-h);min-height:var(--hud-journal-h);min-width:min(118px,34cqw);padding:0;gap:0;font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;pointer-events:auto}
+  #worldRecord.paperPlaque .scrollWell{gap:6px;padding:4px 12px 4px 14px}
+  #worldRecord .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  .locationStrip.paperPlaque{position:absolute;z-index:32;left:50%;bottom:var(--hud-pad-b);width:min(620px,calc(100% - 24px));transform:translateX(-50%);padding:0;pointer-events:auto}
+  .locationStrip.paperPlaque .scrollWell{padding:4px 12px 4px 28px}
+  .locationStrip .paperSeal-left{position:absolute;left:-8px;top:50%;transform:translateY(-50%);width:var(--hud-seal);height:var(--hud-seal);object-fit:contain;z-index:6;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));pointer-events:none}
+  .locationWell{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));align-items:stretch;height:100%;padding:0;gap:0}
+  .locationWell button{position:relative;min-width:0;min-height:0;height:100%;margin:0;padding:8px 4px;color:#3d2b1a;border-right:1px solid rgba(90,62,38,.22);font:700 clamp(8px,2.4cqw,11px)/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,244,214,.7);pointer-events:auto}
+  .locationWell button:last-child{border-right:0}
+  .locationWell button.active{color:#1a120c;font-weight:800}
+
+  /* ---- look-test controls (not part of the screen) ---- */
+  .devBar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px}
+  .devBar button{
+    padding:6px 11px;border:1px solid #5d472f;border-radius:3px;
+    background:#2b2218;color:#d9c9a8;font:600 12px/1 Georgia,serif;
+  }
+  .devBar button.active{background:#f2e1bd;color:#2b2016;border-color:#c4a06a}
+</style>
+</head>
+<body>
+
+<section id="visualShell">
+  <div class="townScene">
+    <div class="scenePlane">
+      <img id="sceneArt" src="./concepts/v1-backdrop-table.jpg" alt="Lythmere as a 2.5D scene">
+      <div class="landmarks" id="landmarks"></div>
+    </div>
+    <div class="sceneVeil" aria-hidden="true"></div>
+  </div>
+
+  <div id="hudLayer" class="townHud">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING · YEAR 1</span></span></span>
+      </button>
+      <div class="worldActions">
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button" aria-label="Open journal">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span id="worldRecordLabel">Journal</span><img class="paperSeal" src="../isometric-town/hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+
+    <nav class="locationStrip scrollPlaque paperPlaque" aria-label="Lythmere locations">
+      <span class="paperCorners" aria-hidden="true">
+        <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+      </span>
+      <img class="paperSeal paperSeal-left" src="../isometric-town/hud/paper_seal.png" alt="">
+      <div class="scrollWell locationWell" id="locationWell">
+        <button type="button" data-loc="Market">Market</button>
+        <button type="button" data-loc="Riverside">Riverside</button>
+        <button type="button" data-loc="Inn">Inn</button>
+        <button type="button" data-loc="Club">Club</button>
+      </div>
+    </nav>
+  </div>
+</section>
+
+<div class="devBar" id="artBar"></div>
+<div class="devBar">
+  <button type="button" id="tagToggle">Tags: always</button>
+</div>
+
+<script>
+/* Each option carries its own landmark anchors, measured as a % of the 9:16
+   painting, so swapping the art keeps the tags on the buildings.
+   V1-V6 vary the CAMERA. A-H vary only the paint, all on one aerial camera. */
+const ART = {
+  "concepts/v1-backdrop-table":   { label:"V1 · backdrop + table", spots:{ Inn:[24,35,26], Market:[75,39,26], Club:[26,57,26], Riverside:[73,70,26] } },
+  "concepts/v5-close-iso-square": { label:"V5 · town square",      spots:{ Inn:[28,29,26], Market:[76,32,24], Club:[23,60,26], Riverside:[78,63,24] } },
+  "concepts/v2-street-level":     { label:"V2 · street level",     spots:{ Inn:[19,52,28], Market:[78,58,24], Club:[57,42,24], Riverside:[86,46,20] } },
+  "concepts/v4-floating-slab":    { label:"V4 · floating slab",    spots:{ Inn:[32,26,24], Market:[69,32,24], Club:[26,46,24], Riverside:[76,53,24] } },
+  "concepts/v3-paper-theatre":    { label:"V3 · paper theatre",    spots:{ Inn:[80,47,24], Market:[21,49,24], Club:[78,68,24], Riverside:[31,75,24] } },
+  "concepts/v6-shelf-of-four":    { label:"V6 · four pieces",      spots:{ Inn:[50,22,30], Market:[50,42,30], Club:[50,62,30], Riverside:[50,78,30] } },
+  "g-safe-diorama":{ label:"aerial G",          spots:{ Inn:[34,28,30], Market:[72,33,28], Club:[28,52,30], Riverside:[72,59,28] } },
+  "h-safe-flocked":{ label:"aerial H",          spots:{ Inn:[28,25,28], Market:[73,27,28], Club:[25,50,28], Riverside:[70,58,28] } }
+};
+
+const art       = document.getElementById("sceneArt");
+const marks     = document.getElementById("landmarks");
+const artBar    = document.getElementById("artBar");
+const tagToggle = document.getElementById("tagToggle");
+const asked = new URLSearchParams(location.search).get("art");
+let current = (asked && ART[asked]) ? asked : "concepts/v1-backdrop-table";
+
+function drawLandmarks(key){
+  const spots = ART[key].spots;
+  marks.textContent = "";
+  for (const name of ["Inn","Market","Club","Riverside"]){
+    const [x,y,w] = spots[name];
+    const b = document.createElement("button");
+    b.type = "button";
+    b.className = "landmark";
+    b.dataset.loc = name;
+    b.style.left = x + "%";
+    b.style.top  = y + "%";
+    b.style.setProperty("--lm-w", w + "%");
+    b.setAttribute("aria-label", "Go to the " + name);
+    const tag = document.createElement("span");
+    tag.className = "lmTag";
+    tag.textContent = name;
+    b.append(tag);
+    marks.append(b);
+  }
+}
+
+function showArt(key){
+  current = key;
+  art.src = "./" + key + ".jpg";
+  drawLandmarks(key);
+  artBar.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.art === key));
+  select(null);
+}
+
+function select(name){
+  marks.querySelectorAll(".landmark").forEach(b => b.classList.toggle("on", b.dataset.loc === name));
+  document.querySelectorAll("#locationWell button").forEach(b => b.classList.toggle("active", b.dataset.loc === name));
+}
+
+for (const [key, meta] of Object.entries(ART)){
+  const b = document.createElement("button");
+  b.type = "button";
+  b.dataset.art = key;
+  b.textContent = meta.label;
+  b.addEventListener("click", () => showArt(key));
+  artBar.append(b);
+}
+
+marks.addEventListener("click", e => {
+  const hit = e.target.closest(".landmark");
+  if (hit) select(hit.dataset.loc);
+});
+document.getElementById("locationWell").addEventListener("click", e => {
+  const hit = e.target.closest("button");
+  if (hit) select(hit.dataset.loc);
+});
+tagToggle.addEventListener("click", () => {
+  const quiet = marks.classList.toggle("quiet");
+  tagToggle.textContent = quiet ? "Tags: on tap" : "Tags: always";
+});
+
+showArt(current);
+</script>
+</body>
+</html>
