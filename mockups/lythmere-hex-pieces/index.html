@@ -2,6 +2,14 @@
 <html lang="en">
 <head>
 <meta charset="utf-8">
+<script>
+(function(){
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+  var b = document.createElement("base");
+  b.href = "https://raw.githubusercontent.com/M-Sheard/CardRoad/cursor/lythmere-25d-screen-12f4/mockups/lythmere-hex-pieces/";
+  document.head.appendChild(b);
+})();
+</script>
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <title>Lythmere — 3D landmarks on a flat map</title>
 <style>
