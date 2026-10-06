@@ -3,10 +3,10 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
-<title>Lythmere — approved hex map with raised 3D pieces</title>
+<title>Lythmere — 3D landmarks on a flat map</title>
 <style>
   html,body{margin:0;min-height:100%;background:#17120d;color:#e8dcc4;font:14px/1.4 Georgia,serif}
-  body{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;padding:18px 0}
+  body{display:flex;align-items:center;justify-content:center;min-height:100dvh}
   button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
 
   #visualShell{
@@ -27,12 +27,9 @@
   }
   @media (max-width:430px){
     html,body{display:block;overflow:hidden}
-    body{padding:0;gap:0}
     #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
-    .devBar{display:none}
   }
 
-  /* The signed-off hex map is the flat table surface. Nothing repaints it. */
   .townScene{position:absolute;inset:0;z-index:0;overflow:hidden;background:#3b3122;touch-action:none}
   .scenePlane{
     position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);
@@ -41,26 +38,31 @@
   }
   .mapArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
 
-  /* Each landmark is a separate keyed model standing on the map. */
   .piece{
     position:absolute;padding:0;background:none;border:0;
     width:var(--pw);
+    left:var(--x); top:var(--y);
     transform:translate(-50%, calc(-1 * var(--anchor)));
-    transition:opacity .2s ease, filter .2s ease;
+    z-index:var(--z);
+    cursor:grab; touch-action:none;
+    user-select:none; -webkit-user-drag:none;
     pointer-events:auto;
   }
-  .piece img{display:block;width:100%;height:auto}
-  .pieces.lit .piece img{
-    filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55));
-  }
-  .piece::before{ /* tight pool of shade so the base reads as touching the map */
+  .piece img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none}
+  .pieces.lit .piece img{filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55))}
+  .piece::before{
     content:"";position:absolute;left:2%;right:-4%;bottom:-3%;height:14%;
     border-radius:50%;background:radial-gradient(ellipse at center, rgba(14,9,4,.6), rgba(14,9,4,0) 68%);
     z-index:-1;
   }
-  .pieces.bare .piece{opacity:0;pointer-events:none}
+  .piece.is-drag{cursor:grabbing;z-index:80!important}
+  .piece.is-sel img{filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55)) brightness(1.08)}
+  .piece.is-sel::after{
+    content:"";position:absolute;inset:6% 10% 4%;
+    border:2px solid #f2e1be;border-radius:6px;pointer-events:none;
+  }
+  body.piecesOff .piece{opacity:0;pointer-events:none}
 
-  /* Matches the serif place names inked into the signed-off map. */
   .mapLabel{
     position:absolute;left:46%;bottom:-11%;transform:translateX(-50%);
     font:400 clamp(11px,3.4cqw,15px)/1 Georgia,"Times New Roman",serif;
@@ -69,9 +71,7 @@
     text-shadow:0 0 3px rgba(240,226,188,.95), 0 0 9px rgba(240,226,188,.85), 0 1px 0 rgba(255,246,214,.7);
     pointer-events:none;
   }
-  .piece:hover img,.piece:focus-visible img{filter:drop-shadow(5px 9px 7px rgba(18,12,6,.62)) brightness(1.1)}
 
-  /* HUD — same paper chrome as the rest of the town */
   #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
   .worldTopbar{
     position:absolute;left:0;right:0;top:0;z-index:40;
@@ -98,10 +98,10 @@
   .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
   .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
   .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
-  #advanceTime.paperPlaque{flex:1 1 auto;min-width:0;max-width:min(264px, calc(100% - 118px));pointer-events:auto}
+  #advanceTime.paperPlaque{flex:1 1 auto;min-width:0;max-width:min(264px, calc(100% - 118px))}
   #advanceTime #visualDate{font:700 clamp(11px,3.2cqw,13px)/1.1 Georgia,serif;color:#1a120c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
   #advanceTime #visualPhase{font:500 clamp(9px,2.7cqw,11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;white-space:nowrap}
-  #worldRecord.paperPlaque{height:var(--hud-journal-h);min-height:var(--hud-journal-h);min-width:min(118px,34cqw);font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;pointer-events:auto}
+  #worldRecord.paperPlaque{height:var(--hud-journal-h);min-height:var(--hud-journal-h);min-width:min(118px,34cqw);font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c}
   #worldRecord.paperPlaque .scrollWell{gap:6px;padding:4px 12px 4px 14px}
   #worldRecord .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
   .locationStrip.paperPlaque{position:absolute;z-index:32;left:50%;bottom:var(--hud-pad-b);width:min(620px,calc(100% - 24px));transform:translateX(-50%);pointer-events:auto}
@@ -110,18 +110,47 @@
   .locationWell button{position:relative;min-width:0;height:100%;padding:8px 4px;color:#3d2b1a;border-right:1px solid rgba(90,62,38,.22);font:700 clamp(8px,2.4cqw,11px)/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,244,214,.7);pointer-events:auto}
   .locationWell button:last-child{border-right:0}
   .locationWell button.active{color:#1a120c;font-weight:800}
+  body.hudOff #hudLayer{display:none}
 
-  .devBar{display:flex;flex-wrap:wrap;gap:6px;justify-content:center;max-width:520px}
-  .devBar button{padding:6px 11px;border:1px solid #5d472f;border-radius:3px;background:#2b2218;color:#d9c9a8;font:600 12px/1 Georgia,serif}
-  .devBar button.active{background:#f2e1bd;color:#2b2016;border-color:#c4a06a}
+  #spotToggle,#spotListToggle,#spotReadout{
+    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;cursor:pointer;pointer-events:auto;
+  }
+  #spotToggle{
+    top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));
+    min-width:108px;padding:7px 10px;
+  }
+  #spotListToggle{
+    top:max(100px, calc(env(safe-area-inset-top, 0px) + 92px));
+    min-width:108px;padding:5px 8px;font-size:11px;
+  }
+  #spotReadout{
+    display:none;top:max(136px, calc(env(safe-area-inset-top, 0px) + 128px));
+    left:auto;width:min(228px, calc(100% - 24px));bottom:auto;
+    padding:6px 7px 7px;border-radius:6px;cursor:default;
+    font:650 10px/1.3 system-ui,sans-serif;
+  }
+  body.spotListOn #spotReadout{display:block}
+  #spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+  #spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+  #spotReadout code{font:700 10px/1.35 ui-monospace,Consolas,monospace}
+  #spotReadout .spotEnd{display:flex;justify-content:space-between;align-items:center;gap:4px;margin:3px 0}
+  #spotReadout .spotActs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  #spotReadout button{
+    padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;
+    border:1px solid #9f8e72;border-radius:4px;cursor:pointer;
+  }
+  #spotReadout button.on{background:#241a13;color:#f2e1be}
 </style>
 </head>
-<body>
+<body class="spotListOn">
 
 <section id="visualShell">
   <div class="townScene">
-    <div class="scenePlane">
-      <img class="mapArt" id="mapArt" src="./map-bare-grid.jpg" alt="The Lythmere hex map">
+    <div class="scenePlane" id="scenePlane">
+      <img class="mapArt" id="mapArt" src="./map-plain.jpg" alt="The Lythmere map">
       <div class="pieces lit" id="pieces"></div>
     </div>
   </div>
@@ -166,131 +195,226 @@
       </div>
     </nav>
   </div>
+
+  <button type="button" id="spotToggle">Hide HUD</button>
+  <button type="button" id="spotListToggle">Hide list</button>
+  <div id="spotReadout"></div>
 </section>
 
-<div class="devBar" id="mapBar"></div>
-<div class="devBar">
-  <button type="button" id="bareToggle">Pieces: on</button>
-  <button type="button" id="litToggle" class="active">Shadows: on</button>
-  <button type="button" id="smaller">Smaller</button>
-  <button type="button" id="bigger">Bigger</button>
-  <span id="readout" style="align-self:center;color:#a3917a;font-size:12px"></span>
-</div>
-
 <script>
-/* x / y are where the model's base centre lands on the map, as a % of the
-   painting. anchor is how far down its own image that base centre sits, so a
-   tall model rises off the map instead of sinking into it.
-   The bare maps allow free placement. The signed-off map still has its four
-   buildings painted in, so there the pieces have to cover them. */
-const MAPS = {
-  "map-bare-grid": {
-    label: "bare map · strong grid",
-    labels: true,
-    pieces: [
-      { loc:"Inn",       x:28, y:26, w:36, anchor:72 },
-      { loc:"Club",      x:73, y:36, w:34, anchor:67 },
-      { loc:"Market",    x:27, y:56, w:34, anchor:70 },
-      { loc:"Riverside", x:50, y:77, w:36, anchor:62 }
-    ]
-  },
-  "map-bare-soft": {
-    label: "bare map · soft grid",
-    labels: true,
-    pieces: [
-      { loc:"Inn",       x:28, y:26, w:36, anchor:72 },
-      { loc:"Club",      x:73, y:36, w:34, anchor:67 },
-      { loc:"Market",    x:27, y:56, w:34, anchor:70 },
-      { loc:"Riverside", x:50, y:77, w:36, anchor:62 }
-    ]
-  },
-  "../lythmere-hex-screen/05-empty-aligned": {
-    label: "signed-off map",
-    labels: false,
-    pieces: [
-      { loc:"Inn",       x:23, y:21, w:38, anchor:72 },
-      { loc:"Club",      x:83, y:42, w:36, anchor:67 },
-      { loc:"Market",    x:21, y:48, w:38, anchor:70 },
-      { loc:"Riverside", x:26, y:77, w:40, anchor:62 }
-    ]
+(function(){
+  /* x / y = where the model's base centre lands, as % of the map.
+     w = width of the piece. anchor = how far down its own image that
+     base centre sits, so a tall model rises off the map. */
+  const DEFAULTS = [
+    { loc:"Inn",       x:28, y:26, w:36, anchor:72 },
+    { loc:"Club",      x:73, y:36, w:34, anchor:67 },
+    { loc:"Market",    x:27, y:56, w:34, anchor:70 },
+    { loc:"Riverside", x:50, y:77, w:36, anchor:62 }
+  ];
+  const KEY = "cardRoadLandmarkPieces";
+  const host = document.getElementById("pieces");
+  const plane = document.getElementById("scenePlane");
+  const mapArt = document.getElementById("mapArt");
+  const readout = document.getElementById("spotReadout");
+  const locBtns = [...document.querySelectorAll("#locationWell [data-loc]")];
+  let pieces = clone(DEFAULTS);
+  let selected = "Inn";
+  let drag = null;
+  let gridOn = false;
+  let listOn = true;
+
+  function clone(list){
+    return list.map(p => ({loc:p.loc, x:+p.x, y:+p.y, w:+p.w, anchor:+p.anchor}));
   }
-};
+  function find(loc){ return pieces.find(p => p.loc === loc); }
+  function elFor(loc){ return host.querySelector('.piece[data-loc="'+loc+'"]'); }
 
-const host = document.getElementById("pieces");
-const mapArt = document.getElementById("mapArt");
-const readout = document.getElementById("readout");
-const mapBar = document.getElementById("mapBar");
-let scale = 1;
-let currentMap = "map-bare-grid";
+  function load(){
+    try{
+      const raw = JSON.parse(localStorage.getItem(KEY) || "null");
+      if (raw && Array.isArray(raw.pieces) && raw.pieces.length === 4){
+        pieces = clone(raw.pieces);
+      }
+      if (raw && raw.gridOn) gridOn = true;
+    }catch(e){}
+  }
+  function save(){
+    try{ localStorage.setItem(KEY, JSON.stringify({pieces, gridOn})); }catch(e){}
+  }
 
-function draw(){
-  const map = MAPS[currentMap];
-  host.textContent = "";
-  host.classList.toggle("tagged", map.labels);
-  for (const p of map.pieces){
-    const b = document.createElement("button");
-    b.type = "button";
-    b.className = "piece";
-    b.dataset.loc = p.loc;
-    b.style.left = p.x + "%";
-    b.style.top = p.y + "%";
-    b.style.setProperty("--pw", (p.w * scale).toFixed(1) + "%");
-    b.style.setProperty("--anchor", p.anchor + "%");
-    b.setAttribute("aria-label", "Go to the " + p.loc);
-    const img = document.createElement("img");
-    img.src = "./piece-" + p.loc.toLowerCase() + ".png";
-    img.alt = "";
-    b.append(img);
-    if (map.labels){
+  function apply(el, p){
+    el.style.setProperty("--x", p.x.toFixed(1) + "%");
+    el.style.setProperty("--y", p.y.toFixed(1) + "%");
+    el.style.setProperty("--pw", p.w.toFixed(1) + "%");
+    el.style.setProperty("--anchor", p.anchor + "%");
+    el.style.setProperty("--z", String(10 + Math.round(p.y)));
+  }
+
+  function draw(){
+    host.textContent = "";
+    const order = pieces.slice().sort((a,b) => a.y - b.y);
+    for (const p of order){
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "piece" + (p.loc === selected ? " is-sel" : "");
+      b.dataset.loc = p.loc;
+      b.setAttribute("aria-label", "Place the " + p.loc);
+      apply(b, p);
+      const img = document.createElement("img");
+      img.src = "./piece-" + p.loc.toLowerCase() + ".png";
+      img.alt = "";
+      img.draggable = false;
       const tag = document.createElement("span");
       tag.className = "mapLabel";
       tag.textContent = p.loc;
-      b.append(tag);
+      b.append(img, tag);
+      b.addEventListener("pointerdown", onDown);
+      host.append(b);
     }
-    host.append(b);
+    locBtns.forEach(btn => btn.classList.toggle("active", btn.dataset.loc === selected));
+    mapArt.src = gridOn ? "./map-bare-grid.jpg" : "./map-plain.jpg";
+    paint();
   }
-  readout.textContent = "scale " + scale.toFixed(2) + "×";
-}
 
-function showMap(key){
-  currentMap = key;
-  mapArt.src = "./" + key + ".jpg";
-  mapBar.querySelectorAll("button").forEach(b => b.classList.toggle("active", b.dataset.map === key));
+  function paint(){
+    readout.innerHTML =
+      "<b>Place landmarks</b>" +
+      "<p class=\"spotHint\">Same as placing people: drag a piece, +/− size, Copy. Hex grid is off.</p>" +
+      pieces.map(p => {
+        const on = p.loc === selected ? " style=\"color:#7a1c18\"" : "";
+        return `<div class="spotEnd" data-pick="${p.loc}"${on}><span>${p.loc}</span><code>${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.w.toFixed(1)}</code></div>`;
+      }).join("") +
+      `<div class="spotActs">
+        <button type="button" data-dir="-1">−</button>
+        <button type="button" data-dir="1">+</button>
+        <button type="button" id="spotCopy">Copy</button>
+        <button type="button" id="spotReset">Reset</button>
+        <button type="button" id="spotGrid" class="${gridOn?"on":""}">Hex</button>
+      </div>`;
+  }
+
+  function cssText(){
+    return "/* Lythmere landmarks — x y = base centre %, w = width % */\n" +
+      pieces.map(p =>
+        `{ loc:"${p.loc}", x:${p.x.toFixed(1)}, y:${p.y.toFixed(1)}, w:${p.w.toFixed(1)}, anchor:${p.anchor} }`
+      ).join(",\n");
+  }
+
+  function pct(clientX, clientY){
+    const r = plane.getBoundingClientRect();
+    return {
+      x: ((clientX - r.left) / r.width) * 100,
+      y: ((clientY - r.top) / r.height) * 100
+    };
+  }
+
+  function select(loc){
+    selected = loc;
+    host.querySelectorAll(".piece").forEach(el => el.classList.toggle("is-sel", el.dataset.loc === loc));
+    locBtns.forEach(btn => btn.classList.toggle("active", btn.dataset.loc === loc));
+    paint();
+  }
+
+  function bump(dir){
+    const p = find(selected);
+    if (!p) return;
+    p.w = Math.max(18, Math.min(56, p.w + dir * 1.5));
+    apply(elFor(p.loc), p);
+    save(); paint();
+  }
+
+  function onDown(e){
+    const el = e.currentTarget;
+    const p = find(el.dataset.loc);
+    if (!p) return;
+    e.preventDefault();
+    select(p.loc);
+    const pos = pct(e.clientX, e.clientY);
+    drag = { loc:p.loc, id:e.pointerId, grabX:p.x - pos.x, grabY:p.y - pos.y };
+    el.classList.add("is-drag");
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+  }
+
+  window.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const p = find(drag.loc);
+    const el = elFor(drag.loc);
+    if (!p || !el) return;
+    const pos = pct(e.clientX, e.clientY);
+    p.x = Math.max(8, Math.min(92, pos.x + drag.grabX));
+    p.y = Math.max(10, Math.min(90, pos.y + drag.grabY));
+    apply(el, p);
+  });
+  window.addEventListener("pointerup", e => {
+    if (!drag || e.pointerId !== drag.id) return;
+    const el = elFor(drag.loc);
+    if (el) el.classList.remove("is-drag");
+    drag = null;
+    save(); paint();
+  });
+  window.addEventListener("pointercancel", () => { drag = null; });
+
+  plane.addEventListener("wheel", e => {
+    const el = e.target.closest(".piece");
+    if (!el) return;
+    e.preventDefault();
+    select(el.dataset.loc);
+    bump(e.deltaY < 0 ? 1 : -1);
+  }, {passive:false});
+
+  readout.addEventListener("click", e => {
+    const pick = e.target.closest("[data-pick]");
+    if (pick){ select(pick.dataset.pick); return; }
+    const dir = e.target.closest("[data-dir]");
+    if (dir){ bump(+dir.dataset.dir); return; }
+    if (e.target.id === "spotReset"){
+      pieces = clone(DEFAULTS);
+      gridOn = false;
+      save(); draw();
+      return;
+    }
+    if (e.target.id === "spotGrid"){
+      gridOn = !gridOn;
+      save(); draw();
+      return;
+    }
+    if (e.target.id === "spotCopy"){
+      const text = cssText();
+      navigator.clipboard.writeText(text).then(() => {
+        e.target.textContent = "Copied";
+        setTimeout(() => e.target.textContent = "Copy", 1200);
+      }).catch(() => window.prompt("Copy CSS", text));
+    }
+  });
+
+  locBtns.forEach(btn => btn.addEventListener("click", () => select(btn.dataset.loc)));
+
+  document.getElementById("spotListToggle").addEventListener("click", () => {
+    listOn = !listOn;
+    document.body.classList.toggle("spotListOn", listOn);
+    document.getElementById("spotListToggle").textContent = listOn ? "Hide list" : "Show list";
+  });
+  document.getElementById("spotToggle").addEventListener("click", () => {
+    const off = document.body.classList.toggle("hudOff");
+    document.getElementById("spotToggle").textContent = off ? "Show HUD" : "Hide HUD";
+  });
+
+  const asked = new URLSearchParams(location.search);
+  load();
+  if (asked.get("hud") === "0" || asked.get("hud") === "off"){
+    document.body.classList.add("hudOff");
+    document.getElementById("spotToggle").textContent = "Show HUD";
+  }
+  if (asked.get("list") === "0"){
+    listOn = false;
+    document.body.classList.remove("spotListOn");
+    document.getElementById("spotListToggle").textContent = "Show list";
+  }
+  if (asked.get("pieces") === "0") document.body.classList.add("piecesOff");
+  if (asked.get("grid") === "1") gridOn = true;
   draw();
-}
-
-for (const [key, meta] of Object.entries(MAPS)){
-  const b = document.createElement("button");
-  b.type = "button";
-  b.dataset.map = key;
-  b.textContent = meta.label;
-  b.addEventListener("click", () => showMap(key));
-  mapBar.append(b);
-}
-
-host.addEventListener("click", e => {
-  const hit = e.target.closest(".piece");
-  if (!hit) return;
-  document.querySelectorAll("#locationWell button")
-    .forEach(b => b.classList.toggle("active", b.dataset.loc === hit.dataset.loc));
-});
-
-document.getElementById("bareToggle").addEventListener("click", e => {
-  const bare = host.classList.toggle("bare");
-  e.target.textContent = bare ? "Pieces: off" : "Pieces: on";
-});
-document.getElementById("litToggle").addEventListener("click", e => {
-  const lit = host.classList.toggle("lit");
-  e.target.classList.toggle("active", lit);
-  e.target.textContent = lit ? "Shadows: on" : "Shadows: off";
-});
-document.getElementById("smaller").addEventListener("click", () => { scale = Math.max(.6, scale - .06); draw(); });
-document.getElementById("bigger").addEventListener("click", () => { scale = Math.min(1.6, scale + .06); draw(); });
-
-const asked = new URLSearchParams(location.search);
-showMap(MAPS[asked.get("map")] ? asked.get("map") : "map-bare-grid");
-if (asked.get("hud") === "0") document.getElementById("hudLayer").hidden = true;
-if (asked.get("pieces") === "0") host.classList.add("bare");
+})();
 </script>
 </body>
 </html>
