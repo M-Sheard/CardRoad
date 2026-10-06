@@ -56,8 +56,8 @@
     z-index:-1;
   }
   .piece.is-drag{cursor:grabbing;z-index:80!important}
-  .piece.is-sel img{filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55)) brightness(1.08)}
-  .piece.is-sel::after{
+  body.spotListOn .piece.is-sel img{filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55)) brightness(1.08)}
+  body.spotListOn .piece.is-sel::after{
     content:"";position:absolute;inset:6% 10% 4%;
     border:2px solid #f2e1be;border-radius:6px;pointer-events:none;
   }
@@ -111,6 +111,9 @@
   .locationWell button:last-child{border-right:0}
   .locationWell button.active{color:#1a120c;font-weight:800}
   body.hudOff #hudLayer{display:none}
+  body.chromeOff #spotToggle,
+  body.chromeOff #spotListToggle,
+  body.chromeOff #spotReadout{display:none!important}
 
   #spotToggle,#spotListToggle,#spotReadout{
     position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
@@ -208,7 +211,7 @@
      base centre sits, so a tall model rises off the map. */
   const DEFAULTS = [
     { loc:"Inn",       x:28, y:26, w:36, anchor:72 },
-    { loc:"Club",      x:73, y:36, w:34, anchor:67 },
+    { loc:"Club",      x:70, y:36, w:34, anchor:67 },
     { loc:"Market",    x:27, y:56, w:34, anchor:70 },
     { loc:"Riverside", x:50, y:77, w:36, anchor:62 }
   ];
@@ -413,6 +416,7 @@
   }
   if (asked.get("pieces") === "0") document.body.classList.add("piecesOff");
   if (asked.get("grid") === "1") gridOn = true;
+  if (asked.get("chrome") === "0") document.body.classList.add("chromeOff");
   draw();
 })();
 </script>
