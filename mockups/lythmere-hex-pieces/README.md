@@ -25,7 +25,13 @@ Each was generated on lime `#00FF00` and keyed by `key_pieces.py`. They share
 one camera, one light, and a chunky hexagonal *base* so they still read as
 models you could pick up. The hex *grid* on the map is gone.
 
-## Maps
+## HUD
+
+Date and Journal stay at the top. **LYTHMERE** is an HTML title in the gap
+under those plaques, not painted under them.
+
+The bottom place-name strip is **off** on this screen. The four pieces are
+the navigation. Toggle **Strip** in the placer if you want it back.
 
 | File | Notes |
 | --- | --- |

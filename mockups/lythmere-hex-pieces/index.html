@@ -118,6 +118,25 @@
   .locationWell button{position:relative;min-width:0;height:100%;padding:8px 4px;color:#3d2b1a;border-right:1px solid rgba(90,62,38,.22);font:700 clamp(8px,2.4cqw,11px)/1.05 Georgia,serif;letter-spacing:.04em;text-transform:uppercase;text-shadow:0 1px 0 rgba(255,244,214,.7);pointer-events:auto}
   .locationWell button:last-child{border-right:0}
   .locationWell button.active{color:#1a120c;font-weight:800}
+  body.stripOff .locationStrip{display:none}
+
+  /* Town name sits in the gap under the date/Journal plaques, not under them. */
+  .townName{
+    position:absolute;z-index:34;left:0;right:0;
+    top:calc(var(--hud-pad-t) + var(--hud-h) + 6px);
+    text-align:center;pointer-events:none;
+    color:#2c1d10;
+    text-shadow:0 1px 0 rgba(240,226,188,.55), 0 0 12px rgba(232,214,176,.45);
+  }
+  body.hudOff .townName{top:calc(var(--hud-pad-t) + 10px)}
+  .townName b{
+    display:block;
+    font:400 clamp(22px,7.2cqw,34px)/1.05 Palatino,"Palatino Linotype","Times New Roman",serif;
+    letter-spacing:.22em;
+  }
+  .townName .flourish{
+    display:block;width:min(48%,180px);height:18px;margin:2px auto 0;
+  }
   body.hudOff #hudLayer{display:none}
   body.chromeOff #spotToggle,
   body.chromeOff #spotListToggle,
@@ -156,7 +175,7 @@
   #spotReadout button.on{background:#241a13;color:#f2e1be}
 </style>
 </head>
-<body class="spotListOn">
+<body class="spotListOn stripOff">
 
 <section id="visualShell">
   <div class="townScene">
@@ -164,6 +183,15 @@
       <img class="mapArt" id="mapArt" src="./map-plain.jpg" alt="The Lythmere map">
       <div class="pieces lit" id="pieces"></div>
     </div>
+  </div>
+
+  <div class="townName" aria-hidden="true">
+      <b>LYTHMERE</b>
+    <svg class="flourish" viewBox="0 0 180 18" fill="none" aria-hidden="true">
+      <path d="M8 9h62M110 9h62" stroke="#3a2814" stroke-width="1" opacity=".7"/>
+      <path d="M78 9c6-7 18-7 24 0c-6 7-18 7-24 0z" stroke="#3a2814" stroke-width="1" fill="none" opacity=".8"/>
+      <circle cx="90" cy="9" r="1.4" fill="#3a2814"/>
+    </svg>
   </div>
 
   <div id="hudLayer" class="townHud">
@@ -291,7 +319,7 @@
   function paint(){
     readout.innerHTML =
       "<b>Place landmarks</b>" +
-      "<p class=\"spotHint\">Same as placing people: drag a piece, +/− size, Copy. Hex grid is off.</p>" +
+      "<p class=\"spotHint\">Tap a piece to go there. Date and Journal stay. The place-name strip is optional.</p>" +
       pieces.map(p => {
         const on = p.loc === selected ? " style=\"color:#7a1c18\"" : "";
         return `<div class="spotEnd" data-pick="${p.loc}"${on}><span>${p.loc}</span><code>${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.w.toFixed(1)}</code></div>`;
@@ -302,6 +330,7 @@
         <button type="button" id="spotCopy">Copy</button>
         <button type="button" id="spotReset">Reset</button>
         <button type="button" id="spotGrid" class="${gridOn?"on":""}">Hex</button>
+        <button type="button" id="spotStrip" class="${document.body.classList.contains("stripOff")?"":"on"}">Strip</button>
       </div>`;
   }
 
@@ -390,6 +419,11 @@
       save(); draw();
       return;
     }
+    if (e.target.id === "spotStrip"){
+      document.body.classList.toggle("stripOff");
+      paint();
+      return;
+    }
     if (e.target.id === "spotCopy"){
       const text = cssText();
       navigator.clipboard.writeText(text).then(() => {
@@ -425,6 +459,7 @@
   if (asked.get("pieces") === "0") document.body.classList.add("piecesOff");
   if (asked.get("grid") === "1") gridOn = true;
   if (asked.get("chrome") === "0") document.body.classList.add("chromeOff");
+  if (asked.get("strip") === "1") document.body.classList.remove("stripOff");
   draw();
 })();
 </script>
