@@ -5,9 +5,9 @@ alwaysApply: true
 
 # Location anchor tool (old shell only)
 
-**Mark spots** (`#spotToggle`, `?pins=1` in root `index.html`) places oak standees on the current street paintings.
+**Mark spots** (`#spotToggle`, `?pins=1` in root `index.html`) places oak standees on the **live** street paintings only.
 
-Marc locked **isometric town** (`isometric-town.mdc`). Do **not** use Mark spots for new locations. Do not invent a new pin/grid widget for isometric either until we build that map on purpose.
+New location screens use the tabletop placer (`mockups/lythmere-hex-pieces/index.html`): drag pieces on the flat board, Copy `%` slots. See `tabletop-locations.mdc`.
 
 If Marc asks to restage the **live** street screens before the rebuild:
 

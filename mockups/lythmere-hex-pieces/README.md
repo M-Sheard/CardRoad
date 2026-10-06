@@ -1,5 +1,7 @@
 # Lythmere — 3D landmarks on a flat map
 
+Marc locked this as **every location screen** (Oct 2026). See `.cursor/rules/tabletop-locations.mdc`.
+
 Open `index.html`. Mockup only — nothing in the live game changes.
 
 Marc's words were that the landmarks should *"stand out from the backdrop like

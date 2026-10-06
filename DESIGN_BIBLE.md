@@ -747,7 +747,7 @@ Existing prototype NPCs can become actual residents rather than names in a menu.
 
 ### Starting town: Lythmere
 
-Locked **display**: isometric painted town (`mockups/isometric-town/`). The live PWA still shows street paintings for:
+Locked **display**: tabletop board + 3D pieces (`mockups/lythmere-hex-pieces/`). Flat painted map, landmarks as separate models. The live PWA still shows street paintings for:
 
 | Location | Role |
 | --- | --- |
@@ -756,7 +756,7 @@ Locked **display**: isometric painted town (`mockups/isometric-town/`). The live
 | Inn | Gathering place |
 | Card Club | Organised play and Saturday |
 
-New location art is isometric, not another street painting.
+New location art uses that two-layer tabletop language, not another street painting and not isometric walkers.
 
 ---
 
@@ -794,11 +794,11 @@ It should not simply award an overpowered card.
 
 # 52. ART-DIRECTION DEVELOPMENT
 
-## The Illustrated Card World (locked environments: isometric town)
+## The Illustrated Card World (locked environments: tabletop locations)
 
 Warm; hand-painted; whimsical; inviting; richly illustrated fantasy; readable game UI; cards belonging to the same world.
 
-**World display (locked Oct 2026):** 3/4 **isometric painted town**. You and NPCs are tiny walking avatars on cobbles and paths. Canonical mock: `mockups/isometric-town/` (hero: `mockups/display-more/07-isometric-town.jpg`). Live `index.html` still uses street paintings + oak standees; that shell is retired for new work.
+**World display (locked Oct 2026):** **tabletop board + 3D pieces**. Flat painted board; landmarks are separate keyed models sitting on it. Canonical look-test: `mockups/lythmere-hex-pieces/`. Never generate board and pieces as one picture. Live `index.html` still uses street paintings + oak standees; that shell is retired for new location work.
 
 **Card faces (locked):** 17d earthy Mary Blair gouache inside the gilt window. Canonical example: `mockups/card-art-dir-17d-blair-earthy-red-fox.png`.
 
@@ -821,11 +821,11 @@ Match, binder, journal, and claim stay the live leftover-space gilt screens unle
 
 # 54. VISUAL IDENTITY (locked mix)
 
-**World:** isometric painted town (walkers, buildings, paths).  
+**World:** tabletop board + 3D landmark pieces (flat map, models on top).  
 **Cards:** 17d gouache creatures in gilt frames.  
 **Menus / match:** leftover-space gilt HTML (club table, binder, journal).
 
-Board-and-pawns and View-Master were strong look-tests; they are **standby**, not the product shell.
+Board-and-pawns, View-Master, and isometric town were strong look-tests; they are **standby**, not the product shell.
 
 ---
 
@@ -843,9 +843,9 @@ Under consideration; not locked production canon.
 
 # 56. UI PHILOSOPHY
 
-The player occupies a real card-playing **town** (isometric map), then sits at a real **table** (gilt 3×3) to play.
+The player occupies a real card-playing **town** (tabletop map with 3D landmarks), then sits at a real **table** (gilt 3×3) to play.
 
-Do not generate more whole-game display languages. Town work goes into the isometric shell. Do not put people inside a close-up 2.5D street with occlusion pads.
+Do not generate more whole-game display languages. Location work uses the two-layer tabletop shell (`tabletop-locations.mdc`). Do not paint people into the board or put NPCs on the overworld map.
 
 The live prototype’s street-and-standee town still runs until that rebuild. Match rules, Baseline V1, Claim One, and the calendar do not change to make the map work.
 
@@ -1199,7 +1199,7 @@ That is the foundation Card Road should now build upon.
 **Already in the playable build**
 
 - Locations: Market, Riverside, Inn, Card Club with production environment art.
-- NPC standees: Tomas, Nessa, Bram, Elira (plus Tomas location placement). **Production town display is isometric walkers**; these standees stay until that rebuild.
+- NPC standees: Tomas, Nessa, Bram, Elira (plus Tomas location placement). **Production location display is tabletop board + 3D pieces**; these standees stay on the live streets until that rebuild.
 - Journal tabs: Calendar, People, Cards, Card News, History.
 - Collection, incoming challenges, local season, Saturday Card Club events.
 - Physical-copy collection and ownership history inspection.
