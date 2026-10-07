@@ -1,0 +1,330 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>
+(function(){
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+  var b = document.createElement("base");
+  b.href = "https://raw.githubusercontent.com/M-Sheard/CardRoad/cursor/location-sheet-12f4/mockups/location-sheet/";
+  document.head.appendChild(b);
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Location sheet — Inn</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#17120d;color:#e8dcc4;font:14px/1.4 Georgia,serif}
+  body{display:flex;align-items:center;justify-content:center;min-height:100dvh}
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+  #visualShell{
+    position:relative;
+    display:flex;flex-direction:column;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    background:#1a140f url("../../assets/ui/match_club_table.png") center / cover no-repeat;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block;overflow:hidden}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+  }
+
+  .shellPad{
+    flex:0 0 auto;
+    height:calc(var(--hud-pad-t) + var(--hud-h) + 4px);
+  }
+  .placeHead{
+    flex:0 0 auto;
+    padding:2px var(--hud-pad-r) 8px var(--hud-pad-l);
+    text-align:center;min-width:0;
+  }
+  .placeHead b{
+    display:block;
+    font:400 clamp(22px,7cqw,34px)/1.05 Palatino,"Palatino Linotype","Times New Roman",serif;
+    letter-spacing:.2em;color:#f3ead4;
+    text-shadow:0 1px 0 #000c, 0 2px 10px #000a;
+  }
+  .placeHead span{
+    display:block;margin-top:3px;
+    font:600 clamp(9px,2.6cqw,11px)/1.2 Georgia,serif;
+    letter-spacing:.14em;text-transform:uppercase;color:#e8d7b0;
+    text-shadow:0 1px 2px #000a;
+  }
+  .sheetStage{
+    flex:1 1 auto;min-height:0;min-width:0;
+    margin:0 var(--hud-pad-r) 10px var(--hud-pad-l);
+    overflow-x:hidden;overflow-y:auto;touch-action:pan-y;
+  }
+  .sheet{
+    position:relative;
+    min-height:100%;
+    box-sizing:border-box;
+    padding:18px 16px 16px;
+    border:10px solid #5c3d24;
+    border-radius:8px;
+    background:
+      linear-gradient(180deg,#f4e6c8 0%,#e7d3a8 100%);
+    box-shadow:inset 0 0 0 2px #c4a06a, 0 10px 24px #0008;
+  }
+  .sheetCorners{position:absolute;inset:4px;z-index:2;pointer-events:none}
+  .sheetCorners img{
+    position:absolute;width:clamp(16px,5cqw,26px);height:auto;
+    filter:drop-shadow(0 1px 1px #0006);
+  }
+  .sheetCorners .tl{top:-2px;left:-2px}
+  .sheetCorners .tr{top:-2px;right:-2px;transform:scaleX(-1)}
+  .sheetCorners .bl{bottom:-2px;left:-2px;transform:scaleY(-1)}
+  .sheetCorners .br{bottom:-2px;right:-2px;transform:scale(-1)}
+
+  .hex{
+    display:block;width:min(72%, 240px);margin:6px auto 4px;
+    filter:drop-shadow(4px 8px 8px rgba(18,12,6,.45));
+    pointer-events:none;user-select:none;
+  }
+  .here{
+    margin:10px 8px 8px;
+    font:700 clamp(10px,2.8cqw,12px)/1.2 Georgia,serif;
+    letter-spacing:.16em;text-transform:uppercase;color:#4a3724;
+    text-align:center;
+  }
+  .people{
+    display:flex;justify-content:center;gap:18px;flex-wrap:wrap;
+    padding:0 8px 8px;
+  }
+  .person{
+    width:96px;padding:6px 4px 8px;
+    display:flex;flex-direction:column;align-items:center;gap:6px;
+    border-radius:6px;
+  }
+  .person img{
+    display:block;width:78px;height:auto;
+    filter:drop-shadow(2px 4px 4px rgba(18,12,6,.4));
+    pointer-events:none;
+  }
+  .person b{
+    font:700 11px/1 Georgia,serif;letter-spacing:.12em;color:#1a120c;
+  }
+  .person.is-on{
+    background:rgba(255,246,214,.45);
+    box-shadow:inset 0 0 0 2px #7a1c18;
+  }
+
+  .actions{
+    flex:0 0 auto;
+    display:flex;gap:8px;
+    width:min(100%, 320px);
+    margin:0 auto;
+    padding:0 var(--hud-pad-r) var(--hud-pad-b) var(--hud-pad-l);
+    box-sizing:border-box;
+  }
+  .plaqueBtn{
+    flex:1 1 0;min-width:0;min-height:48px;
+    padding:10px 12px;
+    font:800 clamp(15px,4.4cqw,18px)/1 Georgia,"Times New Roman",serif;
+    letter-spacing:.12em;text-transform:uppercase;color:#1a0c08;
+    background:linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%);
+    border:3px solid #3d2414;border-radius:6px;
+    box-shadow:inset 0 1px 0 #e8d09a,0 4px 10px #0006;
+  }
+  .plaqueBtn.alt{
+    background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%);
+  }
+  .plaqueBtn[disabled]{opacity:.45}
+
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldActions{flex:0 0 auto;display:flex;gap:6px}
+  .scrollPlaque{display:flex;align-items:stretch;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 16px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;min-width:0;max-width:min(200px, calc(100% - 168px));pointer-events:auto}
+  #advanceTime #visualDate{font:700 clamp(11px,3.2cqw,13px)/1.1 Georgia,serif;color:#1a120c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(9px,2.7cqw,11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;white-space:nowrap}
+  #worldRecord.paperPlaque,#worldMap.paperPlaque{
+    height:var(--hud-journal-h);min-height:var(--hud-journal-h);
+    min-width:72px;padding:0;
+    font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
+    pointer-events:auto;
+  }
+  #worldRecord.paperPlaque .scrollWell,#worldMap.paperPlaque .scrollWell{gap:6px;padding:4px 10px}
+  #worldRecord .paperCorner,#worldMap .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  body.hudOff #hudLayer,body.hudOff .shellPad{display:none}
+  body.chromeOff #spotToggle,body.chromeOff #spotListToggle,body.chromeOff #spotReadout{display:none!important}
+  #spotToggle,#spotListToggle,#spotReadout{
+    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;cursor:pointer;pointer-events:auto;
+  }
+  #spotToggle{top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));min-width:108px;padding:7px 10px}
+  #spotListToggle{top:max(100px, calc(env(safe-area-inset-top, 0px) + 92px));min-width:108px;padding:5px 8px;font-size:11px}
+  #spotReadout{
+    display:none;top:max(136px, calc(env(safe-area-inset-top, 0px) + 128px));
+    left:auto;width:min(220px, calc(100% - 24px));
+    padding:6px 7px 7px;border-radius:6px;cursor:default;font:650 10px/1.3 system-ui,sans-serif;
+  }
+  body.spotListOn #spotReadout{display:block}
+  #spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+  #spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+  #spotReadout button{padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;border:1px solid #9f8e72;border-radius:4px;margin:2px 2px 0 0}
+  #spotReadout button.on{background:#241a13;color:#f2e1be}
+</style>
+</head>
+<body class="spotListOn">
+<section id="visualShell">
+  <div class="shellPad"></div>
+  <div class="placeHead">
+    <b id="placeTitle">THE INN</b>
+    <span id="placeTag">a gathering place</span>
+  </div>
+  <div class="sheetStage">
+    <div class="sheet">
+      <span class="sheetCorners" aria-hidden="true">
+        <img class="tl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="tr" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="bl" src="../isometric-town/hud/paper_corner.png" alt="">
+        <img class="br" src="../isometric-town/hud/paper_corner.png" alt="">
+      </span>
+      <img class="hex" id="hexArt" src="./piece-inn.png" alt="">
+      <div class="here">Here today</div>
+      <div class="people" id="people"></div>
+    </div>
+  </div>
+  <div class="actions">
+    <button type="button" class="plaqueBtn alt" id="btnTalk">Talk</button>
+    <button type="button" class="plaqueBtn" id="btnChallenge">Challenge</button>
+  </div>
+  <div id="hudLayer">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING · YEAR 1</span></span></span>
+      </button>
+      <div class="worldActions">
+        <button type="button" id="worldMap" class="scrollPlaque paperPlaque">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Map</span></span>
+        </button>
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Journal</span><img class="paperSeal" src="../isometric-town/hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <button type="button" id="spotToggle">Hide HUD</button>
+  <button type="button" id="spotListToggle">Hide list</button>
+  <div id="spotReadout"></div>
+</section>
+<script>
+(function(){
+  const LOCS = {
+    Inn: {
+      title:"THE INN", tag:"a gathering place", hex:"./piece-inn.png",
+      people:[{id:"Tomas", src:"./mini-cards.png"}]
+    },
+    Market: {
+      title:"THE MARKET", tag:"stalls by the river path", hex:"./piece-market.png",
+      people:[{id:"Tomas", src:"./mini-cards.png"}]
+    }
+  };
+  let loc = "Inn";
+  let selected = "Tomas";
+  let listOn = true;
+  const peopleEl = document.getElementById("people");
+  const readout = document.getElementById("spotReadout");
+
+  function draw(){
+    const L = LOCS[loc];
+    document.getElementById("placeTitle").textContent = L.title;
+    document.getElementById("placeTag").textContent = L.tag;
+    document.getElementById("hexArt").src = L.hex;
+    if (!L.people.some(p => p.id === selected)) selected = L.people[0].id;
+    peopleEl.textContent = "";
+    L.people.forEach(p => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "person" + (p.id === selected ? " is-on" : "");
+      b.dataset.id = p.id;
+      b.innerHTML = "<img src=\""+p.src+"\" alt=\"\"><b>"+p.id.toUpperCase()+"</b>";
+      b.addEventListener("click", () => { selected = p.id; draw(); });
+      peopleEl.append(b);
+    });
+    const on = !!selected;
+    document.getElementById("btnTalk").disabled = !on;
+    document.getElementById("btnChallenge").disabled = !on;
+    readout.innerHTML = "<b>Sheet · "+loc+"</b><p class=\"spotHint\">Not a landscape. Hex on paper. Talk / Challenge.</p>" +
+      ["Inn","Market"].map(name => `<button type="button" data-place="${name}" class="${name===loc?"on":""}">${name}</button>`).join(" ");
+  }
+  readout.addEventListener("click", e => {
+    const go = e.target.closest("[data-place]");
+    if (go){ loc = go.getAttribute("data-place"); draw(); }
+  });
+  document.getElementById("spotListToggle").addEventListener("click", () => {
+    listOn = !listOn;
+    document.body.classList.toggle("spotListOn", listOn);
+    document.getElementById("spotListToggle").textContent = listOn ? "Hide list" : "Show list";
+  });
+  document.getElementById("spotToggle").addEventListener("click", () => {
+    const off = document.body.classList.toggle("hudOff");
+    document.getElementById("spotToggle").textContent = off ? "Show HUD" : "Hide HUD";
+  });
+  const asked = new URLSearchParams(location.search);
+  if (LOCS[asked.get("loc")]) loc = asked.get("loc");
+  if (asked.get("hud")==="0") document.body.classList.add("hudOff");
+  if (asked.get("list")==="0"){
+    listOn = false;
+    document.body.classList.remove("spotListOn");
+    document.getElementById("spotListToggle").textContent = "Show list";
+  }
+  if (asked.get("chrome")==="0") document.body.classList.add("chromeOff");
+  draw();
+})();
+</script>
+</body>
+</html>
