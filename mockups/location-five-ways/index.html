@@ -1,0 +1,416 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>
+(function(){
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+  var b = document.createElement("base");
+  b.href = "https://raw.githubusercontent.com/M-Sheard/CardRoad/cursor/location-five-ways-12f4/mockups/location-five-ways/";
+  document.head.appendChild(b);
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Five ways — Inn and Market</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#17120d;color:#e8dcc4;font:14px/1.4 Georgia,serif}
+  body{display:flex;align-items:center;justify-content:center;min-height:100dvh}
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block;overflow:hidden}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+  }
+  .townScene{position:absolute;inset:0;z-index:0;overflow:hidden;background:#3b3122;touch-action:none}
+  .scenePlane{
+    position:absolute;top:50%;left:50%;
+    transform:translate(-50%,-50%) scale(var(--zoom, 1));
+    width:max(100cqw, calc(100cqh * 9 / 16));
+    height:max(100cqh, calc(100cqw * 16 / 9));
+  }
+  .mapArt{position:absolute;inset:0;width:100%;height:100%;object-fit:fill;display:block}
+  .piece{
+    position:absolute;padding:0;background:none;border:0;
+    width:var(--pw); left:var(--x); top:var(--y);
+    transform:translate(-50%, calc(-1 * var(--anchor)));
+    z-index:var(--z); cursor:grab; touch-action:none;
+    user-select:none; -webkit-user-drag:none;
+  }
+  .piece img{display:block;width:100%;height:auto;pointer-events:none;user-select:none;-webkit-user-drag:none}
+  .pieces.lit .piece img{filter:drop-shadow(3px 5px 5px rgba(18,12,6,.55))}
+  .piece[data-kind="terrain"]::before{
+    content:"";position:absolute;left:2%;right:-4%;bottom:-3%;height:14%;
+    border-radius:50%;background:radial-gradient(ellipse at center, rgba(14,9,4,.55), rgba(14,9,4,0) 68%);
+    z-index:-1;
+  }
+  .piece.is-drag{cursor:grabbing;z-index:80!important}
+  .townName{
+    position:absolute;z-index:34;left:0;right:0;
+    top:calc(var(--hud-pad-t) + var(--hud-h) + 6px);
+    text-align:center;pointer-events:none;color:#2c1d10;
+    text-shadow:0 1px 0 rgba(240,226,188,.55), 0 0 12px rgba(232,214,176,.45);
+  }
+  body.hudOff .townName{top:calc(var(--hud-pad-t) + 10px)}
+  .townName b{
+    display:block;
+    font:400 clamp(20px,6.6cqw,32px)/1.05 Palatino,"Palatino Linotype","Times New Roman",serif;
+    letter-spacing:.2em;
+  }
+  .townName .tag{
+    display:block;margin-top:4px;
+    font:600 clamp(9px,2.6cqw,11px)/1.2 Georgia,serif;
+    letter-spacing:.14em;text-transform:uppercase;color:#4a3724;
+  }
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldActions{flex:0 0 auto;display:flex;gap:6px}
+  .scrollPlaque{display:flex;align-items:stretch;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 16px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;min-width:0;max-width:min(200px, calc(100% - 168px));pointer-events:auto}
+  #advanceTime #visualDate{font:700 clamp(11px,3.2cqw,13px)/1.1 Georgia,serif;color:#1a120c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(9px,2.7cqw,11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.1em;white-space:nowrap}
+  #worldRecord.paperPlaque,#worldMap.paperPlaque{
+    height:var(--hud-journal-h);min-height:var(--hud-journal-h);
+    min-width:72px;padding:0;
+    font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
+    pointer-events:auto;
+  }
+  #worldRecord.paperPlaque .scrollWell,#worldMap.paperPlaque .scrollWell{gap:6px;padding:4px 10px}
+  #worldRecord .paperCorner,#worldMap .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  body.hudOff #hudLayer{display:none}
+  body.chromeOff #spotToggle,body.chromeOff #spotListToggle,body.chromeOff #spotReadout{display:none!important}
+  #spotToggle,#spotListToggle,#spotReadout{
+    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;cursor:pointer;pointer-events:auto;
+  }
+  #spotToggle{top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));min-width:108px;padding:7px 10px}
+  #spotListToggle{top:max(100px, calc(env(safe-area-inset-top, 0px) + 92px));min-width:108px;padding:5px 8px;font-size:11px}
+  #spotReadout{
+    display:none;top:max(136px, calc(env(safe-area-inset-top, 0px) + 128px));
+    left:auto;width:min(240px, calc(100% - 24px));
+    padding:6px 7px 7px;border-radius:6px;cursor:default;font:650 10px/1.3 system-ui,sans-serif;
+  }
+  body.spotListOn #spotReadout{display:block}
+  #spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+  #spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+  #spotReadout .spotEnd{display:flex;justify-content:space-between;align-items:center;gap:4px;margin:3px 0}
+  #spotReadout .spotActs{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+  #spotReadout button{padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;border:1px solid #9f8e72;border-radius:4px}
+  #spotReadout button.on{background:#241a13;color:#f2e1be}
+</style>
+</head>
+<body class="spotListOn">
+<section id="visualShell">
+  <div class="townScene">
+    <div class="scenePlane" id="scenePlane">
+      <img class="mapArt" id="mapArt" src="./a-inn-board.jpg" alt="">
+      <div class="pieces lit" id="pieces"></div>
+    </div>
+  </div>
+  <div class="townName">
+    <b id="placeTitle">THE INN</b>
+    <span class="tag" id="placeTag">A · furniture is the board</span>
+  </div>
+  <div id="hudLayer" class="townHud">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING · YEAR 1</span></span></span>
+      </button>
+      <div class="worldActions">
+        <a id="worldMap" class="scrollPlaque paperPlaque" href="../lythmere-hex-pieces/index.html?list=0&chrome=0" style="text-decoration:none">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Map</span></span>
+        </a>
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Journal</span><img class="paperSeal" src="../isometric-town/hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <button type="button" id="spotToggle">Hide HUD</button>
+  <button type="button" id="spotListToggle">Hide list</button>
+  <div id="spotReadout"></div>
+</section>
+<script>
+(function(){
+  const PERSON = "../../assets/npcs/tomas_standee_bevel_v19.png";
+  const MAP = "../lythmere-hex-pieces/";
+  const TAGS = {
+    A: "A · furniture is the board",
+    B: "B · dungeon tiles",
+    C: "C · shoebox diorama",
+    D: "D · stay on the map",
+    E: "E · sit down"
+  };
+  const LOCS = {
+    A: {
+      Inn: {
+        title:"THE INN", board:"./a-inn-board.jpg", zoom:1,
+        pieces:[
+          {id:"Tomas", src:PERSON, x:36, y:72, w:14, anchor:96, kind:"person"}
+        ]
+      },
+      Market: {
+        title:"THE MARKET", board:"./a-market-board.jpg", zoom:1,
+        pieces:[
+          {id:"Tomas", src:PERSON, x:50, y:82, w:14, anchor:96, kind:"person"}
+        ]
+      }
+    },
+    B: {
+      Inn: {
+        title:"THE INN", board:"./b-inn-board.jpg", zoom:1,
+        pieces:[
+          {id:"Bar", src:"./b-tile-bar.png", x:32, y:40, w:44, anchor:78, kind:"terrain"},
+          {id:"Hearth", src:"./b-tile-hearth.png", x:70, y:38, w:42, anchor:78, kind:"terrain"},
+          {id:"Table", src:"./b-tile-table.png", x:50, y:68, w:40, anchor:82, kind:"terrain"},
+          {id:"Tomas", src:PERSON, x:22, y:74, w:13, anchor:96, kind:"person"}
+        ]
+      },
+      Market: {
+        title:"THE MARKET", board:"./b-market-board.jpg", zoom:1,
+        pieces:[
+          {id:"Stall", src:"./b-tile-stall.png", x:30, y:48, w:42, anchor:78, kind:"terrain"},
+          {id:"Well", src:"./b-tile-well.png", x:62, y:40, w:36, anchor:78, kind:"terrain"},
+          {id:"Stall2", src:"./b-tile-stall.png", x:70, y:68, w:40, anchor:78, kind:"terrain"},
+          {id:"Tomas", src:PERSON, x:22, y:72, w:13, anchor:96, kind:"person"}
+        ]
+      }
+    },
+    C: {
+      Inn: {
+        title:"THE INN", board:"./c-inn-board.jpg", zoom:1,
+        pieces:[
+          {id:"Bar", src:"./c-piece-bar.png", x:34, y:62, w:34, anchor:88, kind:"terrain"},
+          {id:"Settle", src:"./c-piece-settle.png", x:68, y:60, w:32, anchor:88, kind:"terrain"},
+          {id:"Tomas", src:PERSON, x:50, y:66, w:12, anchor:96, kind:"person"}
+        ]
+      },
+      Market: {
+        title:"THE MARKET", board:"./c-market-board.jpg", zoom:1,
+        pieces:[
+          {id:"Stall", src:"./c-piece-stall.png", x:52, y:60, w:42, anchor:88, kind:"terrain"},
+          {id:"Tomas", src:PERSON, x:26, y:62, w:12, anchor:96, kind:"person"}
+        ]
+      }
+    },
+    D: {
+      Inn: {
+        title:"THE INN", board: MAP+"map-plain.jpg", zoom:1.55,
+        pieces:[
+          {id:"Inn", src:MAP+"piece-inn.png", x:50, y:54, w:58, anchor:72, kind:"terrain"},
+          {id:"Tomas", src:PERSON, x:36, y:62, w:12, anchor:96, kind:"person"}
+        ]
+      },
+      Market: {
+        title:"THE MARKET", board: MAP+"map-plain.jpg", zoom:1.55,
+        pieces:[
+          {id:"Market", src:MAP+"piece-market.png", x:52, y:56, w:58, anchor:70, kind:"terrain"},
+          {id:"Tomas", src:PERSON, x:70, y:62, w:12, anchor:96, kind:"person"}
+        ]
+      }
+    },
+    E: {
+      Inn: {
+        title:"THE INN", board:"./e-inn-board.jpg", zoom:1,
+        pieces:[
+          {id:"Tomas", src:PERSON, x:70, y:44, w:20, anchor:96, kind:"person"}
+        ]
+      },
+      Market: {
+        title:"THE MARKET", board:"./e-market-board.jpg", zoom:1,
+        pieces:[
+          {id:"Tomas", src:PERSON, x:82, y:40, w:22, anchor:96, kind:"person"}
+        ]
+      }
+    }
+  };
+  const host = document.getElementById("pieces");
+  const plane = document.getElementById("scenePlane");
+  const mapArt = document.getElementById("mapArt");
+  const readout = document.getElementById("spotReadout");
+  let dir = "A";
+  let loc = "Inn";
+  let selected = null;
+  let drag = null;
+  let listOn = true;
+
+  function data(){ return LOCS[dir][loc]; }
+  function find(id){ return data().pieces.find(p => p.id === id); }
+  function elFor(id){ return host.querySelector('.piece[data-id="'+id+'"]'); }
+  function apply(el, p){
+    el.style.setProperty("--x", p.x.toFixed(1)+"%");
+    el.style.setProperty("--y", p.y.toFixed(1)+"%");
+    el.style.setProperty("--pw", p.w.toFixed(1)+"%");
+    el.style.setProperty("--anchor", p.anchor+"%");
+    el.style.setProperty("--z", String(10 + Math.round(p.y)));
+  }
+  function draw(){
+    const L = data();
+    mapArt.src = L.board;
+    plane.style.setProperty("--zoom", String(L.zoom || 1));
+    document.getElementById("placeTitle").textContent = L.title;
+    document.getElementById("placeTag").textContent = TAGS[dir];
+    host.textContent = "";
+    L.pieces.slice().sort((a,b)=>a.y-b.y).forEach(p => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "piece" + (p.id===selected ? " is-sel" : "");
+      b.dataset.id = p.id;
+      b.dataset.kind = p.kind;
+      apply(b, p);
+      const img = document.createElement("img");
+      img.src = p.src; img.alt = ""; img.draggable = false;
+      b.append(img);
+      b.addEventListener("pointerdown", onDown);
+      host.append(b);
+    });
+    paint();
+  }
+  function paint(){
+    readout.innerHTML = "<b>"+dir+" · "+loc+"</b><p class=\"spotHint\">Look-test. Drag, +/−. People stay Tomas oak.</p>" +
+      ["A","B","C","D","E"].map(name => `<button type="button" data-way="${name}" class="${name===dir?"on":""}">${name}</button>`).join(" ") +
+      " " +
+      ["Inn","Market"].map(name => `<button type="button" data-place="${name}" class="${name===loc?"on":""}">${name}</button>`).join(" ") +
+      data().pieces.map(p => {
+        const on = p.id===selected ? " style=\"color:#7a1c18\"" : "";
+        return `<div class="spotEnd" data-pick="${p.id}"${on}><span>${p.id}</span><code>${p.x.toFixed(0)} ${p.y.toFixed(0)} ${p.w.toFixed(1)}</code></div>`;
+      }).join("") +
+      `<div class="spotActs">
+        <button type="button" data-bump="-1">−</button>
+        <button type="button" data-bump="1">+</button>
+      </div>`;
+  }
+  function bump(n){
+    const p = selected ? find(selected) : data().pieces[0];
+    if (!p) return;
+    selected = p.id;
+    const lo = p.kind === "person" ? 10 : 22;
+    const hi = p.kind === "person" ? 36 : 72;
+    p.w = Math.max(lo, Math.min(hi, p.w + n * 1.5));
+    apply(elFor(p.id), p);
+    paint();
+  }
+  function pct(cx,cy){
+    const r = plane.getBoundingClientRect();
+    return {x:((cx-r.left)/r.width)*100, y:((cy-r.top)/r.height)*100};
+  }
+  function onDown(e){
+    const el = e.currentTarget;
+    const p = find(el.dataset.id);
+    if (!p) return;
+    e.preventDefault();
+    selected = p.id;
+    const pos = pct(e.clientX, e.clientY);
+    drag = {id:p.id, pid:e.pointerId, grabX:p.x-pos.x, grabY:p.y-pos.y};
+    el.classList.add("is-drag");
+    try{ el.setPointerCapture(e.pointerId); }catch(err){}
+    paint();
+  }
+  window.addEventListener("pointermove", e => {
+    if (!drag || e.pointerId!==drag.pid) return;
+    const p = find(drag.id), el = elFor(drag.id);
+    if (!p||!el) return;
+    const pos = pct(e.clientX, e.clientY);
+    p.x = Math.max(8, Math.min(92, pos.x+drag.grabX));
+    p.y = Math.max(12, Math.min(90, pos.y+drag.grabY));
+    apply(el, p);
+  });
+  window.addEventListener("pointerup", e => {
+    if (!drag || e.pointerId!==drag.pid) return;
+    const el = elFor(drag.id);
+    if (el) el.classList.remove("is-drag");
+    drag = null; paint();
+  });
+  readout.addEventListener("click", e => {
+    const goDir = e.target.closest("[data-way]");
+    if (goDir){ dir = goDir.getAttribute("data-way"); selected = null; draw(); return; }
+    const goLoc = e.target.closest("[data-place]");
+    if (goLoc){ loc = goLoc.getAttribute("data-place"); selected = null; draw(); return; }
+    const pick = e.target.closest("[data-pick]");
+    if (pick){ selected = pick.dataset.pick; paint(); return; }
+    const b = e.target.closest("[data-bump]");
+    if (b) bump(+b.dataset.bump);
+  });
+  document.getElementById("spotListToggle").addEventListener("click", () => {
+    listOn = !listOn;
+    document.body.classList.toggle("spotListOn", listOn);
+    document.getElementById("spotListToggle").textContent = listOn ? "Hide list" : "Show list";
+  });
+  document.getElementById("spotToggle").addEventListener("click", () => {
+    const off = document.body.classList.toggle("hudOff");
+    document.getElementById("spotToggle").textContent = off ? "Show HUD" : "Hide HUD";
+  });
+  const asked = new URLSearchParams(location.search);
+  if (LOCS[asked.get("dir")]) dir = asked.get("dir");
+  if (asked.get("loc")==="Inn" || asked.get("loc")==="Market") loc = asked.get("loc");
+  if (asked.get("hud")==="0" || asked.get("hud")==="off"){
+    document.body.classList.add("hudOff");
+    document.getElementById("spotToggle").textContent = "Show HUD";
+  }
+  if (asked.get("list")==="0"){
+    listOn = false;
+    document.body.classList.remove("spotListOn");
+    document.getElementById("spotListToggle").textContent = "Show list";
+  }
+  if (asked.get("chrome")==="0") document.body.classList.add("chromeOff");
+  draw();
+})();
+</script>
+</body>
+</html>
