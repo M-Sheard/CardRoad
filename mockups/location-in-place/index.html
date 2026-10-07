@@ -1,0 +1,285 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<script>
+(function(){
+  if (/^(localhost|127\.0\.0\.1)$/.test(location.hostname)) return;
+  var b = document.createElement("base");
+  b.href = "https://raw.githubusercontent.com/M-Sheard/CardRoad/cursor/location-in-place-12f4/mockups/location-in-place/";
+  document.head.appendChild(b);
+})();
+</script>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>In the place — Inn</title>
+<style>
+  html,body{margin:0;min-height:100%;background:#17120d;color:#e8dcc4;font:14px/1.4 Georgia,serif}
+  body{display:flex;align-items:center;justify-content:center;min-height:100dvh}
+  button{font:inherit;color:inherit;-webkit-appearance:none;appearance:none;cursor:pointer;border:0;background:none}
+  #visualShell{
+    position:relative;
+    width:min(390px, 100vw, calc(100dvh * 9 / 16));
+    height:min(calc(390px * 16 / 9), 100dvh, calc(100vw * 16 / 9));
+    overflow:hidden;border-radius:24px;
+    box-shadow:0 16px 48px rgba(0,0,0,.55), 0 0 0 2px #4a3828;
+    container-type:size;
+    --hud-pad-t: max(16px, env(safe-area-inset-top, 0px) + 10px);
+    --hud-pad-r: max(16px, env(safe-area-inset-right, 0px) + 10px);
+    --hud-pad-b: max(16px, env(safe-area-inset-bottom, 0px) + 10px);
+    --hud-pad-l: max(16px, env(safe-area-inset-left, 0px) + 10px);
+    --hud-h: clamp(42px, 7.2cqh, 52px);
+    --hud-journal-h: clamp(38px, 6.4cqh, 44px);
+    --hud-corner: clamp(14px, 4.1cqw, 24px);
+    --hud-seal: clamp(22px, 6cqw, 32px);
+  }
+  @media (max-width:430px){
+    html,body{display:block;overflow:hidden}
+    #visualShell{width:100%;height:100dvh;height:100svh;border-radius:0;box-shadow:none}
+  }
+  .townScene{position:absolute;inset:0;overflow:hidden;background:#1a140f}
+  .placeArt{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;display:block}
+  .piece{
+    position:absolute;padding:0;background:none;border:0;
+    width:var(--pw); left:var(--x); top:var(--y);
+    transform:translate(-50%, calc(-1 * var(--anchor)));
+    z-index:var(--z); cursor:pointer; touch-action:manipulation;
+  }
+  .piece img{
+    display:block;width:100%;height:auto;pointer-events:none;
+    filter:drop-shadow(3px 6px 8px rgba(8,4,2,.55));
+  }
+  .townName{
+    position:absolute;z-index:34;left:0;right:0;
+    top:calc(var(--hud-pad-t) + var(--hud-h) + 6px);
+    text-align:center;pointer-events:none;color:#f3ead4;
+    text-shadow:0 1px 0 #000c, 0 2px 12px #000a;
+  }
+  .townName b{
+    display:block;
+    font:400 clamp(20px,6.6cqw,32px)/1.05 Palatino,"Palatino Linotype","Times New Roman",serif;
+    letter-spacing:.2em;
+  }
+  #hudLayer{position:absolute;inset:0;z-index:40;pointer-events:none}
+  .worldTopbar{
+    position:absolute;left:0;right:0;top:0;z-index:40;
+    display:flex;align-items:flex-start;justify-content:space-between;gap:8px;
+    padding:var(--hud-pad-t) var(--hud-pad-r) 0 var(--hud-pad-l);
+    box-sizing:border-box;pointer-events:none;
+  }
+  .worldActions{flex:0 0 auto;display:flex;gap:6px}
+  .scrollPlaque{display:flex;align-items:stretch;padding:0;margin:0;box-sizing:border-box;overflow:visible}
+  .scrollWell{flex:1 1 auto;min-width:0;position:relative;z-index:1;display:flex;align-items:center;justify-content:center;gap:8px;padding:0 10px}
+  .scrollCopy{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;min-width:0;overflow:hidden}
+  .paperPlaque{
+    position:relative;height:var(--hud-h);min-height:var(--hud-h);
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 4px 10px rgba(0,0,0,.35);
+    filter:drop-shadow(0 3px 6px rgba(0,0,0,.28));overflow:visible;
+  }
+  .paperPlaque .scrollWell{background:none;padding:4px 12px}
+  .paperCorners{position:absolute;inset:0;z-index:5;pointer-events:none}
+  .paperCorner{position:absolute;width:var(--hud-corner);height:calc(var(--hud-corner) * 1.18);object-fit:contain;filter:drop-shadow(0 1px 1px rgba(0,0,0,.35))}
+  .paperCorner-tl{top:-4px;left:-4px}
+  .paperCorner-tr{top:-4px;right:-4px;transform:scaleX(-1)}
+  .paperCorner-bl{bottom:-4px;left:-4px;transform:scaleY(-1)}
+  .paperCorner-br{bottom:-4px;right:-4px;transform:scale(-1)}
+  .paperSeal{width:var(--hud-seal);height:var(--hud-seal);flex:0 0 auto;object-fit:contain;filter:drop-shadow(0 2px 2px rgba(0,0,0,.4));z-index:6}
+  #advanceTime.paperPlaque{flex:1 1 auto;min-width:0;max-width:min(220px, calc(100% - 150px));pointer-events:auto}
+  #advanceTime #visualDate{font:700 clamp(10px,3cqw,13px)/1.1 Georgia,serif;color:#1a120c;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  #advanceTime #visualPhase{font:500 clamp(8px,2.4cqw,11px)/1.1 Georgia,serif;color:#614a34;margin-top:1px;letter-spacing:.08em;white-space:nowrap}
+  #worldRecord.paperPlaque,#worldMap.paperPlaque{
+    height:var(--hud-journal-h);min-height:var(--hud-journal-h);
+    min-width:72px;padding:0;
+    font:800 clamp(10px,2.8cqw,11px)/1 Georgia,serif;letter-spacing:.08em;text-transform:uppercase;color:#1a120c;
+    pointer-events:auto;
+  }
+  #worldRecord.paperPlaque .scrollWell,#worldMap.paperPlaque .scrollWell{gap:6px;padding:4px 10px}
+  #worldRecord .paperCorner,#worldMap .paperCorner{width:calc(var(--hud-corner) * .72);height:calc(var(--hud-corner) * .86)}
+  .talk{
+    display:none;position:absolute;z-index:36;left:var(--hud-pad-l);right:var(--hud-pad-r);
+    bottom:calc(var(--hud-pad-b) + 8px);
+    padding:12px 16px 10px;
+    border:1px solid #c4a06a;border-radius:2px;
+    background:linear-gradient(180deg,#f7ead2 0%,#edd6aa 100%);
+    box-shadow:0 8px 20px #0008;
+  }
+  body.talkOn .talk{display:block}
+  .talk p{margin:0 0 8px;font:italic 400 clamp(14px,3.8cqw,17px)/1.35 Georgia,serif;color:#1a120c}
+  .talk .row{display:flex;gap:8px}
+  .talk button{
+    flex:1 1 0;min-height:40px;
+    font:800 13px/1 Georgia,serif;letter-spacing:.1em;text-transform:uppercase;color:#1a0c08;
+    background:linear-gradient(180deg,#c4a06a 0%,#8b5a2b 48%,#6b4220 100%);
+    border:2px solid #3d2414;border-radius:6px;
+    box-shadow:inset 0 1px 0 #e8d09a;
+  }
+  .talk button.alt{background:linear-gradient(180deg,#a88858 0%,#6e4a28 52%,#4a3018 100%)}
+  body.hudOff #hudLayer{display:none}
+  body.chromeOff #spotToggle,body.chromeOff #spotListToggle,body.chromeOff #spotReadout{display:none!important}
+  #spotToggle,#spotListToggle,#spotReadout{
+    position:absolute;z-index:46;right:max(10px, env(safe-area-inset-right, 0px) + 8px);
+    font:650 12px/1.25 system-ui,sans-serif;color:#241a13;
+    background:rgba(242,225,190,.96);border:2px solid #594333;border-radius:5px;
+    box-shadow:0 4px 12px #0007;cursor:pointer;pointer-events:auto;
+  }
+  #spotToggle{top:max(64px, calc(env(safe-area-inset-top, 0px) + 56px));min-width:108px;padding:7px 10px}
+  #spotListToggle{top:max(100px, calc(env(safe-area-inset-top, 0px) + 92px));min-width:108px;padding:5px 8px;font-size:11px}
+  #spotReadout{
+    display:none;top:max(136px, calc(env(safe-area-inset-top, 0px) + 128px));
+    left:auto;width:min(220px, calc(100% - 24px));
+    padding:6px 7px 7px;border-radius:6px;cursor:default;font:650 10px/1.3 system-ui,sans-serif;
+  }
+  body.spotListOn #spotReadout{display:block}
+  #spotReadout b{display:block;margin-bottom:2px;font:800 11px Georgia,serif}
+  #spotReadout .spotHint{margin:0 0 4px;color:#614a34;font-size:9px}
+  #spotReadout button{padding:3px 6px;font-size:10px;font-weight:700;background:#e9ddc3;color:#241a13;border:1px solid #9f8e72;border-radius:4px;margin:2px 2px 0 0}
+  #spotReadout button.on{background:#241a13;color:#f2e1be}
+</style>
+</head>
+<body class="spotListOn">
+<section id="visualShell">
+  <div class="townScene">
+    <img class="placeArt" id="placeArt" src="./inn.jpg" alt="">
+    <div id="pieces"></div>
+  </div>
+  <div class="townName"><b id="placeTitle">THE INN</b></div>
+  <div class="talk" id="talkBox">
+    <p id="talkLine"></p>
+    <div class="row">
+      <button type="button" class="alt" id="btnTalk">Talk</button>
+      <button type="button" id="btnChallenge">Challenge</button>
+    </div>
+  </div>
+  <div id="hudLayer">
+    <div class="worldTopbar">
+      <button type="button" id="advanceTime" class="scrollPlaque paperPlaque" aria-label="Pass time">
+        <span class="paperCorners" aria-hidden="true">
+          <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+          <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+        </span>
+        <span class="scrollWell"><span class="scrollCopy"><b id="visualDate">Mon 2 Mar</b><span id="visualPhase">MORNING</span></span></span>
+      </button>
+      <div class="worldActions">
+        <button type="button" id="worldMap" class="scrollPlaque paperPlaque">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Map</span></span>
+        </button>
+        <button id="worldRecord" class="scrollPlaque paperPlaque" type="button">
+          <span class="paperCorners" aria-hidden="true">
+            <img class="paperCorner paperCorner-tl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-tr" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-bl" src="../isometric-town/hud/paper_corner.png" alt="">
+            <img class="paperCorner paperCorner-br" src="../isometric-town/hud/paper_corner.png" alt="">
+          </span>
+          <span class="scrollWell"><span>Journal</span><img class="paperSeal" src="../isometric-town/hud/paper_seal.png" alt=""></span>
+        </button>
+      </div>
+    </div>
+  </div>
+  <button type="button" id="spotToggle">Hide HUD</button>
+  <button type="button" id="spotListToggle">Hide list</button>
+  <div id="spotReadout"></div>
+</section>
+<script>
+(function(){
+  const LOCS = {
+    Inn: {
+      title:"THE INN", art:"./inn.jpg",
+      people:[
+        {id:"Bram", src:"./bram.png", x:72, y:58, w:22, anchor:96, line:"The fire's the best seat. I'll not be hurried."},
+        {id:"Tomas", src:"./tomas.png", x:38, y:92, w:46, anchor:96, line:"Sit down. I already shuffled."}
+      ]
+    },
+    Market: {
+      title:"THE MARKET", art:"./market.jpg",
+      people:[
+        {id:"Nessa", src:"./nessa.png", x:22, y:62, w:26, anchor:96, line:"Don't buy the first apples they show you."},
+        {id:"Tomas", src:"./tomas.png", x:58, y:92, w:42, anchor:96, line:"If you're playing, say so. I've only got till the rush."}
+      ]
+    }
+  };
+  const host = document.getElementById("pieces");
+  const readout = document.getElementById("spotReadout");
+  let loc = "Inn";
+  let talking = null;
+  let listOn = true;
+
+  function data(){ return LOCS[loc]; }
+  function apply(el, p){
+    el.style.setProperty("--x", p.x+"%");
+    el.style.setProperty("--y", p.y+"%");
+    el.style.setProperty("--pw", p.w+"%");
+    el.style.setProperty("--anchor", p.anchor+"%");
+    el.style.setProperty("--z", String(10 + Math.round(p.y)));
+  }
+  function draw(){
+    const L = data();
+    document.getElementById("placeArt").src = L.art;
+    document.getElementById("placeTitle").textContent = L.title;
+    host.textContent = "";
+    L.people.slice().sort((a,b)=>a.y-b.y).forEach(p => {
+      const b = document.createElement("button");
+      b.type = "button";
+      b.className = "piece";
+      b.dataset.id = p.id;
+      apply(b, p);
+      const img = document.createElement("img");
+      img.src = p.src; img.alt = "";
+      b.append(img);
+      b.addEventListener("click", () => {
+        talking = p;
+        document.getElementById("talkLine").textContent = p.line;
+        document.body.classList.add("talkOn");
+      });
+      host.append(b);
+    });
+    if (talking){
+      const still = L.people.find(p => p.id === talking.id);
+      if (still){
+        talking = still;
+        document.getElementById("talkLine").textContent = still.line;
+        document.body.classList.add("talkOn");
+      } else {
+        talking = null;
+        document.body.classList.remove("talkOn");
+      }
+    } else document.body.classList.remove("talkOn");
+    readout.innerHTML = "<b>"+loc+"</b><p class=\"spotHint\">You're in the place. Tap a person.</p>" +
+      ["Inn","Market"].map(name => `<button type="button" data-place="${name}" class="${name===loc?"on":""}">${name}</button>`).join(" ");
+  }
+  readout.addEventListener("click", e => {
+    const go = e.target.closest("[data-place]");
+    if (go){ loc = go.getAttribute("data-place"); talking = null; draw(); }
+  });
+  document.getElementById("spotListToggle").addEventListener("click", () => {
+    listOn = !listOn;
+    document.body.classList.toggle("spotListOn", listOn);
+    document.getElementById("spotListToggle").textContent = listOn ? "Hide list" : "Show list";
+  });
+  document.getElementById("spotToggle").addEventListener("click", () => {
+    const off = document.body.classList.toggle("hudOff");
+    document.getElementById("spotToggle").textContent = off ? "Show HUD" : "Hide HUD";
+  });
+  const asked = new URLSearchParams(location.search);
+  if (LOCS[asked.get("loc")]) loc = asked.get("loc");
+  if (asked.get("talk")==="1") talking = data().people[data().people.length-1];
+  if (asked.get("hud")==="0") document.body.classList.add("hudOff");
+  if (asked.get("list")==="0"){
+    listOn = false;
+    document.body.classList.remove("spotListOn");
+    document.getElementById("spotListToggle").textContent = "Show list";
+  }
+  if (asked.get("chrome")==="0") document.body.classList.add("chromeOff");
+  draw();
+})();
+</script>
+</body>
+</html>
